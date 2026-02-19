@@ -1,0 +1,21 @@
+services:
+  mongodb:
+    image: mongo:8.2.5
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - app-net
+
+volumes:
+  mongodb-data:
+
+networks:
+  app-net:
+    driver: bridge
+
