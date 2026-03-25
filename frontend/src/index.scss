@@ -1,0 +1,20 @@
+@use "styles/mixins" as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-family: Inter, sans-serif;
+}
+
+body {
+  @include flex-center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  @include flex-center;
+}
