@@ -1,0 +1,32 @@
+# Python cache & bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+*.env
+
+# Development & build files
+.DS_Store
+*.log
+*.tmp
+*.bak
+
+# Source control
+.git/
+.gitignore
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker specific files that are not needed in the final image build context
+Dockerfile
+docker-compose.yml
+*.md

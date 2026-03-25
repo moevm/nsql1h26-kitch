@@ -1,0 +1,28 @@
+# Ignore dependencies and build output
+node_modules/
+dist/
+
+# Ignore Vite, Webpack, and React-specific build artifacts
+.vite/
+.eslintcache
+
+# Ignore environment and config files (sensitive data)
+*.env*
+*.log
+
+# Ignore TypeScript build artifacts (if using TypeScript)
+*.tsbuildinfo
+
+# Ignore local development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Ignore Docker-related files (to avoid copying unnecessary configs)
+Dockerfile
+.dockerignore
+docker-compose.yml

@@ -1,0 +1,78 @@
+version: '3.8'
+
+
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: nsql1h26-kitch_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: nsql1h26-kitch_backend-python-fastapi:v.0.0
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend-python-fastapi
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    image: nsql1h26-kitch_frontend-nginx-react:v.0.0
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-nginx-react
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+
+volumes:
+  mongodb-data:
+    driver: local
+  mongodb-config:
+    driver: local
+
+
+networks:
+  app-net:
+    driver: bridge
