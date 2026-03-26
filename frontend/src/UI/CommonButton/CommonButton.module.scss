@@ -1,0 +1,29 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.button {
+  height: 45px;
+  padding: 0 70px;
+  gap: 10px;
+  @include flex-center;
+  align-self: stretch;
+  background: $primary-color;
+  border: 1px solid $primary-color;
+  border-radius: 6px;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.danger {
+    background: $red-color;
+    border-color: $red-color;
+  }
+}
+
+.buttonText {
+  @include flex-center;
+  text-align: center;
+  @include text-style(16px, 400, $on-primary-color, 16px);
+}

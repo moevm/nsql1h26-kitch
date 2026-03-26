@@ -1,6 +1,19 @@
+@use "variables" as *;
+
 @mixin flex-center($direction: column) {
   display: flex;
   flex-direction: $direction;
   justify-content: center;
   align-items: center;
+}
+
+@mixin text-style($size: 16px, $weight: 400, $color: $on-surface-color, $line-height: normal) {
+  color: $color;
+  font-size: $size;
+  font-weight: $weight;
+  font-family: Inter, sans-serif;
+
+  @if $line-height != normal {
+    line-height: $line-height;
+  }
 }

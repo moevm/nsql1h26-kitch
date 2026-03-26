@@ -5,7 +5,7 @@ function App() {
   return (
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<div>Kitchify</div>} />
+            <Route path="/" element={<div>Kitchify</div>} />
         </Routes>
       </BrowserRouter>
   )
