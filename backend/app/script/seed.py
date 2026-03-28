@@ -77,7 +77,7 @@ def seed_designs():
     designs = [
         {
             "name": "Классическая кухня",
-            "type": "ЛДСП",
+            "type": "П-образная",
             "size": {"height": 85, "width": 60, "length": 300},
             "material": "ЛДСП 16мм",
             "design_price": 50000,
