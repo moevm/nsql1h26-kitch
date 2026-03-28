@@ -1,7 +1,19 @@
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from app.script.seed import seed_users, seed_materials, seed_designs, seed_orders
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting seed...")
+    seed_users()
+    seed_materials()
+    seed_designs()
+    seed_orders()
+    print("Seed completed")
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
