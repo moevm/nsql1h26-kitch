@@ -9,7 +9,7 @@ from app.data.user_repository import get_user_by_email, create_user
 
 load_dotenv()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secret")
 ALGORITHM = "HS256"

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional
 
 def utc_now() -> datetime:
@@ -29,14 +29,14 @@ class WorkerInfo(BaseModel):
 
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
 
 class UserAuth(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class UserInDB(UserBase):
