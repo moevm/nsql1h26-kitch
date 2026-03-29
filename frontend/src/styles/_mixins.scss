@@ -17,3 +17,13 @@
     line-height: $line-height;
   }
 }
+
+@mixin input-reset {
+  border: none;
+  background: transparent;
+  padding: 0;
+
+  &:focus {
+    outline: none;
+  }
+}
