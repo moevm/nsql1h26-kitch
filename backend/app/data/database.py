@@ -15,3 +15,5 @@ try:
     print("Connected to MongoDB!")
 except Exception as e:
     print(e)
+
+db = client[os.getenv("MONGO_INITDB_DATABASE", "database")]  

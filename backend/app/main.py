@@ -2,6 +2,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.script.seed import seed_users, seed_materials, seed_designs, seed_orders
+from app.web.auth_router import router as auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth_router)
 
 @app.get("/")
 async def root():
