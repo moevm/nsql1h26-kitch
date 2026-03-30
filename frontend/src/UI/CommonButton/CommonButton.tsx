@@ -4,6 +4,7 @@ import styles from "./CommonButton.module.scss"
 interface CommonButtonProps {
     title: string;
     onClick?: () => void;
+    disabled?: boolean;
     variant?: "primary" | "danger";
     className?: string;
 }
@@ -11,6 +12,7 @@ interface CommonButtonProps {
 export function CommonButton({
     title,
     onClick,
+    disabled,
     variant = "primary",
     className
 }: CommonButtonProps): ReactElement {
@@ -20,7 +22,7 @@ export function CommonButton({
     } ${className || ""}`;
 
     return (
-        <button className={buttonClass} onClick={onClick}>
+        <button className={buttonClass} onClick={onClick} disabled={disabled}>
             <span className={styles.buttonText}>{title}</span>
         </button>
     );
