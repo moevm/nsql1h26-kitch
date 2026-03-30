@@ -1,0 +1,29 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.form {
+  @include flex-center;
+  padding: 30px;
+  gap: 24px;
+  background: $surface-color;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.03), 0px 4px 8px rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  outline: 1px rgba(0, 0, 0, 0.10) solid;
+  outline-offset: -1px;
+}
+
+.legend {
+  align-self: stretch;
+  height: 55px;
+  @include flex-center;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.legendText {
+  align-self: stretch;
+  @include text-style(24px, 600, $on-surface-color, 28.8px);
+  text-align: center;
+  text-decoration: underline;
+  @include flex-center;
+}
