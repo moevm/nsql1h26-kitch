@@ -2,11 +2,17 @@ from datetime import datetime
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from passlib.context import CryptContext
 
 load_dotenv()
 
 client = MongoClient(os.getenv("MONGODB_URI", "mongodb://user:123@mongodb:27017"))
 db = client[os.getenv("MONGO_INITDB_DATABASE", "database")]
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
 def seed_users():
     users = [
@@ -15,7 +21,7 @@ def seed_users():
             "role": "client",
             "phone": "+7 999 123-45-67",
             "username": "Клиент Иванов",
-            "password": "$2b$12$testhashclient",
+            "hashed_password": hash_password("client123"),
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         },
@@ -24,7 +30,7 @@ def seed_users():
             "role": "worker",
             "phone": "+7 999 765-43-21",
             "username": "Работник Петров",
-            "password": "$2b$12$testhashworker",
+            "hashed_password": hash_password("worker123"),
             "created_at": datetime.now(),
             "updated_at": datetime.now(),
             "worker_info": {
@@ -33,18 +39,18 @@ def seed_users():
                 "comment": "Опытный сборщик",
                 "work_day_start": "09:00",
                 "work_day_end": "18:00",
-                "worker_positions": [
-                    {"position": "Сборщик", "date": datetime(2020, 1, 1)},
-                    {"position": "Старший сборщик", "date": datetime(2022, 1, 1)}
-                ]
-            }
+            },
+            "worker_positions": [
+                {"position": "Сборщик", "date": datetime(2020, 1, 1)},
+                {"position": "Старший сборщик", "date": datetime(2022, 1, 1)}
+            ]
         },
         {
             "email": "admin@example.com",
             "role": "admin",
             "phone": "+7 999 111-22-33",
             "username": "Администратор Сидоров",
-            "password": "$2b$12$testhashadmin",
+            "hashed_password": hash_password("admin123"),
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         }
@@ -57,6 +63,7 @@ def seed_users():
             upsert=True
         )
     print(f"Seeded {db.users.count_documents({})} users")
+
 
 def seed_materials():
     materials = [
@@ -72,6 +79,7 @@ def seed_materials():
             upsert=True
         )
     print(f"Seeded {db.materials.count_documents({})} materials")
+
 
 def seed_designs():
     designs = [
@@ -100,14 +108,14 @@ def seed_designs():
         )
     print(f"Seeded {db.designs.count_documents({})} designs")
 
+
 def seed_orders():
-    # Получаем ID пользователя из БД
     client_user = db.users.find_one({"email": "client@example.com"})
 
     orders = [
         {
             "client": {
-                "client_id": client_user["_id"] if client_user else "client_user_id",
+                "client_id": client_user["_id"] if client_user else None,
                 "username": "Клиент Иванов",
                 "phone": "+7 999 123-45-67"
             },
@@ -147,11 +155,11 @@ def seed_orders():
         )
     print(f"Seeded {db.orders.count_documents({})} orders")
 
+
 if __name__ == "__main__":
     try:
         client.admin.command('ping')
         print("Connected to MongoDB!")
-
         seed_users()
         seed_materials()
         seed_designs()
