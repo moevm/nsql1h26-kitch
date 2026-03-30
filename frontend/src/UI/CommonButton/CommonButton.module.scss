@@ -20,6 +20,24 @@
     background: $red-color;
     border-color: $red-color;
   }
+
+  &.text {
+    background: transparent;
+    border: none;
+    padding: 0;
+    height: auto;
+    border-radius: 0;
+
+    &:active {
+      transform: none;
+    }
+
+    .buttonText {
+      @include text-style(16px, 400, $secondary-color, 22px);
+      text-decoration: underline;
+      background: transparent;
+    }
+  }
 }
 
 .buttonText {

@@ -5,7 +5,6 @@ import { AxiosError } from 'axios';
 import styles from "./LoginPage.module.scss"
 import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
 import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
-import {CommonClickableText} from "../../UI/CommonClickableText/CommonClickableText.tsx";
 import {useAuth} from "../../hooks/useAuth.ts";
 
 export function LoginPage(): ReactElement {
@@ -77,13 +76,15 @@ export function LoginPage(): ReactElement {
                     disabled={isLoading}
                 />
 
-                <CommonClickableText
+                <CommonButton
                     title={"Восставновить пароль"}
+                    variant={"text"}
                     onClick={() => navigate("/password_recover")}
                 />
 
-                <CommonClickableText
+                <CommonButton
                     title={"Регистрация"}
+                    variant={"text"}
                     onClick={() => navigate("/register")}
                 />
 

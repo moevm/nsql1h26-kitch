@@ -5,7 +5,7 @@ interface CommonButtonProps {
     title: string;
     onClick?: () => void;
     disabled?: boolean;
-    variant?: "primary" | "danger";
+    variant?: "primary" | "danger" | "text";
     className?: string;
 }
 
@@ -19,6 +19,8 @@ export function CommonButton({
 
     const buttonClass = `${styles.button} ${
         variant === "danger" ? styles.danger : ""
+    } ${
+        variant === "text" ? styles.text : ""
     } ${className || ""}`;
 
     return (
