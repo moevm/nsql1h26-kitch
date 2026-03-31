@@ -3,32 +3,43 @@
 
 .inputField {
   align-self: stretch;
-  height: 70px;
+  height: auto;
+  min-height: 70px;
   display: inline-flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .label {
-  align-self: stretch;
   @include text-style(16px, 400, $on-surface-color, 22.4px);
+  align-self: stretch;
 }
 
 .inputContainer {
+  @include flex-center(row);
   align-self: stretch;
   min-width: 120px;
   padding: 12px 16px;
   background: $surface-color;
   border-radius: 8px;
   border: 1px solid #D9D9D9;
-  @include flex-center(row);
   justify-content: flex-start;
 }
 
 .value {
+  @include text-style(16px, 400, $on-surface-color, 16px);
+  @include input-reset;
   flex: 1 1 0;
   min-width: 0;
   width: 100%;
-  @include text-style(16px, 400, $on-surface-color, 16px);
-  @include input-reset;
+}
+
+.helperText {
+  @include text-style(12px, 400, #666, 16px);
+  margin-top: 4px;
+  align-self: stretch;
+}
+
+.helperTextError {
+  color: $red-color;
 }

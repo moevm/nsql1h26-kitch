@@ -7,20 +7,50 @@ import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
 import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
 import {useAuth} from "../../hooks/useAuth.ts";
 
+interface LoginFormData {
+    email: string;
+    password: string;
+}
+
 export function LoginPage(): ReactElement {
     const navigate = useNavigate();
     const {login, error, isLoading} = useAuth();
-    const [formData, setFormData] = useState({ email: "", password: "" });
+    const [formData, setFormData] = useState<LoginFormData>({ email: "", password: "" });
+    const [validationErrors, setValidationErrors] = useState<Partial<LoginFormData>>({});
 
-    const handleInputChange = (field: keyof typeof formData) => (value: string) => {
+    const validateForm = (): boolean => {
+        const errors: Partial<LoginFormData> = {};
+
+        if (!formData.email.trim())                     errors.email = "Email обязателен";
+        else if (!/\S+@\S+\.\S+/.test(formData.email))  errors.email = "Введите корректный email";
+
+        if (!formData.password) errors.password = "Пароль обязателен";
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleInputChange = (field: keyof LoginFormData) => (value: string) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
+
+        if (validationErrors[field]) {
+            setValidationErrors(prev => ({
+                ...prev,
+                [field]: undefined
+            }));
+        }
     };
 
     const handleSubmit = () => {
-        login(formData);
+        if (validateForm()) {
+            login({
+                email: formData.email.trim().toLowerCase(),
+                password: formData.password
+            });
+        }
     };
 
     const getErrorMessage = () => {
@@ -40,7 +70,6 @@ export function LoginPage(): ReactElement {
     return (
         <div>
             <Container className={styles.form}>
-
                 <div className={styles.legend}>
                     <div className={styles.legendText}>Вход</div>
                 </div>
@@ -58,6 +87,8 @@ export function LoginPage(): ReactElement {
                     value={formData.email}
                     onChange={handleInputChange("email")}
                     disabled={isLoading}
+                    error={!!validationErrors.email}
+                    helperText={validationErrors.email}
                 />
 
                 <CommonInputField
@@ -67,6 +98,8 @@ export function LoginPage(): ReactElement {
                     value={formData.password}
                     onChange={handleInputChange("password")}
                     disabled={isLoading}
+                    error={!!validationErrors.password}
+                    helperText={validationErrors.password}
                 />
 
                 <CommonButton
@@ -80,12 +113,14 @@ export function LoginPage(): ReactElement {
                     title={"Восставновить пароль"}
                     variant={"text"}
                     onClick={() => navigate("/password_recover")}
+                    disabled={isLoading}
                 />
 
                 <CommonButton
                     title={"Регистрация"}
                     variant={"text"}
                     onClick={() => navigate("/register")}
+                    disabled={isLoading}
                 />
 
             </Container>

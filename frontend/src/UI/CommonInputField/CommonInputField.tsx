@@ -8,6 +8,8 @@ interface CommonInputFieldProps {
     type?: "text" | "password" | "email";
     onChange?: (value: string) => void;
     disabled?: boolean;
+    error?: boolean;
+    helperText?: string;
 }
 
 export function CommonInputField({
@@ -16,7 +18,9 @@ export function CommonInputField({
      placeholder = "",
      type = "text",
      onChange,
-     disabled = false
+     disabled = false,
+     error = false,
+     helperText = ""
 }: CommonInputFieldProps): ReactElement {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,7 +30,7 @@ export function CommonInputField({
     return (
         <div className={styles.inputField}>
             <div className={styles.label}>{label}</div>
-            <div className={styles.inputContainer}>
+            <div className={`${styles.inputContainer} ${error ? styles.inputContainerError : ""}`}>
                 <input
                     type={type}
                     value={value}
@@ -36,6 +40,11 @@ export function CommonInputField({
                     className={styles.value}
                 />
             </div>
+            {helperText && (
+                <div className={`${styles.helperText} ${error ? styles.helperTextError : ""}`}>
+                    {helperText}
+                </div>
+            )}
         </div>
     );
 }
