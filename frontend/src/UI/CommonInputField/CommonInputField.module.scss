@@ -1,0 +1,45 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.inputField {
+  align-self: stretch;
+  height: auto;
+  min-height: 70px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  @include text-style(16px, 400, $on-surface-color, 22.4px);
+  align-self: stretch;
+}
+
+.inputContainer {
+  @include flex-center(row);
+  align-self: stretch;
+  min-width: 120px;
+  padding: 12px 16px;
+  background: $surface-color;
+  border-radius: 8px;
+  border: 1px solid #D9D9D9;
+  justify-content: flex-start;
+}
+
+.value {
+  @include text-style(16px, 400, $on-surface-color, 16px);
+  @include input-reset;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.helperText {
+  @include text-style(12px, 400, #666, 16px);
+  margin-top: 4px;
+  align-self: stretch;
+}
+
+.helperTextError {
+  color: $red-color;
+}
