@@ -8,7 +8,7 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 
 # database
-pymongo==4.8.0  # ← обнови с 4.10.1 на 4.8.0 (или выше)
+pymongo==4.8.0 
 python-dotenv==1.2.2
 
 # auth
