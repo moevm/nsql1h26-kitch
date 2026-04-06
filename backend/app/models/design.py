@@ -21,6 +21,7 @@ class Design(BaseModel):
     name: str
     type: str
     size: Size_design
+    material: str
     material_id: str
     design_price: int
     material_price: int
@@ -34,6 +35,7 @@ class DesignUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     size: Optional[Size_design] = None
+    material: Optional[str] = None
     material_id: Optional[str] = None
     design_price: Optional[int] = None
     material_price: Optional[int] = None
@@ -41,13 +43,14 @@ class DesignUpdate(BaseModel):
     description: Optional[str] = None
     production_time: Optional[int] = None
     need_material: Optional[int] = None
-    blueprint: Optional[str] = None
+    blueprint: Optional[int] = None
 
 
 class DesignInDB(MongoBase):
     name: str
     type: str
     size: Size_design
+    material: str
     material_id: PyObjectId
     design_price: int
     material_price: int
@@ -55,6 +58,6 @@ class DesignInDB(MongoBase):
     description: str
     production_time: int
     need_material: int
-    blueprint: Optional[str] = None
+    blueprint: Optional[int] = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

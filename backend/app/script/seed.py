@@ -82,11 +82,15 @@ def seed_materials():
 
 
 def seed_designs():
+    materials = list(db.materials.find({}))
+    material_map = {m["name"]: str(m["_id"]) for m in materials}
+
     designs = [
         {
             "name": "Классическая кухня",
             "type": "П-образная",
             "size": {"height": 85, "width": 60, "length": 300},
+            "material_id": material_map.get("ЛДСП 16мм", ""),
             "material": "ЛДСП 16мм",
             "design_price": 50000,
             "material_price": 30000,
@@ -95,6 +99,38 @@ def seed_designs():
             "production_time": 14,
             "need_material": 15,
             "blueprint": 1001,
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
+        },
+        {
+            "name": "Современная кухня",
+            "type": "Линейная",  # ← новый тип
+            "size": {"height": 90, "width": 65, "length": 400},
+            "material_id": material_map.get("МДФ 19мм", ""),
+            "material": "МДФ 19мм",
+            "design_price": 75000,
+            "material_price": 45000,
+            "color": {"red": 50, "green": 50, "blue": 50, "name": "Темно-серый"},
+            "description": "Современный минимализм",
+            "production_time": 21,
+            "need_material": 22,
+            "blueprint": 1002,
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
+        },
+        {
+            "name": "Кухня-остров",
+            "type": "Островная",  # ← еще один новый тип
+            "size": {"height": 85, "width": 120, "length": 350},
+            "material_id": material_map.get("Кромка ПВХ", ""),
+            "material": "Кромка ПВХ",
+            "design_price": 95000,
+            "material_price": 55000,
+            "color": {"red": 255, "green": 215, "blue": 0, "name": "Золотистый"},
+            "description": "Кухня с островом",
+            "production_time": 28,
+            "need_material": 30,
+            "blueprint": 1003,
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         }
@@ -107,7 +143,6 @@ def seed_designs():
             upsert=True
         )
     print(f"Seeded {db.designs.count_documents({})} designs")
-
 
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})

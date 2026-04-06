@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.script.seed import seed_users, seed_materials, seed_designs, seed_orders
 from app.web.auth_router import router as auth_router
 from app.web.material_router import router as material_router
+from app.web.design_router import router as design_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,6 +33,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(material_router)
+app.include_router(design_router)
 
 @app.get("/")
 async def root():
