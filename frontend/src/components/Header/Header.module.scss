@@ -1,0 +1,33 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.headerContainer {
+  width: 100%;
+  padding: 24px 64px;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerLogo {
+  width: 40px;
+  height: 40px;
+}
+
+.headerTitle {
+  @include text-style(24px, 600, $on-surface-color, 28.8px);
+  word-wrap: break-word;
+}
+
+.navContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 32px;
+}

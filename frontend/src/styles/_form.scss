@@ -6,7 +6,7 @@
   padding: 30px;
   gap: 24px;
   background: $surface-color;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.03), 0px 4px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: $box-shadow;
   border-radius: 16px;
   outline: 1px rgba(0, 0, 0, 0.10) solid;
   outline-offset: -1px;
