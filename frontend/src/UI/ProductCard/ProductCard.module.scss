@@ -1,0 +1,77 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.cardContainer {
+  width: 300px;
+  height: 460px;
+  background: $surface-color;
+  box-shadow: $box-shadow;
+  overflow: hidden;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.10);
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.cardImage {
+  align-self: stretch;
+  height: 200px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  gap: 32px;
+  flex: 1;
+}
+
+.cardTextWrapper {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  display: flex;
+}
+
+.cardTitle {
+  @include text-style(24px, 600, $on-surface-color, 34px);
+  align-self: stretch;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+}
+
+.cardDescription {
+  @include text-style(16px, 500, $secondary-color, 22px);
+  align-self: stretch;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+}
+
+.cardButton {
+  @include text-style(16px, 500, $on-surface-color, 22px);
+  align-self: stretch;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+  cursor: pointer;
+}
