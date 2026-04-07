@@ -31,8 +31,10 @@ def _create_token(user_id: str, role: str) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def register_user(data: UserCreate) -> str:
-    if get_user_by_email(data.email):
+async def register_user(data: UserCreate) -> str:  
+    existing_user = await get_user_by_email(data.email)
+
+    if existing_user:
         raise HTTPException(status_code=409, detail="Email уже зарегистрирован")
 
     user_in_db = UserInDB(
@@ -42,11 +44,11 @@ def register_user(data: UserCreate) -> str:
         hashed_password=_hash_password(data.password),
     )
 
-    return create_user(user_in_db)
+    return await create_user(user_in_db)
 
 
-def authenticate_user(data: UserAuth) -> str:
-    user_doc = get_user_by_email(data.email)
+async def authenticate_user(data: UserAuth) -> str:  
+    user_doc = await get_user_by_email(data.email)
 
     if not user_doc or not _verify_password(data.password, user_doc["hashed_password"]):
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
