@@ -4,15 +4,18 @@ import logo from "../../assets/kitchify_logo.svg";
 import {Avatar} from "@mui/material";
 
 interface HeaderProps {
+    headerTitle: string;
     children?: ReactElement;
 }
 
-export function Header({children}: HeaderProps): ReactElement {
+export function Header({headerTitle, children}: HeaderProps): ReactElement {
     return (
         <div className={style.headerContainer}>
             <div className={style.logoWrapper}>
-                <Avatar alt="Kitchify" src={logo} className={style.headerLogo} />
-                <div className={style.headerTitle}>Kitchify</div>
+                <Avatar alt={headerTitle} src={logo} className={style.headerLogo} />
+                <div className={style.headerTitle}>
+                    {headerTitle}
+                </div>
             </div>
 
             <div className={style.navContainer}>

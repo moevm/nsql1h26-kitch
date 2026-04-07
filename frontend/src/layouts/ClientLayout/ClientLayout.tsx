@@ -6,7 +6,7 @@ import {HeaderLink} from "../../UI/HeaderLink/HeaderLink.tsx";
 import style from "./ClientLayout.module.scss"
 import {useAuth} from "../../hooks/useAuth.ts";
 
-function ProductsPageHeaderLinks() {
+function ClientLayoutHeaderLinks() {
     const {logout} = useAuth();
 
     return (
@@ -22,8 +22,8 @@ function ProductsPageHeaderLinks() {
 export function ClientLayout() {
     return (
       <div className={style.page}>
-          <Header>
-              <ProductsPageHeaderLinks />
+          <Header headerTitle={"Kitchify"}>
+              <ClientLayoutHeaderLinks />
           </Header>
           <div className={style.layoutBody}>
               <Outlet />

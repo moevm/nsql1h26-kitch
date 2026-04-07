@@ -1,8 +1,11 @@
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
-import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
+
+import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
+
+import {AdminLayout} from "./layouts/AdminLayout/AdminLayout.tsx";
 
 
 function AppRoutes() {
@@ -23,6 +26,17 @@ function AppRoutes() {
                 <Route path="/orders/create"    element={<div>CREATE ORDER</div>}/>
                 <Route path="/orders"           element={<div>ORDERS</div>}/>
             </Route>
+
+            <Route element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout />
+                </ProtectedRoute>
+            }>
+                <Route path="admin/orders"         element={<div>ADMIN ORDERS</div>}/>
+                <Route path="/admin/finances"    element={<div>ADMIN FINANCES</div>}/>
+                <Route path="admin/employees"           element={<div>ADMIN EMPLOYEES</div>}/>
+            </Route>
+
         </Routes>
     );
 }
