@@ -4,11 +4,11 @@ import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
 import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
+import {ProductsPage} from "./pages/ProductsPage/ProductsPage.tsx";
 
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
 
 import {AdminLayout} from "./layouts/AdminLayout/AdminLayout.tsx";
-
 
 function AppRoutes() {
     return (
@@ -24,7 +24,7 @@ function AppRoutes() {
                     <ClientLayout />
                 </ProtectedRoute>
             }>
-                <Route path="/products"         element={<div>PRODUCTS</div>}/>
+                <Route path="/products"         element={<ProductsPage />}/>
                 <Route path="/orders/create"    element={<div>CREATE ORDER</div>}/>
                 <Route path="/orders"           element={<div>ORDERS</div>}/>
             </Route>
