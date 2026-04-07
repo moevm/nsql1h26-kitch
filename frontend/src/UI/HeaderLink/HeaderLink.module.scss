@@ -1,0 +1,23 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.link {
+  @include text-style(16px, 500, $on-surface-color, $line-height: 23px);
+  cursor: pointer;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.linkActive {
+  @extend .link;
+  text-decoration: underline;
+}
