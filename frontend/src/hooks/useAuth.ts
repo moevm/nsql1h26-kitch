@@ -41,6 +41,9 @@ export const useAuth = () => {
             if (role === 'client') {
                 navigate('/products');
             }
+            if (role === 'worker') {
+                navigate('/worker/tasks');
+            }
             if (role === 'admin') {
                 navigate('/admin/finances');
             }

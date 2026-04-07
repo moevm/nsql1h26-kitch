@@ -1,17 +1,17 @@
-import {Fragment} from "react";
-import {Outlet} from "react-router-dom";
-import {Header} from "../../components/Header/Header.tsx";
-import {clientHeaderLinks} from "../../components/Header/navLinks";
-import {HeaderLink} from "../../UI/HeaderLink/HeaderLink.tsx";
-import style from "./ClientLayout.module.scss"
 import {useAuth} from "../../hooks/useAuth.ts";
+import {Fragment} from "react";
+import {workerHeaderLinks} from "../../components/Header/navLinks.ts";
+import {HeaderLink} from "../../UI/HeaderLink/HeaderLink.tsx";
+import style from "./WorkerLayout.module.scss";
+import {Header} from "../../components/Header/Header.tsx";
+import {Outlet} from "react-router-dom";
 
-function ClientLayoutHeaderLinks() {
+function WorkerLayoutHeaderLinks() {
     const {logout} = useAuth();
 
     return (
         <Fragment>
-            {clientHeaderLinks.map((link) => (
+            {workerHeaderLinks.map((link) => (
                 <HeaderLink text={link.text} path={link.path} />
             ))}
             <HeaderLink text={"Выйти"} path={"/login"} onClick={logout}/>
@@ -19,15 +19,15 @@ function ClientLayoutHeaderLinks() {
     );
 }
 
-export function ClientLayout() {
+export function WorkerLayout() {
     return (
         <div className={style.page}>
-            <Header headerTitle={"Kitchify"}>
-                <ClientLayoutHeaderLinks />
+            <Header headerTitle={"Kitchify | ИС Рабочий"}>
+                <WorkerLayoutHeaderLinks />
             </Header>
             <div className={style.layoutBody}>
                 <Outlet />
             </div>
-      </div>
+        </div>
     );
 }
