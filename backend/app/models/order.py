@@ -102,3 +102,18 @@ class OrderUpdate(BaseModel):
     color: Optional[Color] = None
     need_material: Optional[int] = None
     blueprint: Optional[int] = None
+
+class OrderCreate(BaseModel):
+    phone: str
+    address: str
+    kitchen_type: str
+    design_id: str
+    color: Color
+    material: str
+    floor: int
+    has_lift: bool
+    comment: Optional[str] = None
+    type_price: int
+    material_price: int
+    delivery_price: int
+    comment_price: int

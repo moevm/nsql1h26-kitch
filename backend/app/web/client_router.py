@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Header, HTTPException, Depends
+from fastapi import APIRouter, Header, HTTPException
 from app.service.auth_service import get_current_user
-from app.data.order_repository import get_orders_by_user_id
+from app.service.order_service import get_orders_ids_by_client
 
 router = APIRouter(prefix="/api/client", tags=["client"])
 
-@router.get("/", summary="Получение информации о клиенте")
+
+@router.get("/")
 async def get_client_info(
     authorization: str = Header(..., alias="Authorization")
 ):
@@ -23,7 +24,7 @@ async def get_client_info(
     }
 
 
-@router.get("/orders", status_code="Получение списка заказов клиента")
+@router.get("/orders")
 async def get_client_orders(
     authorization: str = Header(..., alias="Authorization")
 ):
@@ -33,10 +34,8 @@ async def get_client_orders(
     if current_user["role"] != "client":
         raise HTTPException(status_code=403, detail="Доступ только для клиентов")
 
-    orders = await get_orders_by_user_id(current_user["user_id"])
+    orders_ids = await get_orders_ids_by_client(current_user["user_id"])
 
     return {
-        "user_id": current_user["user_id"],
-        "total_orders": len(orders),
-        "orders": orders
+        "orders_ids": orders_ids
     }
