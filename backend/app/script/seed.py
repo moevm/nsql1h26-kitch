@@ -147,21 +147,27 @@ def seed_designs():
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})
 
+    # Получаем дизайн и материал
+    design = db.designs.find_one({"name": "Классическая кухня"})
+    material = db.materials.find_one({"name": "ЛДСП 16мм"})
+
     orders = [
         {
+            "material_id": str(material["_id"]) if material else None,
+            "design_id": str(design["_id"]) if design else None,
             "client": {
-                "client_id": client_user["_id"] if client_user else None,
+                "client_id": str(client_user["_id"]) if client_user else None,
                 "username": "Клиент Иванов",
                 "phone": "+7 999 123-45-67"
             },
             "item": "Кухонный гарнитур",
             "comment": "Срочный заказ",
             "delivery": {
+                "address": "ул. Ленина, д. 1",
                 "floor": 5,
-                "has_lift": True,
-                "address": "ул. Ленина, д. 1"
+                "has_lift": True
             },
-            "price": {
+            "pricing": {  # ← поменял price на pricing
                 "total_price": 120000,
                 "type_price": 50000,
                 "material_price": 30000,
@@ -170,11 +176,10 @@ def seed_orders():
             },
             "stages": [],
             "name_design": "Классическая кухня",
-            "type": "ЛДСП",
-            "sizes": {"height": 85, "width": 60, "length": 300},
-            "material_id": None,
+            "type": "П-образная",
             "material": "ЛДСП 16мм",
-            "color": {"r": 255, "g": 255, "b": 255, "name": "Белый"},
+            "size": {"height": 85, "width": 60, "length": 300},  # ← sizes → size
+            "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"},  # ← r,g,b → red,green,blue
             "need_material": 15,
             "blueprint": 1001,
             "created_at": datetime.now(),
