@@ -2,7 +2,6 @@ from fastapi import HTTPException, status
 from app.models.order import Order, OrderInDB, OrderUpdate, OrderCreate, Client, Delivery, Pricing
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
-from app.data import user_repository as user_repo
 from typing import List
 
 

@@ -6,8 +6,18 @@ from passlib.context import CryptContext
 from dotenv import load_dotenv
 from app.models.user import UserCreate, UserAuth, UserInDB
 from app.data.user_repository import get_user_by_email, create_user, get_user_by_id
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 
 load_dotenv()
+
+security = HTTPBearer()
+
+async def get_current_user_dep(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
+    return await get_current_user(credentials.credentials)
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

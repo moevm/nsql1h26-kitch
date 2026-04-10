@@ -66,7 +66,7 @@ class Order(BaseModel):
     need_material: int
     blueprint: int
 
-class OrderInDB(BaseModel):
+class OrderInDB(MongoBase):
     material_id: str
     design_id: str
     client: Client
