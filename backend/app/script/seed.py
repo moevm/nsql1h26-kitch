@@ -3,8 +3,8 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from passlib.context import CryptContext
-from models.design import TypeDesign
-from models.order import TypeStatus
+from app.models.design import TypeDesign
+from app.models.order import TypeStatus
 
 
 load_dotenv()
@@ -152,51 +152,139 @@ def seed_designs():
 
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})
+    if not client_user:
+        print("Client user not found, skipping orders seeding")
+        return
 
-    # Получаем дизайн и материал
-    design = db.designs.find_one({"name": "Классическая кухня"})
-    material = db.materials.find_one({"name": "ЛДСП 16мм"})
+    # Получаем все дизайны и материалы
+    designs = {d["name"]: d for d in db.designs.find({})}
+    materials = {m["name"]: m for m in db.materials.find({})}
 
-    orders = [
+    orders_data = [
         {
-            "material_id": str(material["_id"]) if material else None,
-            "design_id": str(design["_id"]) if design else None,
-            "client": {
-                "client_id": str(client_user["_id"]) if client_user else None,
-                "username": "Клиент Иванов",
-                "phone": "+7 999 123-45-67"
-            },
-            "item": "Кухонный гарнитур",
+            "item": "Кухонный гарнитур «Классика»",
+            "design_name": "Классическая кухня",
+            "material_name": "ЛДСП 16мм",
+            "address": "ул. Ленина, д. 1",
+            "floor": 5,
+            "has_lift": True,
+            "total_price": 120000,
+            "type_price": 50000,
+            "material_price": 30000,
+            "delivery_price": 5000,
+            "comment_price": 1000,
             "comment": "Срочный заказ",
-            "delivery": {
-                "address": "ул. Ленина, д. 1",
-                "floor": 5,
-                "has_lift": True
+            "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"}
+        },
+        {
+            "item": "Кухонный гарнитур «Модерн»",
+            "design_name": "Современная кухня",
+            "material_name": "МДФ 19мм",
+            "address": "пр. Мира, д. 10",
+            "floor": 3,
+            "has_lift": True,
+            "total_price": 150000,
+            "type_price": 75000,
+            "material_price": 45000,
+            "delivery_price": 7000,
+            "comment_price": 2000,
+            "comment": "Установка через 2 недели",
+            "color": {"red": 50, "green": 50, "blue": 50, "name": "Темно-серый"}
+        },
+        {
+            "item": "Кухня-остров «Прованс»",
+            "design_name": "Кухня-остров",
+            "material_name": "Кромка ПВХ",
+            "address": "ул. Гагарина, д. 25",
+            "floor": 1,
+            "has_lift": False,
+            "total_price": 200000,
+            "type_price": 95000,
+            "material_price": 55000,
+            "delivery_price": 10000,
+            "comment_price": 5000,
+            "comment": "Остров в центре",
+            "color": {"red": 255, "green": 215, "blue": 0, "name": "Золотистый"}
+        },
+        {
+            "item": "Кухонный гарнитур «Классика+»",
+            "design_name": "Классическая кухня",
+            "material_name": "ЛДСП 16мм",
+            "address": "ул. Пушкина, д. 5",
+            "floor": 7,
+            "has_lift": True,
+            "total_price": 125000,
+            "type_price": 50000,
+            "material_price": 30000,
+            "delivery_price": 6000,
+            "comment_price": 1000,
+            "comment": "Сборка на месте",
+            "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"}
+        },
+        {
+            "item": "Кухня-остров «Лофт»",
+            "design_name": "Кухня-остров",
+            "material_name": "МДФ 19мм",
+            "address": "ул. Лермонтова, д. 12",
+            "floor": 2,
+            "has_lift": True,
+            "total_price": 210000,
+            "type_price": 95000,
+            "material_price": 55000,
+            "delivery_price": 12000,
+            "comment_price": 8000,
+            "comment": "Чёрная фурнитура",
+            "color": {"red": 30, "green": 30, "blue": 30, "name": "Чёрный"}
+        }
+    ]
+
+    orders = []
+    for data in orders_data:
+        design = designs.get(data["design_name"])
+        material = materials.get(data["material_name"])
+        if not design or not material:
+            print(f"Skipping order '{data['item']}': design or material not found")
+            continue
+
+        order = {
+            "material_id": str(material["_id"]),
+            "design_id": str(design["_id"]),
+            "client": {
+                "client_id": str(client_user["_id"]),
+                "username": client_user["username"],
+                "phone": client_user["phone"]
             },
-            "pricing": {  # ← поменял price на pricing
-                "total_price": 120000,
-                "type_price": 50000,
-                "material_price": 30000,
-                "delivery_price": 5000,
-                "comment_price": 1000
+            "item": data["item"],
+            "comment": data["comment"],
+            "delivery": {
+                "address": data["address"],
+                "floor": data["floor"],
+                "has_lift": data["has_lift"]
+            },
+            "pricing": {
+                "total_price": data["total_price"],
+                "type_price": data["type_price"],
+                "material_price": data["material_price"],
+                "delivery_price": data["delivery_price"],
+                "comment_price": data["comment_price"]
             },
             "stages": [],
-            "name_design": "Классическая кухня",
-            "type": TypeDesign("П-образная"),
-            "material": "ЛДСП 16мм",
-            "size": {"height": 85, "width": 60, "length": 300},  # ← sizes → size
-            "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"},  # ← r,g,b → red,green,blue
-            "need_material": 15,
-            "blueprint": 1001,
+            "name_design": design["name"],
+            "type": TypeDesign(design["type"]),
+            "material": material["name"],
+            "size": design["size"],
+            "color": data["color"],
+            "need_material": design["need_material"],
+            "blueprint": design.get("blueprint", 0),
             "status": TypeStatus("Принят"),
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         }
-    ]
+        orders.append(order)
 
     for order in orders:
         db.orders.update_one(
-            {"item": order["item"], "client.username": order["client"]["username"]},
+            {"item": order["item"]},  # уникальное поле item
             {"$set": order},
             upsert=True
         )
