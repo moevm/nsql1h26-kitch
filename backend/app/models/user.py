@@ -3,8 +3,10 @@ from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Optional
 
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
 
 class UserRole(str, Enum):
     admin = "admin"
@@ -32,12 +34,15 @@ class UserBase(BaseModel):
     email: str
     phone: Optional[str] = None
 
+
 class UserCreate(UserBase):
     password: str
+
 
 class UserAuth(BaseModel):
     email: str
     password: str
+
 
 class UserInDB(UserBase):
     role: UserRole = UserRole.client
@@ -53,8 +58,10 @@ class UserPublic(UserBase):
     id: str
     role: UserRole
 
+
 class RegisterResponse(BaseModel):
     id: str
+
 
 class AuthResponse(BaseModel):
     token: str

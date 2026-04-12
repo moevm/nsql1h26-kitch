@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from pydantic_core import core_schema
 from typing import Any
 
+
 class PyObjectId(str):
     @classmethod
     # вызывает при обнаружении этого типа в аннотации поля модели
@@ -17,6 +18,7 @@ class PyObjectId(str):
         if isinstance(v, str) and ObjectId.is_valid(v):
             return v
         raise ValueError(f"Invalid ObjectId: {v}")
+
 
 class MongoBase(BaseModel):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")

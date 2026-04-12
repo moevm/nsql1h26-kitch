@@ -3,6 +3,9 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from passlib.context import CryptContext
+from models.design import TypeDesign
+from models.order import TypeStatus
+
 
 load_dotenv()
 
@@ -11,8 +14,10 @@ db = client[os.getenv("MONGO_INITDB_DATABASE", "database")]
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def seed_users():
     users = [
@@ -88,7 +93,7 @@ def seed_designs():
     designs = [
         {
             "name": "Классическая кухня",
-            "type": "П-образная",
+            "type": TypeDesign("П-образная"),
             "size": {"height": 85, "width": 60, "length": 300},
             "material_id": material_map.get("ЛДСП 16мм", ""),
             "material": "ЛДСП 16мм",
@@ -104,7 +109,7 @@ def seed_designs():
         },
         {
             "name": "Современная кухня",
-            "type": "Линейная",  # ← новый тип
+            "type": TypeDesign("Линейная"),  # ← новый тип
             "size": {"height": 90, "width": 65, "length": 400},
             "material_id": material_map.get("МДФ 19мм", ""),
             "material": "МДФ 19мм",
@@ -120,7 +125,7 @@ def seed_designs():
         },
         {
             "name": "Кухня-остров",
-            "type": "Островная",  # ← еще один новый тип
+            "type": TypeDesign("Островная"),  # ← еще один новый тип
             "size": {"height": 85, "width": 120, "length": 350},
             "material_id": material_map.get("Кромка ПВХ", ""),
             "material": "Кромка ПВХ",
@@ -143,6 +148,7 @@ def seed_designs():
             upsert=True
         )
     print(f"Seeded {db.designs.count_documents({})} designs")
+
 
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})
@@ -176,12 +182,13 @@ def seed_orders():
             },
             "stages": [],
             "name_design": "Классическая кухня",
-            "type": "П-образная",
+            "type": TypeDesign("П-образная"),
             "material": "ЛДСП 16мм",
             "size": {"height": 85, "width": 60, "length": 300},  # ← sizes → size
             "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"},  # ← r,g,b → red,green,blue
             "need_material": 15,
             "blueprint": 1001,
+            "status": TypeStatus("Принят"),
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         }
