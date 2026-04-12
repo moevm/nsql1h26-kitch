@@ -3,7 +3,7 @@ from app.data.database import db
 from app.models.order import OrderInDB
 from datetime import datetime, timezone
 from typing import List, Optional
-from models.order import TypeStatus
+from app.models.order import TypeStatus
 
 
 orders_collection = db["orders"]
@@ -34,7 +34,7 @@ async def get_by_status(status: TypeStatus, skip: int = 0, limit: int = -1, clie
         return []
     
     try:
-        query = {"status": TypeStatus[status.value]}
+        query = {"status": status}
         if client_id is not None:
             query["client.client_id"] = client_id
         

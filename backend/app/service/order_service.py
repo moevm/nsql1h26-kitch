@@ -3,7 +3,7 @@ from app.models.order import Order, OrderInDB, OrderUpdate, OrderCreate, Client,
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List
-from models.order import TypeStatus
+from app.models.order import TypeStatus
 
 
 async def get_all_orders() -> List[Order]:

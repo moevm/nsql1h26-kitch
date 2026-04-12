@@ -3,7 +3,7 @@ from typing import List, Optional
 from .base import MongoBase
 from datetime import datetime, timezone
 from enum import Enum
-from design import TypeDesign
+from app.models.design import TypeDesign
 
 
 def utc_now() -> datetime:
