@@ -129,6 +129,6 @@ async def delete_order(order_id: str) -> bool:
     return True
 
 
-async def get_orders_by_status(status: TypeStatus, skip: int, limit: int) -> List[Order]:
-    orders_db = await order_repo.get_by_status(status, skip, limit)
+async def get_orders_by_status(status: TypeStatus, skip: int, limit: int, client_id: str) -> List[Order]:
+    orders_db = await order_repo.get_by_status(status, skip, limit, client_id)
     return [Order(**order.model_dump()) for order in orders_db]

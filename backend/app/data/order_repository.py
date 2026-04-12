@@ -29,18 +29,22 @@ async def get_by_client_id(client_id: str) -> List[OrderInDB]:
         return []
 
 
-async def get_by_status(status: TypeStatus, skip: int = 0, limit: int = -1) -> List[OrderInDB]:
+async def get_by_status(status: TypeStatus, skip: int = 0, limit: int = -1, client_id: Optional[str] = None) -> List[OrderInDB]:
     if limit == 0:
         return []
     
     try:
         query = {"status": TypeStatus[status.value]}
+        if client_id is not None:
+            query["client.client_id"] = client_id
+        
         cursor = orders_collection.find(query).skip(skip)
+
         docs = []
         if limit <= -1:
             async for doc in cursor:
                 docs.append(doc)
-        elif limit>0:
+        else:
             cursor = cursor.limit(limit)
             docs = await cursor.to_list(length = limit)
 
