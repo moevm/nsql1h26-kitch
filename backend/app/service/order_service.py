@@ -3,6 +3,7 @@ from app.models.order import Order, OrderInDB, OrderUpdate, OrderCreate, Client,
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List
+from app.models.order import TypeStatus
 
 
 async def get_all_orders() -> List[Order]:
@@ -126,3 +127,8 @@ async def delete_order(order_id: str) -> bool:
             detail="Не удалось удалить заказ"
         )
     return True
+
+
+async def get_orders_by_status(status: TypeStatus, skip: int, limit: int, client_id: str) -> List[Order]:
+    orders_db = await order_repo.get_by_status(status, skip, limit, client_id)
+    return [Order(**order.model_dump()) for order in orders_db]

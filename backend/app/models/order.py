@@ -2,19 +2,25 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from .base import MongoBase
 from datetime import datetime, timezone
+from enum import Enum
+from app.models.design import TypeDesign
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
 
 class Client(BaseModel):
     client_id: str
     username: str
     phone: str
 
+
 class Delivery(BaseModel):
     address: str
     floor: int
     has_lift: bool
+
 
 class Pricing(BaseModel):
     total_price: int
@@ -22,6 +28,7 @@ class Pricing(BaseModel):
     material_price: int
     delivery_price: int
     comment_price: int
+
 
 class Times(BaseModel):
     deadline: Optional[datetime] = None
@@ -31,10 +38,22 @@ class Times(BaseModel):
     spent: int
     expired_time: int
 
+
+class TypeStatus(str, Enum):
+    Processing = "В обработке"
+    Accept = "Принят"
+    Cutting = "Раскрой"
+    Production = "Производство"
+    Delivery = "Доставка"
+    Montage = "Монтаж"
+    Completed = "Завершён"
+    Canceled = "Отменён"
+
+
 class Stages(BaseModel):
     name: str
     worker_id: str
-    status: str
+    status: TypeStatus
     times: Times
 
 
@@ -43,11 +62,13 @@ class Sizes(BaseModel):
     width: int
     length: int
 
+
 class Color(BaseModel):
     red: int
     green: int
     blue: int
     name: str
+
 
 class Order(BaseModel):
     material_id: str
@@ -59,12 +80,13 @@ class Order(BaseModel):
     stages: List[Stages]
     comment: str
     name_design: str
-    type: str
+    type: TypeDesign
     material: str
     size: Sizes
     color: Color
     need_material: int
     blueprint: int
+
 
 class OrderInDB(MongoBase):
     material_id: str
@@ -76,7 +98,7 @@ class OrderInDB(MongoBase):
     stages: List[Stages]
     comment: str
     name_design: str
-    type: str
+    type: TypeDesign
     material: str
     size: Sizes
     color: Color
@@ -96,17 +118,18 @@ class OrderUpdate(BaseModel):
     stages: Optional[List[Stages]] = None
     comment: Optional[str] = None
     name_design: Optional[str] = None
-    type: Optional[str] = None
+    type: Optional[TypeDesign] = None
     material: Optional[str] = None
     size: Optional[Sizes] = None
     color: Optional[Color] = None
     need_material: Optional[int] = None
     blueprint: Optional[int] = None
 
+
 class OrderCreate(BaseModel):
     phone: str
     address: str
-    kitchen_type: str
+    kitchen_type: TypeDesign
     design_id: str
     color: Color
     material: str

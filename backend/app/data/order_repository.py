@@ -3,6 +3,8 @@ from app.data.database import db
 from app.models.order import OrderInDB
 from datetime import datetime, timezone
 from typing import List, Optional
+from app.models.order import TypeStatus
+
 
 orders_collection = db["orders"]
 
@@ -24,6 +26,31 @@ async def get_by_client_id(client_id: str) -> List[OrderInDB]:
         return [OrderInDB(**doc) for doc in docs]
     except Exception as e:
         print(f"Error getting orders for client {client_id}: {e}")
+        return []
+
+
+async def get_by_status(status: TypeStatus, skip: int = 0, limit: int = -1, client_id: Optional[str] = None) -> List[OrderInDB]:
+    if limit == 0:
+        return []
+    
+    try:
+        query = {"status": status}
+        if client_id is not None:
+            query["client.client_id"] = client_id
+        
+        cursor = orders_collection.find(query).skip(skip)
+
+        docs = []
+        if limit <= -1:
+            async for doc in cursor:
+                docs.append(doc)
+        else:
+            cursor = cursor.limit(limit)
+            docs = await cursor.to_list(length = limit)
+
+        return [OrderInDB(**doc) for doc in docs]
+    except Exception as e:
+        print(f"Error getting orders with status {TypeStatus[status.value]}: {e}")
         return []
 
 

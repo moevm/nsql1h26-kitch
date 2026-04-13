@@ -2,14 +2,18 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from .base import MongoBase, PyObjectId
 from datetime import datetime, timezone
+from enum import Enum
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
 
 class Size_design(BaseModel):
     height: int
     width: int
     length: int
+
 
 class Color_design(BaseModel):
     red: int
@@ -17,9 +21,19 @@ class Color_design(BaseModel):
     blue: int
     name: str
 
+
+class TypeDesign(str, Enum):
+    G_shaped = "G-образная"
+    Island = "Островная"
+    U_shaped = "П-образная"
+    Two_linear = "Двухлинейная"
+    Linear = "Линейная"
+    L_shaped = "Г-образная"
+
+
 class Design(BaseModel):
     name: str
-    type: str
+    type: TypeDesign
     size: Size_design
     material: str
     material_id: str
@@ -30,6 +44,7 @@ class Design(BaseModel):
     production_time: int
     need_material: int
     blueprint: int
+
 
 class DesignUpdate(BaseModel):
     name: Optional[str] = None
