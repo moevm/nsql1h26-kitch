@@ -26,7 +26,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend-python-fastapi
+    container_name: nsql1h26-kitch_backend-python-fastapi
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -48,7 +48,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend-nginx-react
+    container_name: nsql1h26-kitch_frontend-nginx-react
     restart: unless-stopped
     env_file: .env
     ports:
