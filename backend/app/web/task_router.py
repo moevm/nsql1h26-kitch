@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.service.auth_service import get_current_user_dep
-from app.service.task_service import (
-    get_tasks_by_status
-)
+from app.service.task_service import get_tasks_by_status
 from app.models.order import TypeTask
 
 
@@ -19,28 +17,28 @@ TASK_STATUS_MAP = {
 
 
 @router.get("/tasks/{task_status}")
-async def get_tasks_by_status(
+async def get_tasks_by_status_admin(
     task_status: str,
     start: int = 0,
     limit: int = -1,
     current_user: dict = Depends(get_current_user_dep)
 ):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Доступ только для админа")
+    
     if task_status not in TASK_STATUS_MAP:
         raise HTTPException(status_code=400, detail="Неверный статус задачи")
 
     try:
-        db_status = TypeTask[TASK_STATUS_MAP[task_status]]
+        db_status = TypeTask(TASK_STATUS_MAP[task_status])
     except ValueError:
         raise HTTPException(status_code=400, detail="Некорректное значение статуса задачи")
-    
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Доступ запрещен")
 
-    return await get_tasks_by_status(task_status, start, limit)
+    return await get_tasks_by_status(db_status, start, limit, worker_id=None)
 
 
 @router.get("/worker/tasks/{task_status}")
-async def get_tasks_by_status(
+async def get_tasks_by_status_worker(
     task_status: str,
     start: int = 0,
     limit: int = -1,
@@ -50,7 +48,7 @@ async def get_tasks_by_status(
         raise HTTPException(status_code=400, detail="Неверный статус задачи")
 
     try:
-        db_status = TypeTask[TASK_STATUS_MAP[task_status]]
+        db_status = TypeTask(TASK_STATUS_MAP[task_status])
     except ValueError:
         raise HTTPException(status_code=400, detail="Некорректное значение статуса задачи")
     
@@ -63,4 +61,4 @@ async def get_tasks_by_status(
     if worker_id is None:
         raise HTTPException(status_code=400, detail="Некорректный id работника")
     
-    return await get_tasks_by_status(task_status, start, limit, worker_id)
+    return await get_tasks_by_status(db_status, start, limit, worker_id)

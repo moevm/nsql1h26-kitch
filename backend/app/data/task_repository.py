@@ -12,7 +12,7 @@ async def get_by_status(task_status: TypeTask, skip: int = 0, limit: int = -1, w
         return []
     
     try:
-        query = {"task_status": task_status}
+        query = {"stages.task_status": task_status}
         if worked_id is not None:
             query["stages.worked_id"] = worked_id
         

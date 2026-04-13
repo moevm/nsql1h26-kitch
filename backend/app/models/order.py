@@ -62,7 +62,7 @@ class Stages(BaseModel):
     name: str
     worker_id: str
     status: TypeStatus
-    task_status = TypeTask
+    task_status: TypeTask
     times: Times
 
 
