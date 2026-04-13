@@ -17,6 +17,7 @@ TASK_STATUS_MAP = {
     "canceled": "Отменена"
 }
 
+
 @router.get("/tasks/{task_status}")
 async def get_tasks_by_status(
     task_status: str,
@@ -35,5 +36,31 @@ async def get_tasks_by_status(
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Доступ запрещен")
 
-    return get_tasks_by_status(task_status, start, limit)
+    return await get_tasks_by_status(task_status, start, limit)
 
+
+@router.get("/worker/tasks/{task_status}")
+async def get_tasks_by_status(
+    task_status: str,
+    start: int = 0,
+    limit: int = -1,
+    current_user: dict = Depends(get_current_user_dep)
+):
+    if task_status not in TASK_STATUS_MAP:
+        raise HTTPException(status_code=400, detail="Неверный статус задачи")
+
+    try:
+        db_status = TypeTask[TASK_STATUS_MAP[task_status]]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Некорректное значение статуса задачи")
+    
+    worker_id = None
+    if current_user["role"] == "worker":
+        worker_id = current_user["user_id"]
+    else:
+        raise HTTPException(status_code=403, detail="Доступ только для работников")
+
+    if worker_id is None:
+        raise HTTPException(status_code=400, detail="Некорректный id работника")
+    
+    return await get_tasks_by_status(task_status, start, limit, worker_id)
