@@ -50,10 +50,19 @@ class TypeStatus(str, Enum):
     Canceled = "Отменён"
 
 
+class TypeTask(str, Enum):
+    Available = "Доступна"
+    In_progress = "В процессе"
+    Completed = "Выполнена"
+    Overdue = "Просрочена"
+    Canceled = "Отменена"
+
+
 class Stages(BaseModel):
     name: str
     worker_id: str
     status: TypeStatus
+    task_status = TypeTask
     times: Times
 
 
