@@ -138,7 +138,7 @@ def seed_orders():
     designs = {d["name"]: d for d in db.designs.find({})}
     materials = {m["name"]: m for m in db.materials.find({})}
 
-    # Создаём 15 заказов для тестирования пагинации
+    # Генерируем 15 заказов для тестирования пагинации
     orders_data = []
     for i in range(1, 16):
         orders_data.append({
@@ -166,9 +166,9 @@ def seed_orders():
             print(f"Skipping order '{data['item']}': design or material not found")
             continue
 
-        # Формируем этапы (задачи) с разными статусами для тестирования пагинации
         stages = []
-        # 1) Задача "Доступна" (без работника)
+
+        # 1) Задача "Доступна" (без рабочего) – для эндпоинта /tasks/available
         stages.append({
             "name": f"Раскрой {material['name']}",
             "worker_id": "",
@@ -183,7 +183,8 @@ def seed_orders():
                 "expired_time": 0
             }
         })
-        # 2) Задача "В процессе" (назначена одному работнику)
+
+        # 2) Задача "В процессе" (назначена рабочему) – для /worker/tasks/in_progress
         stages.append({
             "name": "Сборка корпуса",
             "worker_id": worker_id,
@@ -198,7 +199,8 @@ def seed_orders():
                 "expired_time": 0
             }
         })
-        # 3) Задача "Выполнена" (для некоторых заказов)
+
+        # 3) Задача "Выполнена" (назначена рабочему, завершена) – для /worker/tasks/completed
         if idx % 3 == 0:
             stages.append({
                 "name": "Покраска",
@@ -214,7 +216,8 @@ def seed_orders():
                     "expired_time": 0
                 }
             })
-        # 4) Задача "Просрочена" (дедлайн в прошлом)
+
+        # 4) Задача "Просрочена" (назначена рабочему, дедлайн просрочен) – для /worker/tasks/overdue
         if idx % 2 == 0:
             stages.append({
                 "name": "Доставка",
@@ -230,7 +233,8 @@ def seed_orders():
                     "expired_time": 1
                 }
             })
-        # 5) Задача "Отменена" (редко)
+
+        # 5) Задача "Отменена" (редко, для полноты)
         if idx == 5:
             stages.append({
                 "name": "Монтаж",
