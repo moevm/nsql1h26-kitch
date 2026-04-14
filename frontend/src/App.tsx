@@ -1,13 +1,19 @@
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
+
+// common elements
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
+// client elements
 import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
-import {ProductsPage} from "./pages/ProductsPage/ProductsPage.tsx";
+import {ProductsPage} from "./pages/ClientPages/ProductsPage/ProductsPage.tsx";
+import {CreateOrderPage} from "./pages/ClientPages/CreateOrderPage/CreateOrderPage.tsx";
 
+// worker elements
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
 
+// admin elements
 import {AdminLayout} from "./layouts/AdminLayout/AdminLayout.tsx";
 
 function AppRoutes() {
@@ -25,7 +31,7 @@ function AppRoutes() {
                 </ProtectedRoute>
             }>
                 <Route path="/products"         element={<ProductsPage />}/>
-                <Route path="/orders/create"    element={<div>CREATE ORDER</div>}/>
+                <Route path="/orders/create"    element={<CreateOrderPage />}/>
                 <Route path="/orders"           element={<div>ORDERS</div>}/>
             </Route>
 

@@ -1,0 +1,70 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+.cardContainer {
+  width: 1166px;
+  height: 525px;
+  background: $surface-color;
+  box-shadow: $box-shadow;
+  overflow: visible;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.10);
+  outline-offset: -1px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.mainTitle {
+  @include text-style(24px, 600, $on-surface-color, 28.8px);
+}
+
+.subTitle {
+  @include text-style(16px, 400, $secondary-color, 22.4px);
+}
+
+/* ---------- grid items ---------- */
+
+.headerGridItem {
+  grid-column: span 7;
+  grid-row: span 1;
+  margin-bottom: 8px;
+}
+
+.clientNameGridItem,
+.phoneGridItem,
+.kitchenTypeGridItem,
+.materialGridItem {
+  grid-column: span 2;
+  grid-row: span 1;
+}
+
+.addressGridItem {
+  grid-column: span 3;
+  grid-row: span 1;
+}
+
+.colorGridItem,
+.floorGridItem,
+.elevatorGridItem,
+.priceGridItem {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.notesGridItem {
+  grid-column: span 4;
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.payButtonGridItem {
+  grid-column: span 3;
+  grid-row: span 1;
+  align-content: center;
+}

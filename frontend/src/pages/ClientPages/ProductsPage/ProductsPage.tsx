@@ -1,8 +1,8 @@
 import {Fragment, type ReactElement} from "react";
 import {useNavigate} from "react-router-dom";
-import {ProductCard} from "../../UI/ProductCard/ProductCard.tsx";
-import {kitchenTypesMap} from "../../utils/kitchenTypesMap.ts";
-import {useDesignTypes} from "../../hooks/useDesigns.ts";
+import {ProductCard} from "../../../UI/ProductCard/ProductCard.tsx";
+import {kitchenTypesMap} from "../../../utils/kitchenTypesMap.ts";
+import {useDesignTypes} from "../../../hooks/useDesigns.ts";
 
 export function ProductsPage(): ReactElement {
     const { data: designTypes, isLoading, error } = useDesignTypes();
