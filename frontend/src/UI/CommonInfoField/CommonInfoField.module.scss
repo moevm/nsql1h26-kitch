@@ -1,0 +1,29 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.infoField {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 53px;
+}
+
+.label {
+  @include text-style(16px, 600, $on-surface-color, 19.2px);
+  align-self: stretch;
+  word-wrap: break-word;
+}
+
+.valueContainer {
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.value {
+  @include text-style(16px, 400, $secondary-color, 22.4px);
+  word-wrap: break-word;
+}
