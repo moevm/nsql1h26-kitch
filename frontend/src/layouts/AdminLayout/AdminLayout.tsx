@@ -17,8 +17,8 @@ function AdminLayoutHeaderLinks() {
             {adminHeaderLinks.map((link) => (
                 <HeaderLink text={link.text} path={link.path} />
             ))}
-            <HeaderLink text={"Экспорт"} path={"/"} onClick={logout}/>
-            <HeaderLink text={"Импорт"} path={"/"} onClick={logout}/>
+            <HeaderLink text={"Экспорт"} path={"/"} onClick={() => {}}/>
+            <HeaderLink text={"Импорт"} path={"/"} onClick={() => {}}/>
             <HeaderLink text={"Выйти"} path={"/login"} onClick={logout}/>
         </Fragment>
     );
