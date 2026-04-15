@@ -1,13 +1,33 @@
 import {type ReactElement, useState} from "react";
 import style from "./CreateOrderPage.module.scss"
+
+// elements
 import {CommonInputField} from "../../../UI/CommonInputField/CommonInputField.tsx";
 import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
 import {CommonInfoField} from "../../../UI/CommonInfoField/CommonInfoField.tsx";
 import {CommonSelectField} from "../../../UI/CommonSelectField/CommonSelectField.tsx";
 
+// hooks
+import {useMaterials} from "../../../hooks/useMaterials.ts";
 
 export function CreateOrderPage(): ReactElement {
-    const [selectedLift, setSelectedLift] = useState("");
+    // kitchen type
+    const [selectedKitchenType, setSelectedKitchenType] = useState<number | null>(null);
+
+    // color
+    const [selectedColor, setSelectedColor] = useState<number | null>(null);
+
+    // materials
+    const { data: materials, isLoading: materialsLoading } = useMaterials();
+    const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number | null>(null);
+
+    const materialOptions = materials?.map((material, index) => ({
+        value: index,
+        label: material.name
+    })) ?? [];
+
+    // lift
+    const [selectedLift, setSelectedLift] = useState<number | null>(null);
 
     return (
         <div className={style.cardContainer}>
@@ -49,12 +69,12 @@ export function CreateOrderPage(): ReactElement {
             <div className={style.kitchenTypeGridItem}>
                 <CommonSelectField
                     label="Тип кухни"
-                    value={selectedLift}
+                    value={selectedKitchenType}
                     options={[
-                        { value: "yes", label: "Да" },
-                        { value: "no", label: "Нет" }
+                        {value: 1, label: "Да"},
+                        {value: 0, label: "Нет"}
                     ]}
-                    onChange={setSelectedLift}
+                    onChange={setSelectedKitchenType}
                     disabled={false}
                 />
             </div>
@@ -62,12 +82,12 @@ export function CreateOrderPage(): ReactElement {
             <div className={style.colorGridItem}>
                 <CommonSelectField
                     label="Цвет"
-                    value={selectedLift}
+                    value={selectedColor}
                     options={[
-                        { value: "yes", label: "Да" },
-                        { value: "no", label: "Нет" }
+                        {value: 1, label: "Да"},
+                        {value: 0, label: "Нет"}
                     ]}
-                    onChange={setSelectedLift}
+                    onChange={setSelectedColor}
                     disabled={false}
                 />
             </div>
@@ -75,13 +95,10 @@ export function CreateOrderPage(): ReactElement {
             <div className={style.materialGridItem}>
                 <CommonSelectField
                     label="Материал"
-                    value={selectedLift}
-                    options={[
-                        { value: "yes", label: "Да" },
-                        { value: "no", label: "Нет" }
-                    ]}
-                    onChange={setSelectedLift}
-                    disabled={false}
+                    value={selectedMaterialIndex ?? undefined}
+                    options={materialOptions}
+                    onChange={setSelectedMaterialIndex}
+                    disabled={materialsLoading}
                 />
             </div>
 
@@ -99,8 +116,8 @@ export function CreateOrderPage(): ReactElement {
                     label="Лифт"
                     value={selectedLift}
                     options={[
-                        { value: "yes", label: "Да" },
-                        { value: "no", label: "Нет" }
+                        {value: 1, label: "Да"},
+                        {value: 2, label: "Нет"}
                     ]}
                     onChange={setSelectedLift}
                     disabled={false}

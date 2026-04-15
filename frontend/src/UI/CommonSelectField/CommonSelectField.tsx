@@ -1,28 +1,34 @@
 import type {ReactElement} from "react";
 import styles from "./CommonSelectField.module.scss"
 
-interface Option {
-    value: string
+export interface Option {
+    value: number
     label: string
 }
 
 interface CommonSelectFieldProps {
     label: string;
-    value: string;
+    value: number | null | undefined;
     options: Option[];
-    onChange: (value: string) => void;
+    onChange: (value: number) => void;
     disabled?: boolean;
 }
 
 export function CommonSelectField({
     label,
-    value = "",
+    value,
     options,
     onChange,
     disabled = false
 }: CommonSelectFieldProps): ReactElement {
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        onChange?.(e.target.value);
+        const stringValue = e.target.value;
+        if (stringValue === "") return;
+
+        const numberValue = Number(stringValue);
+        if (!isNaN(numberValue)) {
+            onChange(numberValue);
+        }
     };
 
     return (
@@ -31,7 +37,7 @@ export function CommonSelectField({
             <div className={styles.selectWrapper}>
                 <select
                     className={styles.listSelect}
-                    value={value}
+                    value={value !== undefined && value !== null ? value : ""}
                     onChange={handleChange}
                     disabled={disabled}
                 >
