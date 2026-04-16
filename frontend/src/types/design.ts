@@ -11,7 +11,7 @@ export interface Color {
     name: string
 }
 
-export interface DesignType {
+export interface Design {
     id?: string;
     name: string;
     type: string;
@@ -29,8 +29,14 @@ export interface DesignType {
     updated_at?: string;
 }
 
-export interface Design {
+export interface DesignType {
     type: string;
     type_price: number;
     count: number;
 }
+
+export const colors: Color[] = [
+    { name: "Красный", red: 255, green: 0, blue: 0 },
+    { name: "Зеленый", red: 0, green: 255, blue: 0 },
+    { name: "Синий", red: 0, green: 0, blue: 255 }
+]

@@ -29,6 +29,17 @@
   flex: 1;
 }
 
+.textarea {
+  @include text-style(16px, 400, $on-surface-color, 22px);
+  @include input-reset;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  resize: none;
+  overflow-y: auto;
+  vertical-align: top;
+}
+
 .value {
   @include text-style(16px, 400, $on-surface-color, 16px);
   @include input-reset;

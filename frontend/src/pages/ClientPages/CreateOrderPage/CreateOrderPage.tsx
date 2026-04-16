@@ -9,25 +9,44 @@ import {CommonSelectField} from "../../../UI/CommonSelectField/CommonSelectField
 
 // hooks
 import {useMaterials} from "../../../hooks/useMaterials.ts";
+import {useDesigns} from "../../../hooks/useDesigns.ts";
+
+//types
+import {colors} from "../../../types/design.ts";
 
 export function CreateOrderPage(): ReactElement {
-    // kitchen type
-    const [selectedKitchenType, setSelectedKitchenType] = useState<number | null>(null);
+    // text
+    const [clientName, setClientName] = useState<string>("");
+    const [phone, setPhone] = useState<string>("");
+    const [address, setAddress] = useState<string>("");
+    const [notes, setNotes] = useState<string>("");
+
+    // design type
+    const {data: designs, isLoading: designsLoading} = useDesigns();
+    const [selectedDesignIndex, setSelectedDesignIndex] = useState<number | null>(null);
+    const designOptions = designs?.map((design, index) => ({
+        value: index,
+        label: `${design.name} (${design.type})`
+    })) ?? [];
 
     // color
     const [selectedColor, setSelectedColor] = useState<number | null>(null);
+    const colorOptions = colors?.map((color, index) => ({
+        value: index,
+        label: color.name
+    })) ?? [];
 
     // materials
     const { data: materials, isLoading: materialsLoading } = useMaterials();
     const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number | null>(null);
-
     const materialOptions = materials?.map((material, index) => ({
         value: index,
         label: material.name
     })) ?? [];
 
-    // lift
+    // lift and delivery
     const [selectedLift, setSelectedLift] = useState<number | null>(null);
+    const [floor, setFloor] = useState<string>("1");
 
     return (
         <div className={style.cardContainer}>
@@ -44,7 +63,8 @@ export function CreateOrderPage(): ReactElement {
                     label={"Имя заказчика"}
                     placeholder={"Введите ваше имя"}
                     type={"text"}
-                    value={""}
+                    value={clientName}
+                    onChange={setClientName}
                 />
             </div>
 
@@ -53,7 +73,8 @@ export function CreateOrderPage(): ReactElement {
                     label={"Номер телефона"}
                     placeholder={"Введите ваш номер телефона"}
                     type={"text"}
-                    value={""}
+                    value={phone}
+                    onChange={setPhone}
                 />
             </div>
 
@@ -62,20 +83,18 @@ export function CreateOrderPage(): ReactElement {
                     label={"Адрес доставки"}
                     placeholder={"Введите ваш адрес"}
                     type={"text"}
-                    value={""}
+                    value={address}
+                    onChange={setAddress}
                 />
             </div>
 
             <div className={style.kitchenTypeGridItem}>
                 <CommonSelectField
-                    label="Тип кухни"
-                    value={selectedKitchenType}
-                    options={[
-                        {value: 1, label: "Да"},
-                        {value: 0, label: "Нет"}
-                    ]}
-                    onChange={setSelectedKitchenType}
-                    disabled={false}
+                    label="Дизайн кухни"
+                    value={selectedDesignIndex ?? undefined}
+                    options={designOptions}
+                    onChange={setSelectedDesignIndex}
+                    disabled={designsLoading}
                 />
             </div>
 
@@ -83,10 +102,7 @@ export function CreateOrderPage(): ReactElement {
                 <CommonSelectField
                     label="Цвет"
                     value={selectedColor}
-                    options={[
-                        {value: 1, label: "Да"},
-                        {value: 0, label: "Нет"}
-                    ]}
+                    options={colorOptions}
                     onChange={setSelectedColor}
                     disabled={false}
                 />
@@ -106,8 +122,11 @@ export function CreateOrderPage(): ReactElement {
                 <CommonInputField
                     label={"Этаж"}
                     placeholder={"Ваш этаж"}
-                    type={"text"}
-                    value={""}
+                    type={"number"}
+                    value={floor}
+                    onChange={setFloor}
+                    max={100}
+                    min={1}
                 />
             </div>
 
@@ -129,7 +148,10 @@ export function CreateOrderPage(): ReactElement {
                     label={"Дополнительные пожелания"}
                     placeholder={"Расскажите о ваших пожеланиях"}
                     type={"text"}
-                    value={""}
+                    value={notes}
+                    onChange={setNotes}
+                    multiline={true}
+                    rows={6}
                 />
             </div>
 
@@ -149,8 +171,8 @@ export function CreateOrderPage(): ReactElement {
 
             <div className={style.priceGridItem}>
                 <CommonInfoField
-                    label={"Доставка 5 этаж"}
-                    value={"500$"}
+                    label={`Доставка ${floor} этаж`}
+                    value={`${Number(floor) * 100}$`}
                 />
             </div>
 
