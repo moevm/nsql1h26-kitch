@@ -12,7 +12,7 @@ import {useMaterials} from "../../../hooks/useMaterials.ts";
 import {useDesigns} from "../../../hooks/useDesigns.ts";
 
 //types
-import {colors} from "../../../types/design.ts";
+import {colors} from "../../../types/color.ts";
 
 export function CreateOrderPage(): ReactElement {
     // text

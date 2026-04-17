@@ -1,15 +1,5 @@
-export interface Size {
-    height: number;
-    width: number;
-    length: number;
-}
-
-export interface Color {
-    red: number;
-    green: number;
-    blue: number;
-    name: string
-}
+import type {Color} from "./color.ts";
+import type {Size} from "./size.ts";
 
 export interface Design {
     id?: string;
@@ -34,9 +24,3 @@ export interface DesignType {
     type_price: number;
     count: number;
 }
-
-export const colors: Color[] = [
-    { name: "Красный", red: 255, green: 0, blue: 0 },
-    { name: "Зеленый", red: 0, green: 255, blue: 0 },
-    { name: "Синий", red: 0, green: 0, blue: 255 }
-]
