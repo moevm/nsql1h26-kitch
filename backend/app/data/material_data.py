@@ -21,3 +21,14 @@ async def update(id: str, data: dict) -> bool:
         {"$set": data}
     )
     return result.modified_count > 0
+
+
+async def get_by_name(name: str):
+    from app.data.database import db
+    from bson import ObjectId
+    doc = await db["materials"].find_one({"name": name})
+    if doc:
+        from app.models.material import MaterialInDB
+        doc["id"] = str(doc["_id"])
+        return MaterialInDB(**doc)
+    return None
