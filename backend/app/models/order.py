@@ -34,24 +34,24 @@ class Times(BaseModel):
     deadline: Optional[datetime] = None
     start: Optional[datetime] = None
     end: Optional[datetime] = None
-    est_time: int
-    spent: int
-    expired_time: int
+    est_time: int #оценочное время выполнения в минутах
+    spent: int #фактически затраченное время в минутах
+    expired_time: int #время просрочки в минутах
 
 
 class TypeStatus(str, Enum):
-    Processing = "В обработке"
-    Accept = "Принят"
     Cutting = "Раскрой"
     Production = "Производство"
     Delivery = "Доставка"
     Montage = "Монтаж"
+    # для каждой стадии может быть статус "Завершён", "Отменён"
     Completed = "Завершён"
     Canceled = "Отменён"
 
 
 class TypeTask(str, Enum):
     Available = "Доступна"
+    Closed = "Закрыта"
     In_progress = "В процессе"
     Completed = "Выполнена"
     Overdue = "Просрочена"
@@ -80,6 +80,7 @@ class Color(BaseModel):
 
 
 class Order(BaseModel):
+    id: str
     material_id: str
     design_id: str
     client: Client

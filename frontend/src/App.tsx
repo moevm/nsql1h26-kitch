@@ -3,6 +3,7 @@ import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 // common elements
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
+import {PasswordRecoverPage} from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
 // client elements
@@ -23,7 +24,7 @@ function AppRoutes() {
             <Route path="/login"            element={<LoginPage />} />
             <Route path="/logout"           element={<LoginPage />} />
             <Route path="/register"         element={<RegisterPage />} />
-            <Route path="/password_recover" element={<div>PASSWORD RECOVER</div>} />
+            <Route path="/password_recover" element={<PasswordRecoverPage />} />
 
             <Route element={
                 <ProtectedRoute allowedRoles={['client']}>

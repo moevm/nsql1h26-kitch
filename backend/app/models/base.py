@@ -24,7 +24,9 @@ class MongoBase(BaseModel):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")
 
     model_config = {
-        "populate_by_name": True, #можно указывать как имя поля (id), так и алиас (_id)
-        "arbitrary_types_allowed": True, #разрешает использовать в полях модели произвольные типы данных
-        "json_encoders": {ObjectId: str}, #Указывает, что любой объект типа ObjectId (из bson) при сериализации в JSON должен быть преобразован в строку с помощью функции str()
+        "populate_by_name": True,  # можно указывать как имя поля (id), так и алиас (_id)
+        "arbitrary_types_allowed": True,  # разрешает использовать в полях модели произвольные типы данных
+        "json_encoders": {
+            ObjectId: str
+        },  # Указывает, что любой объект типа ObjectId (из bson) при сериализации в JSON должен быть преобразован в строку с помощью функции str()
     }
