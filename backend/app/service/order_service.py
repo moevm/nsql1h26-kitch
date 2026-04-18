@@ -58,6 +58,53 @@ async def create_new_order(
         + order_data.delivery_price
         + order_data.comment_price
     )
+    from app.models.order import Stages, TypeStatus, TypeTask, Times
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+
+    stages = []
+
+    stages_config = [
+        {"name": "Раскрой", "status": TypeStatus.Cutting, "est_time": 2880},
+        {"name": "Производство", "status": TypeStatus.Production, "est_time": 2880},
+        {"name": "Доставка", "status": TypeStatus.Delivery, "est_time": 2880},
+        {"name": "Монтаж", "status": TypeStatus.Montage, "est_time": 2880},
+    ]
+
+    for i, config in enumerate(stages_config):
+        if i == 0:
+            deadline = now + timedelta(minutes=config["est_time"])
+            times = Times(
+                deadline=deadline,
+                start=now,
+                end=None,
+                est_time=config["est_time"],
+                spent=0,
+                expired_time=0
+            )
+            stages.append(Stages(
+                name=config["name"],
+                worker_id="",
+                status=config["status"],
+                task_status=TypeTask.Available,
+                times=times
+            ))
+        else:
+            stages.append(Stages(
+                name=config["name"],
+                worker_id="",
+                status=config["status"],
+                task_status=TypeTask.Closed,
+                times=Times(
+                    deadline=None,
+                    start=None,
+                    end=None,
+                    est_time=config["est_time"],
+                    spent=0,
+                    expired_time=0
+                )
+            ))
 
     order_dict = {
         "material_id": str(material.id),
@@ -76,7 +123,7 @@ async def create_new_order(
             delivery_price=order_data.delivery_price,
             comment_price=order_data.comment_price,
         ),
-        "stages": [],
+        "stages": [stage.model_dump() for stage in stages],
         "comment": order_data.comment or "",
         "name_design": design.name,
         "type": design.type,

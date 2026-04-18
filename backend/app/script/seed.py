@@ -314,7 +314,7 @@ def seed_orders():
             "color": data["color"],
             "need_material": design["need_material"],
             "blueprint": design.get("blueprint", 0),
-            "status": TypeStatus("Принят"),
+            "status": TypeStatus("Раскрой"),
             "created_at": now,
             "updated_at": now,
         }
