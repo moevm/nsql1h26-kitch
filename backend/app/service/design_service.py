@@ -7,7 +7,12 @@ from typing import List
 async def get_all_designs() -> List[Design]:
     try:
         designs_db = await design_repo.get_all()
-        return [Design(**d.model_dump()) for d in designs_db]
+        result = []
+        for d in designs_db:
+            design_dict = d.model_dump()
+            design_dict["id"] = str(d.id)
+            result.append(Design(**design_dict))
+        return result
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -22,7 +27,9 @@ async def get_design_by_id(design_id: str) -> Design:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Дизайн с ID {design_id} не найден",
         )
-    return Design(**design_db.model_dump())
+    design_dict = design_db.model_dump()
+    design_dict["id"] = str(design_db.id)
+    return Design(**design_dict)
 
 
 async def get_design_types() -> List[dict]:
