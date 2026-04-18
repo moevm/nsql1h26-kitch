@@ -5,16 +5,14 @@ from pymongo.errors import PyMongoError
 
 load_dotenv()
 
+
 class Student:
     def __init__(self, name, group):
         self.name = name
         self.group = group
 
     def to_dict(self):
-        return {
-            "name": self.name,
-            "group": self.group
-        }
+        return {"name": self.name, "group": self.group}
 
 
 def main():
@@ -35,12 +33,12 @@ def main():
         # подключаемся к базе данных и проверяем подключение
         client = MongoClient(URI)
 
-        client.admin.command('ping')
+        client.admin.command("ping")
         print("#Connection: ok")
 
         # получаем коллекцию
         collection = client[database]["students"]
-        
+
         # добавляем записи
         collection.insert_many([student.to_dict() for student in students])
 
@@ -50,15 +48,10 @@ def main():
         print()
 
         # удаляем одну запись
-        collection.delete_one(
-            {"name": "Oleg"}
-        )
+        collection.delete_one({"name": "Oleg"})
 
-        # изменяем одну запись 
-        collection.update_one(
-            {"name": "Maria"},
-            {"$set": {"group": "1234"}}
-        )
+        # изменяем одну запись
+        collection.update_one({"name": "Maria"}, {"$set": {"group": "1234"}})
 
         # проверяем изменения
         print("\nПосле изменений:")
@@ -71,7 +64,8 @@ def main():
     finally:
         client.close()
 
-    return 0;
+    return 0
+
 
 if __name__ == "__main__":
     main()

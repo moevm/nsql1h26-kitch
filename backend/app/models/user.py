@@ -13,7 +13,9 @@ class UserRole(str, Enum):
     client = "client"
     worker = "worker"
 
+
 # --- worker ---
+
 
 class WorkerPosition(BaseModel):
     position: str
@@ -27,7 +29,9 @@ class WorkerInfo(BaseModel):
     work_day_start: Optional[datetime] = None
     work_day_end: Optional[datetime] = None
 
+
 # ---Base---
+
 
 class UserBase(BaseModel):
     username: str
@@ -52,7 +56,9 @@ class UserInDB(UserBase):
     worker_info: Optional[WorkerInfo] = None
     worker_positions: Optional[list[WorkerPosition]] = None
 
+
 # --- Responce ---
+
 
 class UserPublic(UserBase):
     id: str
