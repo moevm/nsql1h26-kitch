@@ -1,20 +1,8 @@
 from fastapi import HTTPException, status
-from app.models.order import Order, OrderInDB, OrderUpdate, OrderCreate, Client, Delivery, Pricing
+from app.models.order import Order, OrderInDB, OrderCreate, Client, Delivery, Pricing
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List
-from app.models.order import TypeStatus
-
-
-async def get_all_orders() -> List[Order]:
-    try:
-        orders_db = await order_repo.get_all()
-        return [Order(**order.model_dump()) for order in orders_db]
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при получении заказов: {str(e)}"
-        )
 
 
 async def get_order_by_id(order_id: str) -> Order:
@@ -24,32 +12,40 @@ async def get_order_by_id(order_id: str) -> Order:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Заказ с ID {order_id} не найден"
         )
-    return Order(**order_db.model_dump())
+    order_dict = order_db.model_dump()
+    order_dict["id"] = str(order_db.id)
+    return Order(**order_dict)
 
 
-async def get_orders_by_client(client_id: str) -> List[Order]:
-    orders_db = await order_repo.get_by_client_id(client_id)
-    return [Order(**order.model_dump()) for order in orders_db]
+async def get_orders_by_user_role(user_id: str, role: str) -> List[Order]:
+    if role == "admin":
+        orders_db = await order_repo.get_all()
+    elif role == "client":
+        orders_db = await order_repo.get_by_client_id(user_id)
+    elif role == "worker":
+        orders_db = await order_repo.get_by_worker_id(user_id)
+    else:
+        raise HTTPException(status_code=403, detail="Неизвестная роль")
 
-
-async def get_orders_ids_by_client(client_id: str) -> List[str]:
-    orders_db = await order_repo.get_by_client_id(client_id)
-    return [str(order.id) for order in orders_db]
+    orders = []
+    for order_db in orders_db:
+        order_dict = order_db.model_dump()
+        order_dict["id"] = str(order_db.id)
+        orders.append(Order(**order_dict))
+    return orders
 
 
 async def create_new_order(order_data: OrderCreate, user_id: str, username: str) -> str:
-    # Получаем дизайн
     design = await design_repo.get_by_id(order_data.design_id)
     if not design:
         raise HTTPException(status_code=404, detail="Дизайн не найден")
 
-    # Получаем материал
+    # ← ищем материал по ИМЕНИ, не по id
     from app.data import material_data as material_repo
-    material = await material_repo.get_by_id(order_data.material)
+    material = await material_repo.get_by_name(order_data.material)
     if not material:
         raise HTTPException(status_code=404, detail="Материал не найден")
 
-    # Рассчитываем total_price
     total_price = (
         order_data.type_price +
         order_data.material_price +
@@ -57,9 +53,8 @@ async def create_new_order(order_data: OrderCreate, user_id: str, username: str)
         order_data.comment_price
     )
 
-    # Собираем заказ
     order_dict = {
-        "material_id": order_data.material,
+        "material_id": str(material.id),  # ← берём id из найденного материала
         "design_id": order_data.design_id,
         "client": Client(
             client_id=user_id,
@@ -84,51 +79,31 @@ async def create_new_order(order_data: OrderCreate, user_id: str, username: str)
         "name_design": design.name,
         "type": design.type,
         "material": material.name,
-        "size": design.size,
+        "size": design.size.model_dump() if hasattr(design.size, 'model_dump') else dict(design.size),
         "color": order_data.color,
         "need_material": design.need_material,
-        "blueprint": design.blueprint or 0
+        "blueprint": design.blueprint or 0,
     }
 
     order_in_db = OrderInDB(**order_dict)
     return await order_repo.create(order_in_db)
 
 
-async def update_order(order_id: str, order_update: OrderUpdate) -> Order:
-    await get_order_by_id(order_id)
+async def cancel_order(order_id: str, user_id: str, role: str) -> dict:
+    if role == "worker":
+        raise HTTPException(status_code=403, detail="Рабочий не может отменять заказы")
 
-    update_data = order_update.model_dump(exclude_none=True)
+    order = await get_order_by_id(order_id)
 
-    if not update_data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Нет данных для обновления"
-        )
+    if role == "client":
+        if order.client.client_id != user_id:
+            raise HTTPException(status_code=403, detail="Вы можете отменить только свои заказы")
 
-    success = await order_repo.update(order_id, update_data)
-
+    success = await order_repo.cancel(order_id)
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Не удалось обновить заказ"
-        )
+        raise HTTPException(status_code=500, detail="Не удалось отменить заказ")
 
-    updated_order = await order_repo.get_by_id(order_id)
-    return Order(**updated_order.model_dump())
-
-
-async def delete_order(order_id: str) -> bool:
-    await get_order_by_id(order_id)
-    success = await order_repo.delete(order_id)
-
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Не удалось удалить заказ"
-        )
-    return True
-
-
-async def get_orders_by_status(status: TypeStatus, skip: int, limit: int, client_id: str) -> List[Order]:
-    orders_db = await order_repo.get_by_status(status, skip, limit, client_id)
-    return [Order(**order.model_dump()) for order in orders_db]
+    return {
+        "order_id": order_id,
+        "message": "Заказ успешно отменён"
+    }
