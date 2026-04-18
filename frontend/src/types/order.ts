@@ -1,4 +1,4 @@
-import type {DesignType} from "./design.ts";
+import type {DesignType, TypeDesign} from "./design.ts";
 import type {Stages} from "./stages.ts";
 import type {Pricing} from "./pricing.ts";
 import type {Client} from "./client.ts";
@@ -28,7 +28,7 @@ export interface Order {
 export interface OrderCreate {
     phone: string;
     address: string;
-    kitchen_type: DesignType;
+    kitchen_type: TypeDesign;
     design_id: string;
     color: Color;
     material: string;
