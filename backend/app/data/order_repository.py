@@ -4,7 +4,6 @@ from app.models.order import OrderInDB, TypeStatus
 from datetime import datetime, timezone
 from typing import List, Optional
 
-
 orders_collection = db["orders"]
 
 
@@ -29,6 +28,7 @@ async def get_all() -> List[OrderInDB]:
         result.append(OrderInDB(**doc))
     return result
 
+
 async def get_by_client_id(client_id: str) -> List[OrderInDB]:
     try:
         cursor = orders_collection.find({"client.client_id": client_id})
@@ -41,6 +41,7 @@ async def get_by_client_id(client_id: str) -> List[OrderInDB]:
     except Exception as e:
         print(f"Error getting orders for client {client_id}: {e}")
         return []
+
 
 async def get_by_worker_id(worker_id: str) -> List[OrderInDB]:
     cursor = orders_collection.find({"stages.worker_id": worker_id})
@@ -62,10 +63,6 @@ async def cancel(order_id: str) -> bool:
     """Отменить заказ (изменить статус)"""
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
-        {
-            "$set": {
-                "updated_at": datetime.now(timezone.utc)
-            }
-        }
+        {"$set": {"updated_at": datetime.now(timezone.utc)}},
     )
     return result.modified_count > 0

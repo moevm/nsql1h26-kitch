@@ -16,7 +16,7 @@ class Material(BaseModel):
 
 class MaterialUpdate(BaseModel):
     name: Optional[str] = None
-    remain: Optional[int] =  None
+    remain: Optional[int] = None
     cost: Optional[int] = None
 
 

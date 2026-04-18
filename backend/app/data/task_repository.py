@@ -2,19 +2,23 @@ from app.data.database import db
 from typing import List, Optional
 from app.models.order import TypeTask, OrderInDB
 
-
 orders_collection = db["orders"]
 
 
-async def get_by_status(task_status: TypeTask, skip: int = 0, limit: int = -1, worker_id: Optional[str] = None) -> List[OrderInDB]:
+async def get_by_status(
+    task_status: TypeTask,
+    skip: int = 0,
+    limit: int = -1,
+    worker_id: Optional[str] = None,
+) -> List[OrderInDB]:
     if limit == 0:
         return []
-    
+
     try:
         query = {"stages.task_status": task_status}
         if worker_id is not None:
             query["stages.worker_id"] = worker_id
-        
+
         cursor = orders_collection.find(query).skip(skip)
 
         docs = []
@@ -23,7 +27,7 @@ async def get_by_status(task_status: TypeTask, skip: int = 0, limit: int = -1, w
                 docs.append(doc)
         else:
             cursor = cursor.limit(limit)
-            docs = await cursor.to_list(length = limit)
+            docs = await cursor.to_list(length=limit)
 
         return [OrderInDB(**doc) for doc in docs]
     except Exception as e:

@@ -9,6 +9,7 @@ from app.web.design_router import router as design_router
 from app.web.order_router import router as order_router
 from app.web.task_router import router as task_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting seed...")
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
     seed_orders()
     print("Seed completed")
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -39,13 +41,16 @@ app.include_router(design_router)
 app.include_router(order_router)
 app.include_router(task_router)
 
+
 @app.get("/")
 async def root():
     return {"message": "каркас"}
 
+
 @app.get("/health", summary="Health check", tags=["health"], status_code=200)
 async def health_check():
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True, host="127.0.0.1", port=8000)
