@@ -76,7 +76,12 @@ async def create_order(
     if current_user["role"] != "client":
         raise HTTPException(status_code=403, detail="Только клиенты могут создавать заказы")
 
-    order_id = await create_new_order(order_data, current_user["user_id"], current_user["username"])
+    order_id = await create_new_order(
+        order_data,
+        current_user["user_id"],
+        current_user["username"],
+        current_user["role"]
+    )
 
     return {"id": order_id, "message": "Заказ успешно создан"}
 
@@ -97,6 +102,8 @@ async def cancel_order_endpoint(
     order_id: str,
     current_user: dict = Depends(get_current_user_dep)
 ):
+    if current_user["role"] == "worker":
+        raise HTTPException(status_code=403, detail="Рабочие не могут отменять заказы")
     result = await cancel_order(
         order_id=order_id,
         user_id=current_user["user_id"],

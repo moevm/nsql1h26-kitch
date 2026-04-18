@@ -35,12 +35,13 @@ async def get_orders_by_user_role(user_id: str, role: str) -> List[Order]:
     return orders
 
 
-async def create_new_order(order_data: OrderCreate, user_id: str, username: str) -> str:
+async def create_new_order(order_data: OrderCreate, user_id: str, username: str, role: str) -> str:
+    if role != "client":
+        raise HTTPException(status_code=403, detail="Только клиенты могут создавать заказы")
     design = await design_repo.get_by_id(order_data.design_id)
     if not design:
         raise HTTPException(status_code=404, detail="Дизайн не найден")
 
-    # ← ищем материал по ИМЕНИ, не по id
     from app.data import material_data as material_repo
     material = await material_repo.get_by_name(order_data.material)
     if not material:
