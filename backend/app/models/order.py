@@ -80,6 +80,7 @@ class Color(BaseModel):
 
 
 class Order(BaseModel):
+    id: str
     material_id: str
     design_id: str
     client: Client
