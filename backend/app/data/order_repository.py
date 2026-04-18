@@ -12,11 +12,11 @@ async def get_by_id(order_id: str) -> Optional[OrderInDB]:
     try:
         doc = await orders_collection.find_one({"_id": ObjectId(order_id)})
         if doc:
-            doc["id"] = str(doc["_id"])  # ← добавить конвертацию
+            doc["id"] = str(doc["_id"])
             return OrderInDB(**doc)
         return None
     except Exception as e:
-        print(f"Error getting order {order_id}: {e}")  # ← логировать
+        print(f"Error getting order {order_id}: {e}")
         return None
 
 

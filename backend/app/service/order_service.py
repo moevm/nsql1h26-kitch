@@ -54,7 +54,7 @@ async def create_new_order(order_data: OrderCreate, user_id: str, username: str)
     )
 
     order_dict = {
-        "material_id": str(material.id),  # ← берём id из найденного материала
+        "material_id": str(material.id),
         "design_id": order_data.design_id,
         "client": Client(
             client_id=user_id,
