@@ -1,5 +1,5 @@
 export interface Delivery {
-    adress: string;
+    address: string;
     floor: number;
     has_lift: boolean;
 };

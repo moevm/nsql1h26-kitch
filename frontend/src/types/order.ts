@@ -7,6 +7,7 @@ import type {Color} from "./color.ts";
 import type {Delivery} from "./delivery.ts";
 
 export interface Order {
+    id: string;
     material_id: string;
     design_id: string;
     client: Client;

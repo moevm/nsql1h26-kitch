@@ -1,10 +1,18 @@
 import type {Color} from "./color.ts";
 import type {Size} from "./size.ts";
 
+export type TypeDesign =
+    | "G-образная"
+    | "Островная"
+    | "П-образная"
+    | "Двухлинейная"
+    | "Линейная"
+    | "Г-образная";
+
 export interface Design {
     id?: string;
     name: string;
-    type: string;
+    type: TypeDesign;
     size: Size;
     material: string;
     material_id: string;
@@ -14,7 +22,7 @@ export interface Design {
     description: string;
     production_time: number;
     need_material: number;
-    blueprint?: number;
+    blueprint: number;
     created_at?: string;
     updated_at?: string;
 }
