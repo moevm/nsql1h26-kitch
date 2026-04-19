@@ -23,6 +23,7 @@ export interface Order {
     color: Color;
     need_material: number;
     blueprint: number;
+    created_at: string;
 }
 
 export interface OrderCreate {

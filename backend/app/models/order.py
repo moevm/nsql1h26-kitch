@@ -96,6 +96,7 @@ class Order(BaseModel):
     color: Color
     need_material: int
     blueprint: int
+    created_at: datetime
 
 
 class OrderInDB(MongoBase):
