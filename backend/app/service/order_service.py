@@ -1,9 +1,10 @@
 from fastapi import HTTPException, status
-from app.models.order import Order, OrderInDB, OrderCreate, Client, Delivery, Pricing
+from app.models.order import Order, OrderInDB, OrderCreate, Client, Delivery, Pricing, TypeStatus
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
-from typing import List
-
+from typing import List, Optional
+from app.models.design import TypeDesign
+from datetime import datetime
 
 async def get_order_by_id(order_id: str) -> Order:
     order_db = await order_repo.get_by_id(order_id)
@@ -159,3 +160,13 @@ async def cancel_order(order_id: str, user_id: str, role: str) -> dict:
         raise HTTPException(status_code=500, detail="Не удалось отменить заказ")
 
     return {"order_id": order_id, "message": "Заказ успешно отменён"}
+
+
+async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStatus, min_price: int,
+                                        max_price: int, from_created: Optional[datetime], to_created: Optional[datetime], 
+                                        from_deadline: Optional[datetime], to_deadline: Optional[datetime],
+                                        sort_by: str, sort_direction: int, skip: int, limit: int
+                                        ) -> List[Order]:
+    orders_db = await order_repo.get_filtered_orders_for_client(client_id, name_design, type, material, stage, min_price,max_price, from_created,
+                                                                to_created, from_deadline, to_deadline, sort_by, sort_direction, skip, limit)
+    return [Order(**order.model_dump()) for order in orders_db]
