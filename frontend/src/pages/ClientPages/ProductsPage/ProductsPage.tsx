@@ -1,8 +1,8 @@
 import {Fragment, type ReactElement} from "react";
 import {useNavigate} from "react-router-dom";
-import {ProductCard} from "../../UI/ProductCard/ProductCard.tsx";
-import {kitchenTypesMap} from "../../utils/kitchenTypesMap.ts";
-import {useDesignTypes} from "../../hooks/useDesigns.ts";
+import {ProductCard} from "../../../UI/ProductCard/ProductCard.tsx";
+import {kitchenTypesMap} from "../../../utils/kitchenTypesMap.ts";
+import {useDesignTypes} from "../../../hooks/useDesigns.ts";
 
 export function ProductsPage(): ReactElement {
     const { data: designTypes, isLoading, error } = useDesignTypes();
@@ -13,11 +13,11 @@ export function ProductsPage(): ReactElement {
     };
 
     if (isLoading) {
-        return <div>Loading designs...</div>;
+        return (<div>Загружаем дизайны...</div>);
     }
 
     if (error) {
-        return <div>Error loading designs: {error.message}</div>;
+        return (<div>Ошибка загрузки: {error.message}</div>);
     }
 
     return (

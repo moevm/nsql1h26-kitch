@@ -32,6 +32,7 @@ class TypeDesign(str, Enum):
 
 
 class Design(BaseModel):
+    id: str
     name: str
     type: TypeDesign
     size: Size_design
