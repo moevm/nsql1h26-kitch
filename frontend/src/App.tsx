@@ -10,6 +10,7 @@ import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
 import {ProductsPage} from "./pages/ClientPages/ProductsPage/ProductsPage.tsx";
 import {CreateOrderPage} from "./pages/ClientPages/CreateOrderPage/CreateOrderPage.tsx";
+import {OrdersPage} from "./pages/ClientPages/OrdersPage/OrdersPage.tsx";
 
 // worker elements
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
@@ -33,7 +34,7 @@ function AppRoutes() {
             }>
                 <Route path="/products"         element={<ProductsPage />}/>
                 <Route path="/orders/create"    element={<CreateOrderPage />}/>
-                <Route path="/orders"           element={<div>ORDERS</div>}/>
+                <Route path="/orders"           element={<OrdersPage />}/>
             </Route>
 
             <Route element={

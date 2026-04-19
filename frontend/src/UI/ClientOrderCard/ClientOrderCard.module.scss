@@ -34,21 +34,32 @@
 }
 
 .statusChip {
-  width: 120px;
-  height: 55px;
+  width: 140px;
+  height: 70px;
   padding: 10px;
-  background: $green-color;
   border-radius: 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   box-sizing: border-box;
+}
+
+.statusCancelled {
+  background: $red-color;
+}
+
+.statusCompleted {
+  background: $green-color;
+}
+
+.statusProcessing {
+  background: $yellow-color;
 }
 
 .statusText {
   @include text-style(16px, 600, $on-primary-color, 19.2px);
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
 

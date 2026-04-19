@@ -1,6 +1,6 @@
 .page {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: white;
@@ -13,5 +13,5 @@
   justify-content: center;
   align-items: center;
   gap: 32px;
-  flex: 1
+  flex: 1;
 }

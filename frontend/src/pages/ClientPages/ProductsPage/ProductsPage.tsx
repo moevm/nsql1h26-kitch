@@ -13,11 +13,11 @@ export function ProductsPage(): ReactElement {
     };
 
     if (isLoading) {
-        return <div>Loading designs...</div>;
+        return (<div>Загружаем дизайны...</div>);
     }
 
     if (error) {
-        return <div>Error loading designs: {error.message}</div>;
+        return (<div>Ошибка загрузки: {error.message}</div>);
     }
 
     return (
