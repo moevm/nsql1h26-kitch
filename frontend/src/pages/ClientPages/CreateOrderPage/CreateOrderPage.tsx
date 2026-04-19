@@ -79,8 +79,9 @@ export function CreateOrderPage(): ReactElement {
     }, [selectedDesign]);
 
     const materialPrice = useMemo(() => {
-        return selectedMaterial?.cost ?? 0;
-    }, [selectedMaterial]);
+        if (!selectedMaterial || !selectedDesign) return 0;
+        return Math.round(selectedMaterial.cost * (selectedDesign.need_material || 1));
+    }, [selectedDesign, selectedMaterial]);
 
     const deliveryPrice = useMemo(() => {
         const floorPrice = 100;
@@ -215,7 +216,7 @@ export function CreateOrderPage(): ReactElement {
                 </Alert>
             )}
 
-            <div className={style.clientNameGridItem}>
+            <div className={`${style.clientNameGridItem} ${style.gridItemWithError}`}>
                 <CommonInputField
                     label={"Имя заказчика"}
                     placeholder={"Введите ваше имя"}
@@ -228,7 +229,7 @@ export function CreateOrderPage(): ReactElement {
                 />
             </div>
 
-            <div className={style.phoneGridItem}>
+            <div className={`${style.phoneGridItem} ${style.gridItemWithError}`}>
                 <CommonInputField
                     label={"Номер телефона"}
                     placeholder={"Введите ваш номер телефона"}
@@ -241,7 +242,7 @@ export function CreateOrderPage(): ReactElement {
                 />
             </div>
 
-            <div className={style.addressGridItem}>
+            <div className={`${style.addressGridItem} ${style.gridItemWithError}`}>
                 <CommonInputField
                     label={"Адрес доставки"}
                     placeholder={"Введите ваш адрес"}

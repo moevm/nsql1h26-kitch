@@ -28,6 +28,10 @@
 
 /* ---------- grid items ---------- */
 
+.gridItemWithError {
+  min-height: 90px;
+}
+
 .headerGridItem {
   grid-column: span 7;
   grid-row: span 1;
