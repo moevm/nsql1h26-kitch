@@ -100,11 +100,6 @@ async def get_filtered_orders_for_client(client_id: str, name_design: str, type:
         
         if type is not None:
             filter_query["type"] = type.value
-        
-        if stage is not None:
-            filter_query["stages"] = {
-                "$elemMatch": {"status": stage.value}
-            }
 
         price_filter = {}
         if min_price is not None:
@@ -139,6 +134,9 @@ async def get_filtered_orders_for_client(client_id: str, name_design: str, type:
                 }
             }
         ]
+
+        if stage is not None:
+            pipeline.append({"$match": {"last_stage_status": stage.value}})
 
         sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
         pipeline.append({"$sort": {sort_field: sort_direction}})
