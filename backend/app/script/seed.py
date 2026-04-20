@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 from app.models.design import TypeDesign
-from app.models.order import TypeStatus, TypeTask
+from app.models.order import TypeStage, TypeStatus, TypeTask
 
 load_dotenv()
 
@@ -13,10 +13,8 @@ db = client[os.getenv("MONGO_INITDB_DATABASE", "database")]
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
-
 
 def seed_users():
     users = [
@@ -63,24 +61,15 @@ def seed_users():
         db.users.update_one({"email": user["email"]}, {"$set": user}, upsert=True)
     print(f"Seeded {db.users.count_documents({})} users")
 
-
 def seed_materials():
     materials = [
-        {
-            "name": "ЛДСП 16мм",
-            "remain": 100,
-            "cost": 1500,
-            "updated_at": datetime.now(),
-        },
+        {"name": "ЛДСП 16мм", "remain": 100, "cost": 1500, "updated_at": datetime.now()},
         {"name": "МДФ 19мм", "remain": 50, "cost": 2500, "updated_at": datetime.now()},
         {"name": "Кромка ПВХ", "remain": 500, "cost": 50, "updated_at": datetime.now()},
     ]
     for material in materials:
-        db.materials.update_one(
-            {"name": material["name"]}, {"$set": material}, upsert=True
-        )
+        db.materials.update_one({"name": material["name"]}, {"$set": material}, upsert=True)
     print(f"Seeded {db.materials.count_documents({})} materials")
-
 
 def seed_designs():
     materials = list(db.materials.find({}))
@@ -139,7 +128,6 @@ def seed_designs():
         db.designs.update_one({"name": design["name"]}, {"$set": design}, upsert=True)
     print(f"Seeded {db.designs.count_documents({})} designs")
 
-
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})
     worker_user = db.users.find_one({"email": "worker@example.com"})
@@ -150,140 +138,35 @@ def seed_orders():
     designs = {d["name"]: d for d in db.designs.find({})}
     materials = {m["name"]: m for m in db.materials.find({})}
 
-    # Генерируем 15 заказов для тестирования пагинации
+    # Генерируем 15 базовых заказов
     orders_data = []
     for i in range(1, 16):
-        orders_data.append(
-            {
-                "item": f"Кухонный гарнитур №{i}",
-                "design_name": [
-                    "Классическая кухня",
-                    "Современная кухня",
-                    "Кухня-остров",
-                ][i % 3],
-                "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
-                "address": f"ул. Тестовая, д. {i}",
-                "floor": i % 5 + 1,
-                "has_lift": i % 2 == 0,
-                "total_price": 100000 + i * 5000,
-                "type_price": 50000 + i * 1000,
-                "material_price": 30000 + i * 800,
-                "delivery_price": 5000 + i * 200,
-                "comment_price": 1000 + i * 100,
-                "comment": f"Тестовый заказ {i}",
-                "color": {
-                    "red": 100 + i,
-                    "green": 50,
-                    "blue": 200 - i,
-                    "name": f"Цвет {i}",
-                },
-            }
-        )
+        orders_data.append({
+            "item": f"Кухонный гарнитур №{i}",
+            "design_name": ["Классическая кухня", "Современная кухня", "Кухня-остров"][i % 3],
+            "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
+            "address": f"ул. Тестовая, д. {i}",
+            "floor": i % 5 + 1,
+            "has_lift": i % 2 == 0,
+            "total_price": 100000 + i * 5000,
+            "type_price": 50000 + i * 1000,
+            "material_price": 30000 + i * 800,
+            "delivery_price": 5000 + i * 200,
+            "comment_price": 1000 + i * 100,
+            "comment": f"Тестовый заказ {i}",
+            "color": {"red": 100 + i, "green": 50, "blue": 200 - i, "name": f"Цвет {i}"},
+        })
 
     orders = []
     now = datetime.now(timezone.utc)
-    for idx, data in enumerate(orders_data):
-        design = designs.get(data["design_name"])
-        material = materials.get(data["material_name"])
+
+    # Функция для добавления заказа
+    def add_order(order_data, stages):
+        design = designs.get(order_data["design_name"])
+        material = materials.get(order_data["material_name"])
         if not design or not material:
-            print(f"Skipping order '{data['item']}': design or material not found")
-            continue
-
-        stages = []
-
-        # 1) Задача "Доступна" (без рабочего) – для эндпоинта /tasks/available
-        stages.append(
-            {
-                "name": f"Раскрой {material['name']}",
-                "worker_id": "",
-                "status": TypeStatus("Раскрой"),
-                "task_status": TypeTask("Доступна"),
-                "times": {
-                    "deadline": now + timedelta(days=3 + idx),
-                    "start": None,
-                    "end": None,
-                    "est_time": 4,
-                    "spent": 0,
-                    "expired_time": 0,
-                },
-            }
-        )
-
-        # 2) Задача "В процессе" (назначена рабочему) – для /worker/tasks/in_progress
-        stages.append(
-            {
-                "name": "Сборка корпуса",
-                "worker_id": worker_id,
-                "status": TypeStatus("Производство"),
-                "task_status": TypeTask("В процессе"),
-                "times": {
-                    "deadline": now + timedelta(days=5 + idx),
-                    "start": now - timedelta(days=1),
-                    "end": None,
-                    "est_time": 8,
-                    "spent": 2,
-                    "expired_time": 0,
-                },
-            }
-        )
-
-        # 3) Задача "Выполнена" (назначена рабочему, завершена) – для /worker/tasks/completed
-        if idx % 3 == 0:
-            stages.append(
-                {
-                    "name": "Покраска",
-                    "worker_id": worker_id,
-                    "status": TypeStatus("Производство"),
-                    "task_status": TypeTask("Выполнена"),
-                    "times": {
-                        "deadline": now - timedelta(days=2),
-                        "start": now - timedelta(days=5),
-                        "end": now - timedelta(days=3),
-                        "est_time": 3,
-                        "spent": 3,
-                        "expired_time": 0,
-                    },
-                }
-            )
-
-        # 4) Задача "Просрочена" (назначена рабочему, дедлайн просрочен) – для /worker/tasks/overdue
-        if idx % 2 == 0:
-            stages.append(
-                {
-                    "name": "Доставка",
-                    "worker_id": worker_id,
-                    "status": TypeStatus("Доставка"),
-                    "task_status": TypeTask("Просрочена"),
-                    "times": {
-                        "deadline": now - timedelta(days=1),
-                        "start": now - timedelta(days=3),
-                        "end": None,
-                        "est_time": 2,
-                        "spent": 2,
-                        "expired_time": 1,
-                    },
-                }
-            )
-
-        # 5) Задача "Отменена" (редко, для полноты)
-        if idx == 5:
-            stages.append(
-                {
-                    "name": "Монтаж",
-                    "worker_id": worker_id,
-                    "status": TypeStatus("Монтаж"),
-                    "task_status": TypeTask("Отменена"),
-                    "times": {
-                        "deadline": now + timedelta(days=10),
-                        "start": None,
-                        "end": None,
-                        "est_time": 5,
-                        "spent": 0,
-                        "expired_time": 0,
-                    },
-                }
-            )
-
+            print(f"Skipping order '{order_data['item']}': design or material not found")
+            return
         order = {
             "material_id": str(material["_id"]),
             "design_id": str(design["_id"]),
@@ -292,38 +175,247 @@ def seed_orders():
                 "username": client_user["username"],
                 "phone": client_user["phone"],
             },
-            "item": data["item"],
-            "comment": data["comment"],
+            "item": order_data["item"],
+            "comment": order_data["comment"],
             "delivery": {
-                "address": data["address"],
-                "floor": data["floor"],
-                "has_lift": data["has_lift"],
+                "address": order_data["address"],
+                "floor": order_data["floor"],
+                "has_lift": order_data["has_lift"],
             },
             "pricing": {
-                "total_price": data["total_price"],
-                "type_price": data["type_price"],
-                "material_price": data["material_price"],
-                "delivery_price": data["delivery_price"],
-                "comment_price": data["comment_price"],
+                "total_price": order_data["total_price"],
+                "type_price": order_data["type_price"],
+                "material_price": order_data["material_price"],
+                "delivery_price": order_data["delivery_price"],
+                "comment_price": order_data["comment_price"],
             },
             "stages": stages,
             "name_design": design["name"],
             "type": TypeDesign(design["type"]),
             "material": material["name"],
             "size": design["size"],
-            "color": data["color"],
+            "color": order_data["color"],
             "need_material": design["need_material"],
             "blueprint": design.get("blueprint", 0),
-            "status": TypeStatus("Раскрой"),
             "created_at": now,
             "updated_at": now,
         }
         orders.append(order)
 
+    # 1. Базовые 15 заказов (разные статусы)
+    for idx, data in enumerate(orders_data):
+        stages = []
+
+        # Раскрой (доступен)
+        stages.append({
+            "name_stage": TypeStage.Cutting,
+            "worker_id": "",
+            "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
+            "task_status": TypeTask.Available,
+            "times": {
+                "deadline": now + timedelta(days=3 + idx),
+                "start": None,
+                "end": None,
+                "est_time": 4,
+                "spent": 0,
+                "expired_time": 0,
+            }
+        })
+
+        # Производство (в процессе)
+        stages.append({
+            "name_stage": TypeStage.Production,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.In_progress,
+            "times": {
+                "deadline": now + timedelta(days=5 + idx),
+                "start": now - timedelta(days=1),
+                "end": None,
+                "est_time": 8,
+                "spent": 2,
+                "expired_time": 0,
+            }
+        })
+
+        # Доставка (просрочена) для чётных индексов
+        if idx % 2 == 0:
+            stages.append({
+                "name_stage": TypeStage.Delivery,
+                "worker_id": worker_id,
+                "status": TypeStatus.Canceled,
+                "task_status": TypeTask.Overdue,
+                "times": {
+                    "deadline": now - timedelta(days=1),
+                    "start": now - timedelta(days=3),
+                    "end": None,
+                    "est_time": 2,
+                    "spent": 2,
+                    "expired_time": 1,
+                }
+            })
+
+        # Монтаж (отменён) только для idx == 5
+        if idx == 5:
+            stages.append({
+                "name_stage": TypeStage.Montage,
+                "worker_id": worker_id,
+                "status": TypeStatus.Canceled,
+                "task_status": TypeTask.Canceled,
+                "times": {
+                    "deadline": now + timedelta(days=10),
+                    "start": None,
+                    "end": None,
+                    "est_time": 5,
+                    "spent": 0,
+                    "expired_time": 0,
+                }
+            })
+
+        add_order(data, stages)
+
+        # 2. Полностью завершённый заказ (все этапы выполнены + финальный этап "Завершён")
+    completed_order_data = {
+        "item": "Кухонный гарнитур (полностью завершён)",
+        "design_name": "Классическая кухня",
+        "material_name": "ЛДСП 16мм",
+        "address": "ул. Завершённая, д. 1",
+        "floor": 1,
+        "has_lift": True,
+        "total_price": 200000,
+        "type_price": 80000,
+        "material_price": 50000,
+        "delivery_price": 10000,
+        "comment_price": 2000,
+        "comment": "Полностью завершённый заказ",
+        "color": {"red": 255, "green": 255, "blue": 255, "name": "Белый"},
+    }
+    completed_stages = [
+        {
+            "name_stage": TypeStage.Cutting,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Completed,
+            "times": {
+                "deadline": now - timedelta(days=5),
+                "start": now - timedelta(days=10),
+                "end": now - timedelta(days=6),
+                "est_time": 4,
+                "spent": 4,
+                "expired_time": 0,
+            }
+        },
+        {
+            "name_stage": TypeStage.Production,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Overdue,
+            "times": {
+                "deadline": now - timedelta(days=3),
+                "start": now - timedelta(days=6),
+                "end": now - timedelta(days=4),
+                "est_time": 8,
+                "spent": 8,
+                "expired_time": 0,
+            }
+        },
+        {
+            "name_stage": TypeStage.Delivery,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Completed,
+            "times": {
+                "deadline": now - timedelta(days=1),
+                "start": now - timedelta(days=4),
+                "end": now - timedelta(days=2),
+                "est_time": 2,
+                "spent": 2,
+                "expired_time": 0,
+            }
+        },
+        {
+            "name_stage": TypeStage.Montage,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Overdue,
+            "times": {
+                "deadline": now + timedelta(days=1),
+                "start": now - timedelta(days=2),
+                "end": now,
+                "est_time": 5,
+                "spent": 5,
+                "expired_time": 0,
+            }
+        },
+        {
+            "name_stage": TypeStage.Completed,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Completed,
+            "times": {
+                "deadline": now,
+                "start": now,
+                "end": now,
+                "est_time": 0,
+                "spent": 0,
+                "expired_time": 0,
+            }
+        },
+    ]
+    add_order(completed_order_data, completed_stages)
+
+    # 3. Заказ, отменённый после раскроя
+    canceled_order_data = {
+        "item": "Кухонный гарнитур (отменён после раскроя)",
+        "design_name": "Современная кухня",
+        "material_name": "МДФ 19мм",
+        "address": "ул. Отменённая, д. 2",
+        "floor": 2,
+        "has_lift": False,
+        "total_price": 150000,
+        "type_price": 60000,
+        "material_price": 40000,
+        "delivery_price": 8000,
+        "comment_price": 1000,
+        "comment": "Отменён после раскроя",
+        "color": {"red": 50, "green": 50, "blue": 50, "name": "Темно-серый"},
+    }
+    canceled_stages = [
+        {
+            "name_stage": TypeStage.Cutting,
+            "worker_id": worker_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Completed,
+            "times": {
+                "deadline": now - timedelta(days=2),
+                "start": now - timedelta(days=5),
+                "end": now - timedelta(days=3),
+                "est_time": 4,
+                "spent": 4,
+                "expired_time": 0,
+            }
+        },
+        {
+            "name_stage": TypeStage.Canceled,   # специальный этап "Отменён"
+            "worker_id": worker_id,
+            "status": TypeStatus.Canceled,
+            "task_status": TypeTask.Canceled,
+            "times": {
+                "deadline": now + timedelta(days=10),
+                "start": now - timedelta(days=1),
+                "end": now,
+                "est_time": 0,
+                "spent": 0,
+                "expired_time": 0,
+            }
+        },
+    ]
+    add_order(canceled_order_data, canceled_stages)
+
+    # Сохраняем все заказы в БД
     for order in orders:
         db.orders.update_one({"item": order["item"]}, {"$set": order}, upsert=True)
     print(f"Seeded {db.orders.count_documents({})} orders with stages")
-
 
 if __name__ == "__main__":
     try:

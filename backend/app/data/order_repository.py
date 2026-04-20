@@ -1,6 +1,6 @@
 from bson import ObjectId
 from app.data.database import db
-from app.models.order import OrderInDB, TypeStatus
+from app.models.order import OrderInDB, TypeStage
 from datetime import datetime, timezone
 from typing import List, Optional
 from app.models.design import TypeDesign
@@ -81,7 +81,7 @@ async def cancel(order_id: str) -> bool:
     return result.modified_count > 0
 
 
-async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStatus, min_price: int,
+async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStage, min_price: int,
                                         max_price: int, from_created: Optional[datetime], to_created: Optional[datetime], 
                                         from_deadline: Optional[datetime], to_deadline: Optional[datetime],
                                         sort_by: str, sort_direction: int, skip: int, limit: int
@@ -129,7 +129,7 @@ async def get_filtered_orders_for_client(client_id: str, name_design: str, type:
             {"$match": filter_query},
             {
                 "$addFields": {
-                    "last_stage_status": {"$arrayElemAt": ["$stages.status", -1]},
+                    "last_stage_status": {"$arrayElemAt": ["$stages.name_stage", -1]},
                     "last_stage_deadline": {"$arrayElemAt": ["$stages.times.deadline", -1]}
                 }
             }

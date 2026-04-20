@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from app.models.order import Order, OrderInDB, OrderCreate, Client, Delivery, Pricing, TypeStatus
+from app.models.order import Order, OrderInDB, OrderCreate, Client, Delivery, Pricing, TypeStage
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List, Optional
@@ -162,7 +162,7 @@ async def cancel_order(order_id: str, user_id: str, role: str) -> dict:
     return {"order_id": order_id, "message": "Заказ успешно отменён"}
 
 
-async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStatus, min_price: int,
+async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStage, min_price: int,
                                         max_price: int, from_created: Optional[datetime], to_created: Optional[datetime], 
                                         from_deadline: Optional[datetime], to_deadline: Optional[datetime],
                                         sort_by: str, sort_direction: int, skip: int, limit: int

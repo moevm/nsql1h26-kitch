@@ -39,12 +39,11 @@ class Times(BaseModel):
     expired_time: int #время просрочки в минутах
 
 
-class TypeStatus(str, Enum):
+class TypeStage(str, Enum):
     Cutting = "Раскрой"
     Production = "Производство"
     Delivery = "Доставка"
     Montage = "Монтаж"
-    # для каждой стадии может быть статус "Завершён", "Отменён"
     Completed = "Завершён"
     Canceled = "Отменён"
 
@@ -58,8 +57,13 @@ class TypeTask(str, Enum):
     Canceled = "Отменена"
 
 
+class TypeStatus(str, Enum):
+    In_progress = "В процессе"
+    Completed = "Завершён"
+    Canceled = "Отменён"
+
 class Stages(BaseModel):
-    name: str
+    name_stage: TypeStage
     worker_id: str
     status: TypeStatus
     task_status: TypeTask
