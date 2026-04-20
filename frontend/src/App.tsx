@@ -11,6 +11,7 @@ import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
 import {ProductsPage} from "./pages/ClientPages/ProductsPage/ProductsPage.tsx";
 import {CreateOrderPage} from "./pages/ClientPages/CreateOrderPage/CreateOrderPage.tsx";
 import {OrdersPage} from "./pages/ClientPages/OrdersPage/OrdersPage.tsx";
+import {OrderDetailsPage} from "./pages/OrderDatailsPage/OrderDatailsPage.tsx";
 
 // worker elements
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
@@ -26,6 +27,10 @@ function AppRoutes() {
             <Route path="/logout"           element={<LoginPage />} />
             <Route path="/register"         element={<RegisterPage />} />
             <Route path="/password_recover" element={<PasswordRecoverPage />} />
+
+            <Route element={<ClientLayout />}>
+                <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+            </Route>
 
             <Route element={
                 <ProtectedRoute allowedRoles={['client']}>

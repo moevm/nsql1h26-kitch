@@ -3,6 +3,8 @@ import styles from "./ClientOrderCard.module.scss"
 import {CommonInfoField} from "../CommonInfoField/CommonInfoField.tsx";
 import {CommonButton} from "../CommonButton/CommonButton.tsx";
 import type {Order} from "../../types/order.ts";
+import {useNavigate} from "react-router-dom";
+import {formatDate} from "../FormatFunctions.ts";
 
 const getOrderStatus = (stages: Order['stages']): { text: string; className: string } => {
     const isCanceled = stages.some(stage => stage.status === "Отменён");
@@ -37,22 +39,11 @@ interface ClientOrderCardProps {
 }
 
 export function ClientOrderCard({order}: ClientOrderCardProps): ReactElement {
+    const navigate = useNavigate();
     const { text: statusText, className: statusClassName } = getOrderStatus(order.stages);
 
     const handleSubmit = () => {
-        console.log("Order details:", order.id);
-    };
-
-    const formatDate = (date?: string | Date | null): string => {
-        if (!date) return "—";
-        const d = new Date(date);
-        return d.toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        navigate(`/orders/${order.id}`, { state: { order } });
     };
 
     const getEstimatedCompletionDate = (): string => {
@@ -68,7 +59,7 @@ export function ClientOrderCard({order}: ClientOrderCardProps): ReactElement {
             <div className={styles.orderIdGridItem}>
                 <div className={styles.orderTitle}>
                     <div className={styles.orderTitleText}>
-                        {`Заказ №${(order.id).slice(-10).toUpperCase()}`}
+                        {`Заказ №${order.id}`}
                     </div>
                 </div>
             </div>

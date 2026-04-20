@@ -29,9 +29,6 @@ export function OrdersPage(): ReactElement {
         setPage(value);
     };
 
-    console.log(isLoading);
-    console.log(error);
-
     if (orders) {
         return (
             <div className={styles.ordersPageContainer}>
