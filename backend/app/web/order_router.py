@@ -8,7 +8,7 @@ from app.service.order_service import (
     get_orders_by_user_role,
     get_filtered_orders_for_client
 )
-from app.models.order import OrderCreate, Order, TypeStatus
+from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
 from datetime import datetime
 
@@ -93,7 +93,7 @@ async def get_order(order_id: str, current_user: dict = Depends(get_current_user
 async def get_filtered_orders_client(name_design: str = None,
                               type: TypeDesign = None,
                               material: str = None,
-                              stage: TypeStatus = None,
+                              stage: TypeStage = None,
                               min_price: int = None,
                               max_price: int = None,
                               from_created: Optional[datetime] = None,

@@ -1,6 +1,6 @@
 from bson import ObjectId
 from app.data.database import db
-from app.models.order import OrderInDB, TypeStatus
+from app.models.order import OrderInDB, TypeStage, TypeStatus, TypeTask
 from datetime import datetime, timezone
 from typing import List, Optional
 from app.models.design import TypeDesign
@@ -74,14 +74,35 @@ async def create(order: OrderInDB) -> str:
 
 async def cancel(order_id: str) -> bool:
     """Отменить заказ (изменить статус)"""
+    now = datetime.now(timezone.utc)
+
+    cancel_order = {
+        "name_stage": TypeStage.Canceled.value,   # строка
+        "worker_id": "",
+        "status": TypeStatus.Canceled.value,      # строка
+        "task_status": TypeTask.Canceled.value,   # строка
+        "times": {
+            "deadline": now,
+            "start": now,
+            "end": now,
+            "est_time": 0,
+            "spent": 0,
+            "expired_time": 0,
+         
+        }
+    }
+
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
-        {"$set": {"updated_at": datetime.now(timezone.utc)}},
+        {
+            "$push": {"stages": cancel_order},
+            "$set": {"updated_at": now}
+        },
     )
     return result.modified_count > 0
 
 
-async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStatus, min_price: int,
+async def get_filtered_orders_for_client(client_id: str, name_design: str, type: TypeDesign, material: str, stage: TypeStage, min_price: int,
                                         max_price: int, from_created: Optional[datetime], to_created: Optional[datetime], 
                                         from_deadline: Optional[datetime], to_deadline: Optional[datetime],
                                         sort_by: str, sort_direction: int, skip: int, limit: int
@@ -129,7 +150,7 @@ async def get_filtered_orders_for_client(client_id: str, name_design: str, type:
             {"$match": filter_query},
             {
                 "$addFields": {
-                    "last_stage_status": {"$arrayElemAt": ["$stages.status", -1]},
+                    "last_stage_status": {"$arrayElemAt": ["$stages.name_stage", -1]},
                     "last_stage_deadline": {"$arrayElemAt": ["$stages.times.deadline", -1]}
                 }
             }
