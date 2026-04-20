@@ -155,3 +155,16 @@ class OrderCreate(BaseModel):
     material_price: int
     delivery_price: int
     comment_price: int
+
+
+class Task(BaseModel):
+    order_id: str
+    stage_index: int
+    stage_name: TypeStage
+    status: TypeTask
+    name_design: str
+    type: TypeDesign
+    color: Color
+    material: str
+    times: Times
+    worker_id: str
