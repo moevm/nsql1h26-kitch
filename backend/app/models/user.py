@@ -45,6 +45,7 @@ class WorkerInfo(BaseModel):
     date_of_birth: Optional[datetime] = None
     date_of_employment: Optional[datetime] = None
     date_of_remove: Optional[datetime] = None
+    start_experience: Optional[int] = 0
     comment: Optional[str] = None
     work_day_start: Optional[str] = None
     work_day_end: Optional[str] = None
@@ -67,6 +68,7 @@ class WorkerCreate(BaseModel):
     email: str
     date_of_birth: datetime
     position: str
+    start_experience: int
     work_day_start: str
     work_day_end: str
 

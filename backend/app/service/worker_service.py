@@ -24,12 +24,12 @@ def _time_str_to_datetime(time_str: str) -> datetime:
     return now.replace(hour=hours, minute=minutes, second=0, microsecond=0)
 
 
-def _calculate_experience_years(date_of_employment: datetime) -> int:
+def _calculate_experience_years(date_of_employment: datetime, start_experience: int) -> int:
     now = datetime.now(timezone.utc)
     years = now.year - date_of_employment.year
     if now.month < date_of_employment.month or (now.month == date_of_employment.month and now.day < date_of_employment.day):
         years -= 1
-    return max(0, years)
+    return max(0, years + start_experience)
 
 
 def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
@@ -41,7 +41,7 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
 
     exp_years = 0
     if worker_db.worker_info and worker_db.worker_info.date_of_employment:
-        exp_years = _calculate_experience_years(worker_db.worker_info.date_of_employment)
+        exp_years = _calculate_experience_years(worker_db.worker_info.date_of_employment,worker_db.worker_info.start_experience)
 
     work_start = None
     work_end = None
@@ -99,6 +99,7 @@ async def create_new_worker(data: WorkerCreate) -> Tuple[str, str]:
         date_of_employment=now,
         date_of_remove=None,
         comment=None,
+        start_experience=data.start_experience,
         work_day_start=data.work_day_start,
         work_day_end=data.work_day_end
     )
