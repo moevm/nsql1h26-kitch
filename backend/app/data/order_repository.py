@@ -1,6 +1,6 @@
 from bson import ObjectId
 from app.data.database import db
-from app.models.order import OrderInDB, TypeStage
+from app.models.order import OrderInDB, TypeStage, TypeStatus, TypeTask
 from datetime import datetime, timezone
 from typing import List, Optional
 from app.models.design import TypeDesign
@@ -74,9 +74,30 @@ async def create(order: OrderInDB) -> str:
 
 async def cancel(order_id: str) -> bool:
     """Отменить заказ (изменить статус)"""
+    now = datetime.now(timezone.utc)
+
+    cancel_order = {
+        "name_stage": TypeStage.Canceled.value,   # строка
+        "worker_id": "",
+        "status": TypeStatus.Canceled.value,      # строка
+        "task_status": TypeTask.Canceled.value,   # строка
+        "times": {
+            "deadline": now,
+            "start": now,
+            "end": now,
+            "est_time": 0,
+            "spent": 0,
+            "expired_time": 0,
+         
+        }
+    }
+
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
-        {"$set": {"updated_at": datetime.now(timezone.utc)}},
+        {
+            "$push": {"stages": cancel_order},
+            "$set": {"updated_at": now}
+        },
     )
     return result.modified_count > 0
 
