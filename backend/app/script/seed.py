@@ -13,8 +13,10 @@ db = client[os.getenv("MONGO_INITDB_DATABASE", "database")]
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def seed_users():
     users = [
@@ -61,15 +63,24 @@ def seed_users():
         db.users.update_one({"email": user["email"]}, {"$set": user}, upsert=True)
     print(f"Seeded {db.users.count_documents({})} users")
 
+
 def seed_materials():
     materials = [
-        {"name": "ЛДСП 16мм", "remain": 100, "cost": 1500, "updated_at": datetime.now()},
+        {
+            "name": "ЛДСП 16мм",
+            "remain": 100,
+            "cost": 1500,
+            "updated_at": datetime.now(),
+        },
         {"name": "МДФ 19мм", "remain": 50, "cost": 2500, "updated_at": datetime.now()},
         {"name": "Кромка ПВХ", "remain": 500, "cost": 50, "updated_at": datetime.now()},
     ]
     for material in materials:
-        db.materials.update_one({"name": material["name"]}, {"$set": material}, upsert=True)
+        db.materials.update_one(
+            {"name": material["name"]}, {"$set": material}, upsert=True
+        )
     print(f"Seeded {db.materials.count_documents({})} materials")
+
 
 def seed_designs():
     materials = list(db.materials.find({}))
@@ -128,6 +139,7 @@ def seed_designs():
         db.designs.update_one({"name": design["name"]}, {"$set": design}, upsert=True)
     print(f"Seeded {db.designs.count_documents({})} designs")
 
+
 def seed_orders():
     client_user = db.users.find_one({"email": "client@example.com"})
     worker_user = db.users.find_one({"email": "worker@example.com"})
@@ -141,21 +153,32 @@ def seed_orders():
     # Генерируем 15 базовых заказов
     orders_data = []
     for i in range(1, 16):
-        orders_data.append({
-            "item": f"Кухонный гарнитур №{i}",
-            "design_name": ["Классическая кухня", "Современная кухня", "Кухня-остров"][i % 3],
-            "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
-            "address": f"ул. Тестовая, д. {i}",
-            "floor": i % 5 + 1,
-            "has_lift": i % 2 == 0,
-            "total_price": 100000 + i * 5000,
-            "type_price": 50000 + i * 1000,
-            "material_price": 30000 + i * 800,
-            "delivery_price": 5000 + i * 200,
-            "comment_price": 1000 + i * 100,
-            "comment": f"Тестовый заказ {i}",
-            "color": {"red": 100 + i, "green": 50, "blue": 200 - i, "name": f"Цвет {i}"},
-        })
+        orders_data.append(
+            {
+                "item": f"Кухонный гарнитур №{i}",
+                "design_name": [
+                    "Классическая кухня",
+                    "Современная кухня",
+                    "Кухня-остров",
+                ][i % 3],
+                "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
+                "address": f"ул. Тестовая, д. {i}",
+                "floor": i % 5 + 1,
+                "has_lift": i % 2 == 0,
+                "total_price": 100000 + i * 5000,
+                "type_price": 50000 + i * 1000,
+                "material_price": 30000 + i * 800,
+                "delivery_price": 5000 + i * 200,
+                "comment_price": 1000 + i * 100,
+                "comment": f"Тестовый заказ {i}",
+                "color": {
+                    "red": 100 + i,
+                    "green": 50,
+                    "blue": 200 - i,
+                    "name": f"Цвет {i}",
+                },
+            }
+        )
 
     orders = []
     now = datetime.now(timezone.utc)
@@ -165,7 +188,9 @@ def seed_orders():
         design = designs.get(order_data["design_name"])
         material = materials.get(order_data["material_name"])
         if not design or not material:
-            print(f"Skipping order '{order_data['item']}': design or material not found")
+            print(
+                f"Skipping order '{order_data['item']}': design or material not found"
+            )
             return
         order = {
             "material_id": str(material["_id"]),
@@ -207,70 +232,78 @@ def seed_orders():
         stages = []
 
         # Раскрой (доступен)
-        stages.append({
-            "name_stage": TypeStage.Cutting,
-            "worker_id": "",
-            "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
-            "task_status": TypeTask.Available,
-            "times": {
-                "deadline": now + timedelta(days=3 + idx),
-                "start": None,
-                "end": None,
-                "est_time": 4,
-                "spent": 0,
-                "expired_time": 0,
+        stages.append(
+            {
+                "name_stage": TypeStage.Cutting,
+                "worker_id": "",
+                "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
+                "task_status": TypeTask.Available,
+                "times": {
+                    "deadline": now + timedelta(days=3 + idx),
+                    "start": None,
+                    "end": None,
+                    "est_time": 4,
+                    "spent": 0,
+                    "expired_time": 0,
+                },
             }
-        })
+        )
 
         # Производство (в процессе)
-        stages.append({
-            "name_stage": TypeStage.Production,
-            "worker_id": worker_id,
-            "status": TypeStatus.Completed,
-            "task_status": TypeTask.In_progress,
-            "times": {
-                "deadline": now + timedelta(days=5 + idx),
-                "start": now - timedelta(days=1),
-                "end": None,
-                "est_time": 8,
-                "spent": 2,
-                "expired_time": 0,
+        stages.append(
+            {
+                "name_stage": TypeStage.Production,
+                "worker_id": worker_id,
+                "status": TypeStatus.Completed,
+                "task_status": TypeTask.In_progress,
+                "times": {
+                    "deadline": now + timedelta(days=5 + idx),
+                    "start": now - timedelta(days=1),
+                    "end": None,
+                    "est_time": 8,
+                    "spent": 2,
+                    "expired_time": 0,
+                },
             }
-        })
+        )
 
         # Доставка (просрочена) для чётных индексов
         if idx % 2 == 0:
-            stages.append({
-                "name_stage": TypeStage.Delivery,
-                "worker_id": worker_id,
-                "status": TypeStatus.Canceled,
-                "task_status": TypeTask.Overdue,
-                "times": {
-                    "deadline": now - timedelta(days=1),
-                    "start": now - timedelta(days=3),
-                    "end": None,
-                    "est_time": 2,
-                    "spent": 2,
-                    "expired_time": 1,
+            stages.append(
+                {
+                    "name_stage": TypeStage.Delivery,
+                    "worker_id": worker_id,
+                    "status": TypeStatus.Canceled,
+                    "task_status": TypeTask.Overdue,
+                    "times": {
+                        "deadline": now - timedelta(days=1),
+                        "start": now - timedelta(days=3),
+                        "end": None,
+                        "est_time": 2,
+                        "spent": 2,
+                        "expired_time": 1,
+                    },
                 }
-            })
+            )
 
         # Монтаж (отменён) только для idx == 5
         if idx == 5:
-            stages.append({
-                "name_stage": TypeStage.Montage,
-                "worker_id": worker_id,
-                "status": TypeStatus.Canceled,
-                "task_status": TypeTask.Canceled,
-                "times": {
-                    "deadline": now + timedelta(days=10),
-                    "start": None,
-                    "end": None,
-                    "est_time": 5,
-                    "spent": 0,
-                    "expired_time": 0,
+            stages.append(
+                {
+                    "name_stage": TypeStage.Montage,
+                    "worker_id": worker_id,
+                    "status": TypeStatus.Canceled,
+                    "task_status": TypeTask.Canceled,
+                    "times": {
+                        "deadline": now + timedelta(days=10),
+                        "start": None,
+                        "end": None,
+                        "est_time": 5,
+                        "spent": 0,
+                        "expired_time": 0,
+                    },
                 }
-            })
+            )
 
         add_order(data, stages)
 
@@ -303,7 +336,7 @@ def seed_orders():
                 "est_time": 4,
                 "spent": 4,
                 "expired_time": 0,
-            }
+            },
         },
         {
             "name_stage": TypeStage.Production,
@@ -317,7 +350,7 @@ def seed_orders():
                 "est_time": 8,
                 "spent": 8,
                 "expired_time": 0,
-            }
+            },
         },
         {
             "name_stage": TypeStage.Delivery,
@@ -331,7 +364,7 @@ def seed_orders():
                 "est_time": 2,
                 "spent": 2,
                 "expired_time": 0,
-            }
+            },
         },
         {
             "name_stage": TypeStage.Montage,
@@ -345,7 +378,7 @@ def seed_orders():
                 "est_time": 5,
                 "spent": 5,
                 "expired_time": 0,
-            }
+            },
         },
         {
             "name_stage": TypeStage.Completed,
@@ -359,7 +392,7 @@ def seed_orders():
                 "est_time": 0,
                 "spent": 0,
                 "expired_time": 0,
-            }
+            },
         },
     ]
     add_order(completed_order_data, completed_stages)
@@ -393,10 +426,10 @@ def seed_orders():
                 "est_time": 4,
                 "spent": 4,
                 "expired_time": 0,
-            }
+            },
         },
         {
-            "name_stage": TypeStage.Canceled,   # специальный этап "Отменён"
+            "name_stage": TypeStage.Canceled,  # специальный этап "Отменён"
             "worker_id": worker_id,
             "status": TypeStatus.Canceled,
             "task_status": TypeTask.Canceled,
@@ -407,7 +440,7 @@ def seed_orders():
                 "est_time": 0,
                 "spent": 0,
                 "expired_time": 0,
-            }
+            },
         },
     ]
     add_order(canceled_order_data, canceled_stages)
@@ -416,6 +449,7 @@ def seed_orders():
     for order in orders:
         db.orders.update_one({"item": order["item"]}, {"$set": order}, upsert=True)
     print(f"Seeded {db.orders.count_documents({})} orders with stages")
+
 
 if __name__ == "__main__":
     try:
