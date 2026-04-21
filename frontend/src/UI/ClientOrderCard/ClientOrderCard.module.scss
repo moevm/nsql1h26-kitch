@@ -18,19 +18,12 @@
   box-sizing: border-box;
 }
 
-.orderTitle {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 4px;
-  align-self: stretch;
-  height: 55px;
+.mainTitle {
+  @include text-style(24px, 600, $on-surface-color, 28.8px);
 }
 
-.orderTitleText {
-  @include text-style(24px, 600, $on-surface-color, 28.8px);
-  align-self: stretch;
+.subTitle {
+  @include text-style(16px, 400, $secondary-color, 22.4px);
 }
 
 .statusChip {

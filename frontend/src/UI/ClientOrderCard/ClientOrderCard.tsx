@@ -5,18 +5,20 @@ import {CommonButton} from "../CommonButton/CommonButton.tsx";
 import type {Order} from "../../types/order.ts";
 import {useNavigate} from "react-router-dom";
 import {formatDate} from "../FormatFunctions.ts";
+import style from "../../pages/ClientPages/CreateOrderPage/CreateOrderPage.module.scss";
 
 const getOrderStatus = (stages: Order['stages']): { text: string; className: string } => {
-    const isCanceled = stages.some(stage => stage.status === "Отменён");
-    if (isCanceled) {
+    console.log(stages);
+
+    const lastStage = stages[stages.length - 1];
+    if (lastStage?.name_stage === "Отменён") {
         return {
             text: "Отменён",
             className: styles.statusCancelled
         };
     }
 
-    const allCompleted = stages.every(stage => stage.status === "Завершён");
-    if (allCompleted) {
+    if (lastStage?.name_stage === "Завершён") {
         return {
             text: "Завершён",
             className: styles.statusCompleted
@@ -24,12 +26,11 @@ const getOrderStatus = (stages: Order['stages']): { text: string; className: str
     }
 
     const currentStage = stages.find(stage =>
-        stage.task_status === "В процессе" ||
-        stage.task_status === "Доступна"
+        stage.task_status === "В процессе" || stage.task_status === "Доступна"
     );
 
     return {
-        text: currentStage?.status || "В обработке",
+        text: currentStage?.name_stage || "В процессе",
         className: styles.statusProcessing
     };
 };
@@ -57,10 +58,9 @@ export function ClientOrderCard({order}: ClientOrderCardProps): ReactElement {
         <div className={styles.cardContainer}>
 
             <div className={styles.orderIdGridItem}>
-                <div className={styles.orderTitle}>
-                    <div className={styles.orderTitleText}>
-                        {`Заказ №${order.id}`}
-                    </div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
+                    <div className={style.mainTitle}>{`Заказ №${order.id}`}</div>
+                    <div className={style.subTitle}>{`Дизайн: ${order.name_design} (${order.type})`}</div>
                 </div>
             </div>
 
