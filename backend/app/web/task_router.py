@@ -1,67 +1,98 @@
 from fastapi import APIRouter, HTTPException, Depends
+from typing import List
 from app.service.auth_service import get_current_user_dep
-from app.service.task_service import get_tasks_by_status
-from app.models.order import TypeTask
+from app.service.task_service import (
+    get_tasks,
+    get_tasks_by_worker,
+    take_task,
+    complete_task,
+)
+from app.models.order import Task
+from pydantic import BaseModel
 
-router = APIRouter(prefix="/api", tags=["task"])
-
-
-TASK_STATUS_MAP = {
-    "available": "Доступна",
-    "in_progress": "В процессе",
-    "completed": "Выполнена",
-    "overdue": "Просрочена",
-    "canceled": "Отменена",
-}
+router = APIRouter(prefix="/api", tags=["tasks"])
 
 
-@router.get("/tasks/{task_status}")
-async def get_tasks_by_status_admin(
-    task_status: str,
-    start: int = 0,
-    limit: int = -1,
+class TakeTaskRequest(BaseModel):
+    worker_id: str
+
+
+@router.get(
+    "/tasks",
+    response_model=List[Task],
+    summary="Получить список задач",
+    description="""
+    Возвращает задачи в зависимости от роли:
+    - **WORKER**: только свои задачи
+    - **ADMIN**: все задачи
+    """,
+)
+async def get_all_tasks(current_user: dict = Depends(get_current_user_dep)):
+    return await get_tasks(current_user["user_id"], current_user["role"])
+
+
+@router.get(
+    "/tasks/worker/{worker_id}",
+    response_model=List[Task],
+    summary="Получить задачи рабочего по ID",
+    description="""
+    Возвращает все задачи в которых участвовал рабочий:
+    - **WORKER**: только свои задачи
+    - **ADMIN**: задачи любого рабочего
+    """,
+)
+async def get_worker_tasks(
+    worker_id: str, current_user: dict = Depends(get_current_user_dep)
+):
+    return await get_tasks_by_worker(
+        worker_id=current_user["user_id"],
+        role=current_user["role"],
+        target_worker_id=worker_id,
+    )
+
+
+@router.patch(
+    "/tasks/{order_id}/{stage_index}/take",
+    response_model=dict,
+    summary="Взять задачу в работу",
+    description="""
+    Назначает рабочего на этап и ставит статус **В процессе**.
+    Можно взять только задачу со статусом **Доступна** без назначенного рабочего.
+    - **WORKER**: назначает себя
+    - **ADMIN**: назначает любого
+    """,
+)
+async def take_task_endpoint(
+    order_id: str,
+    stage_index: int,
+    body: TakeTaskRequest,
     current_user: dict = Depends(get_current_user_dep),
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Доступ только для админа")
-
-    if task_status not in TASK_STATUS_MAP:
-        raise HTTPException(status_code=400, detail="Неверный статус задачи")
-
-    try:
-        db_status = TypeTask(TASK_STATUS_MAP[task_status])
-    except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Некорректное значение статуса задачи"
-        )
-
-    return await get_tasks_by_status(db_status, start, limit, worker_id=None)
+    return await take_task(
+        order_id=order_id,
+        stage_index=stage_index,
+        worker_id=body.worker_id,
+        role=current_user["role"],
+    )
 
 
-@router.get("/worker/tasks/{task_status}")
-async def get_tasks_by_status_worker(
-    task_status: str,
-    start: int = 0,
-    limit: int = -1,
-    current_user: dict = Depends(get_current_user_dep),
+@router.patch(
+    "/tasks/{order_id}/{stage_index}/complete",
+    response_model=dict,
+    summary="Завершить задачу",
+    description="""
+    Завершает текущий этап и открывает следующий.
+    Статус следующего этапа становится **Доступна**.
+    - **WORKER**: только свою задачу
+    - **ADMIN**: любую задачу
+    """,
+)
+async def complete_task_endpoint(
+    order_id: str, stage_index: int, current_user: dict = Depends(get_current_user_dep)
 ):
-    if task_status not in TASK_STATUS_MAP:
-        raise HTTPException(status_code=400, detail="Неверный статус задачи")
-
-    try:
-        db_status = TypeTask(TASK_STATUS_MAP[task_status])
-    except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Некорректное значение статуса задачи"
-        )
-
-    worker_id = None
-    if current_user["role"] == "worker":
-        worker_id = current_user["user_id"]
-    else:
-        raise HTTPException(status_code=403, detail="Доступ только для работников")
-
-    if worker_id is None:
-        raise HTTPException(status_code=400, detail="Некорректный id работника")
-
-    return await get_tasks_by_status(db_status, start, limit, worker_id)
+    return await complete_task(
+        order_id=order_id,
+        stage_index=stage_index,
+        worker_id=current_user["user_id"],
+        role=current_user["role"],
+    )

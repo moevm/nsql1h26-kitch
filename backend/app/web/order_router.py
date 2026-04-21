@@ -6,21 +6,21 @@ from app.service.order_service import (
     create_new_order,
     cancel_order,
     get_orders_by_user_role,
-    get_filtered_orders_for_client
+    get_filtered_orders_for_client,
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
 from datetime import datetime
 
-
-ALLOWED_SORTED_FIELDS = {"created_at", 
-                         "name_design", 
-                         "type",
-                         "material",
-                         "stage",
-                         "deadline",
-                         "total_price"
-                         }
+ALLOWED_SORTED_FIELDS = {
+    "created_at",
+    "name_design",
+    "type",
+    "material",
+    "stage",
+    "deadline",
+    "total_price",
+}
 
 
 router = APIRouter(prefix="/api", tags=["orders"])
@@ -34,21 +34,21 @@ router = APIRouter(prefix="/api", tags=["orders"])
     """,
 )
 async def get_filtered_orders_client(name_design: str = None,
-                                     type: TypeDesign = None,
-                                     material: str = None,
-                                     stage: TypeStage = None,
-                                     min_price: int = None,
-                                     max_price: int = None,
-                                     from_created: Optional[datetime] = None,
-                                     to_created: Optional[datetime] = None,
-                                     from_deadline: Optional[datetime] = None,
-                                     to_deadline: Optional[datetime] = None,
-                                     sort_by: str = "created_at",
-                                     sort: str = "ASC",
-                                     start: int = 0,
-                                     limit: int = -1,
-                                     current_user: dict = Depends(get_current_user_dep)
-                                     ):
+    type: TypeDesign = None,
+    material: str = None,
+    stage: TypeStage = None,
+    min_price: int = None,
+    max_price: int = None,
+    from_created: Optional[datetime] = None,
+    to_created: Optional[datetime] = None,
+    from_deadline: Optional[datetime] = None,
+    to_deadline: Optional[datetime] = None,
+    sort_by: str = "created_at",
+    sort: str = "ASC",
+    start: int = 0,
+    limit: int = -1,
+    current_user: dict = Depends(get_current_user_dep)
+):
     if current_user["role"] != "client":
         raise HTTPException(status_code=403, detail="Только клиенты могу фильтровать свои заказы")
 
