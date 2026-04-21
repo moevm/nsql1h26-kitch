@@ -19,7 +19,7 @@ export const useOrder = (id: string) => {
 
 export const useFilteredOrders = (filters: FilterParams) => {
     return useQuery({
-        queryKey: ['orders', 'filtered', filters],
+        queryKey: ['orders', 'filter', JSON.stringify(filters)],
         queryFn: () => ordersAPI.getFiltered(filters),
         enabled: true,
     });

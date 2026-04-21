@@ -25,6 +25,64 @@ ALLOWED_SORTED_FIELDS = {"created_at",
 
 router = APIRouter(prefix="/api", tags=["orders"])
 
+@router.get(
+    "/orders/filter",
+    response_model=List[Order],
+    summary="Получить отфильтрованные заказы покупателю",
+    description="""
+    Возвращает отфильтрованные заказы для клиента с регистронезависимым поиском
+    """,
+)
+async def get_filtered_orders_client(name_design: str = None,
+                                     type: TypeDesign = None,
+                                     material: str = None,
+                                     stage: TypeStage = None,
+                                     min_price: int = None,
+                                     max_price: int = None,
+                                     from_created: Optional[datetime] = None,
+                                     to_created: Optional[datetime] = None,
+                                     from_deadline: Optional[datetime] = None,
+                                     to_deadline: Optional[datetime] = None,
+                                     sort_by: str = "created_at",
+                                     sort: str = "ASC",
+                                     start: int = 0,
+                                     limit: int = -1,
+                                     current_user: dict = Depends(get_current_user_dep)
+                                     ):
+    if current_user["role"] != "client":
+        raise HTTPException(status_code=403, detail="Только клиенты могу фильтровать свои заказы")
+
+    if sort_by not in ALLOWED_SORTED_FIELDS:
+        raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
+
+    if sort.upper() not in {"ASC","DESC"}:
+        raise HTTPException(status_code=400, detail="sort может быть только 'ASC' или 'DESC'")
+    sort_direction = 1 if sort.upper() == "ASC" else -1
+
+    if limit < -1:
+        limit = 1
+    elif limit == 0:
+        raise HTTPException(status_code=400, detail="limit должен быть больше 0")
+
+    orders = await get_filtered_orders_for_client(
+        client_id=current_user["user_id"],
+        name_design=name_design,
+        type=type,
+        material=material,
+        stage=stage,
+        min_price=min_price,
+        max_price=max_price,
+        from_created=from_created,
+        to_created=to_created,
+        from_deadline=from_deadline,
+        to_deadline=to_deadline,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        skip=start,
+        limit=limit
+    )
+
+    return orders
 
 @router.get(
     "/orders",
@@ -80,67 +138,6 @@ async def get_order(order_id: str, current_user: dict = Depends(get_current_user
         return order
 
     raise HTTPException(status_code=403, detail="Недостаточно прав")
-
-
-@router.get(
-    "/orders/filter/",
-    response_model=List[Order],
-    summary="Получить отфильтрованные заказы покупателю",
-    description="""
-    Возвращает отфильтрованные заказы для клиента с регистронезависимым поиском
-    """,
-)
-async def get_filtered_orders_client(name_design: str = None,
-                              type: TypeDesign = None,
-                              material: str = None,
-                              stage: TypeStage = None,
-                              min_price: int = None,
-                              max_price: int = None,
-                              from_created: Optional[datetime] = None,
-                              to_created: Optional[datetime] = None,
-                              from_deadline: Optional[datetime] = None,
-                              to_deadline: Optional[datetime] = None,
-                              sort_by: str = "created_at",
-                              sort: str = "ASC",
-                              start: int = 0,
-                              limit: int = -1,
-                              current_user: dict = Depends(get_current_user_dep)
-                              ):
-    if current_user["role"] != "client":
-        raise HTTPException(status_code=403, detail="Только клиенты могу фильтровать свои заказы")
-    
-    if sort_by not in ALLOWED_SORTED_FIELDS:
-        raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
-
-    if sort.upper() not in {"ASC","DESC"}:
-        raise HTTPException(status_code=400, detail="sort может быть только 'ASC' или 'DESC'")
-    sort_direction = 1 if sort.upper() == "ASC" else -1
-
-    if limit < -1:
-        limit = 1
-    elif limit == 0:
-        raise HTTPException(status_code=400, detail="limit должен быть больше 0")
-    
-    orders = await get_filtered_orders_for_client(
-        client_id=current_user["user_id"],
-        name_design=name_design,
-        type=type,
-        material=material,
-        stage=stage,
-        min_price=min_price,
-        max_price=max_price,
-        from_created=from_created,
-        to_created=to_created,
-        from_deadline=from_deadline,
-        to_deadline=to_deadline,
-        sort_by=sort_by,
-        sort_direction=sort_direction,
-        skip=start,
-        limit=limit
-    )
-
-    return orders
-
 
 @router.post(
     "/orders/new",

@@ -24,3 +24,24 @@
   padding-top: 24px;
   width: 100%;
 }
+
+.loadingState,
+.errorState,
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  font-size: 18px;
+  color: $on-surface-color;
+  background: $surface-color;
+  border-radius: 12px;
+  width: 100%;
+}
+
+.errorState {
+  color: $red-color;
+  background: rgba($red-color, 0.05);
+}
+
+.emptyState {
+  color: $secondary-color;
+}
