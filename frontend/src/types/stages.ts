@@ -17,7 +17,7 @@ export type TypeTask =
     | "Отменена";
 
 export interface Stages {
-    name: TypeStage;
+    name_stage: TypeStage;
     worker_id: string;
     status: TypeStage;
     task_status: TypeTask;

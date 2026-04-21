@@ -5,9 +5,11 @@
   width: 100%;
   margin-bottom: 32px;
   background: $surface-color;
+  box-shadow: $box-shadow;
   border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.10);
+  outline-offset: -1px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .filterBar {
