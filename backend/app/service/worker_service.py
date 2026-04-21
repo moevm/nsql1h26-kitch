@@ -66,7 +66,7 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
         work_day_end=work_end,
         comment=worker_db.worker_info.comment if worker_db.worker_info else None,
         date_of_employment = worker_db.worker_info.date_of_employment if worker_db.worker_info else None,
-        date_of_remove = worker_db.worker_info.date_of_remove if is_active else None,
+        date_of_remove = worker_db.worker_info.date_of_remove,
         is_active=is_active,
         created_at=worker_db.created_at,
         updated_at=worker_db.updated_at
