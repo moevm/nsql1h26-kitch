@@ -1,6 +1,6 @@
 import type {Times} from "./times.ts";
 
-export type TypeStatus =
+export type TypeStage =
     | "Раскрой"
     | "Производство"
     | "Доставка"
@@ -17,9 +17,9 @@ export type TypeTask =
     | "Отменена";
 
 export interface Stages {
-    name: string;
+    name: TypeStage;
     worker_id: string;
-    status: TypeStatus;
+    status: TypeStage;
     task_status: TypeTask;
     times: Times;
 }

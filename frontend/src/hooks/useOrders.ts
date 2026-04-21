@@ -1,5 +1,5 @@
 import {useMutation, useQuery} from "@tanstack/react-query";
-import {ordersAPI} from "../api/orders.ts";
+import {type FilterParams, ordersAPI} from "../api/orders.ts";
 import type {OrderCreate} from "../types/order.ts";
 
 export const useOrders = () => {
@@ -14,6 +14,14 @@ export const useOrder = (id: string) => {
         queryKey: ['orders', id],
         queryFn: () => ordersAPI.getById(id),
         enabled: !!id,
+    });
+}
+
+export const useFilteredOrders = (filters: FilterParams) => {
+    return useQuery({
+        queryKey: ['orders', 'filtered', filters],
+        queryFn: () => ordersAPI.getFiltered(filters),
+        enabled: true,
     });
 }
 
