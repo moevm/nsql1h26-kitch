@@ -1,15 +1,17 @@
-import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
-import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
-import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
-import {PasswordRecoverPage} from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
-import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { LoginPage } from "./pages/LoginPage/LoginPage.tsx";
+import { RegisterPage } from "./pages/RegisterPage/RegisterPage.tsx";
+import { PasswordRecoverPage } from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
+import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
-import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
-import {ProductsPage} from "./pages/ProductsPage/ProductsPage.tsx";
+import { ClientLayout } from "./layouts/ClientLayout/ClientLayout.tsx";
+import { ProductsPage } from "./pages/ProductsPage/ProductsPage.tsx";
 
-import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
+import { WorkerLayout } from "./layouts/WorkerLayout/WorkerLayout.tsx";
 
-import {AdminLayout} from "./layouts/AdminLayout/AdminLayout.tsx";
+import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
+import { AdminEmployeesPage } from "./pages/AdminEmployeesPage/AdminEmployeesPage.tsx";
+import { EmployeeProfilePage } from "./pages/EmployeeProfilePage/EmployeeProfilePage.tsx";
 
 function AppRoutes() {
     return (
@@ -47,7 +49,8 @@ function AppRoutes() {
             }>
                 <Route path="/admin/orders"     element={<div>ADMIN ORDERS</div>}/>
                 <Route path="/admin/finances"   element={<div>ADMIN FINANCES</div>}/>
-                <Route path="/admin/employees"  element={<div>ADMIN EMPLOYEES</div>}/>
+                <Route path="/admin/employees"  element={<AdminEmployeesPage />}/>
+                <Route path="/admin/employees/:id" element={<EmployeeProfilePage />}/>
             </Route>
 
         </Routes>
