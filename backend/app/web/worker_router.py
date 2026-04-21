@@ -81,7 +81,7 @@ async def edit_worker_profile(worker_id: str, worker_data: WorkerUpdate, current
 
 
 @router.delete(
-    "/workers/{id}",
+    "/workers/{worker_id}",
     status_code=200,
     response_model=dict,
     summary="Мягкое удаление работника",
