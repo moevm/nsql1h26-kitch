@@ -8,6 +8,14 @@ import defaultImage from "../../assets/image_sample.png";
 import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
 import {formatDate} from "../../UI/FormatFunctions.ts";
 
+const getStageEndDate = (order: Order, stageName: string): string => {
+    const stage = order.stages.find(s => s.name_stage === stageName);
+    if (stage?.times?.end) {
+        return formatDate(stage.times.end);
+    }
+    return "-";
+};
+
 export function OrderDetailsPage(): ReactElement {
     const location = useLocation();
     const navigate = useNavigate();
@@ -111,28 +119,28 @@ export function OrderDetailsPage(): ReactElement {
             <div className={style.stagesGridItem}>
                 <CommonInfoField
                     label={"Раскрой"}
-                    value={"-"}
+                    value={getStageEndDate(order, "Раскрой")}
                 />
             </div>
 
             <div className={style.stagesGridItem}>
                 <CommonInfoField
                     label={"Производство"}
-                    value={"-"}
+                    value={getStageEndDate(order, "Производство")}
                 />
             </div>
 
             <div className={style.stagesGridItem}>
                 <CommonInfoField
                     label={"Доставка"}
-                    value={"-"}
+                    value={getStageEndDate(order, "Доставка")}
                 />
             </div>
 
             <div className={style.stagesGridItem}>
                 <CommonInfoField
                     label={"Монтаж"}
-                    value={"-"}
+                    value={getStageEndDate(order, "Монтаж")}
                 />
             </div>
 
