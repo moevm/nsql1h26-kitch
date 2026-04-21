@@ -49,7 +49,7 @@ export function OrdersPage(): ReactElement {
 
     return (
         <div className={styles.ordersPageContainer}>
-            <OrdersFilter onFilterChange={handleFilterChange} />
+            <OrdersFilter onFilterChange={handleFilterChange} initialFilters={filters} />
 
             {orders && orders.length === 0 ? (
                 <div className={styles.emptyState}>

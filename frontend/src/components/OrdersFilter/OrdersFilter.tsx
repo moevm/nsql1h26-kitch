@@ -39,15 +39,46 @@ const stageOptions: Option[] = [
     { value: 7, label: 'Отменён' },
 ];
 
-export function OrdersFilter({onFilterChange}: OrdersFilterProps): ReactElement {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [sortBy, setSortBy] = useState<number | null>(1);
-    const [designType, setDesignType] = useState<number | null>(1);
-    const [stage, setStage] = useState<number | null>(1);
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-    const [priceMin, setPriceMin] = useState('');
-    const [priceMax, setPriceMax] = useState('');
+const getDesignTypeValueFromString = (type: string | undefined): number => {
+    switch (type) {
+        case 'Линейная': return 2;
+        case 'Г-образная': return 3;
+        case 'П-образная': return 4;
+        case 'Островная': return 5;
+        case 'Двухлинейная': return 6;
+        default: return 1;
+    }
+};
+
+const getStageValueFromString = (stage: string | undefined): number => {
+    switch (stage) {
+        case 'Раскрой': return 2;
+        case 'Производство': return 3;
+        case 'Доставка': return 4;
+        case 'Монтаж': return 5;
+        case 'Завершён': return 6;
+        case 'Отменён': return 7;
+        default: return 1;
+    }
+};
+
+const getSortValueFromParams = (sortBy: string | undefined, sort: 'ASC' | 'DESC' | undefined): number => {
+    if (sortBy === 'total_price' && sort === 'ASC') return 2;
+    if (sortBy === 'total_price' && sort === 'DESC') return 3;
+    if (sortBy === 'created_at' && sort === 'DESC') return 4;
+    if (sortBy === 'created_at' && sort === 'ASC') return 5;
+    return 1;
+};
+
+export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps): ReactElement {
+    const [searchQuery, setSearchQuery] = useState(initialFilters?.name_design || "");
+    const [sortBy, setSortBy] = useState<number | null>(getSortValueFromParams(initialFilters?.sort_by, initialFilters?.sort));
+    const [designType, setDesignType] = useState<number | null>(getDesignTypeValueFromString(initialFilters?.type));
+    const [stage, setStage] = useState<number | null>(getStageValueFromString(initialFilters?.stage));
+    const [dateFrom, setDateFrom] = useState(initialFilters?.from_created || "");
+    const [dateTo, setDateTo] = useState(initialFilters?.to_created || "");
+    const [priceMin, setPriceMin] = useState(initialFilters?.min_price ? String(initialFilters.min_price) : "");
+    const [priceMax, setPriceMax] = useState(initialFilters?.max_price ? String(initialFilters.max_price) : "");
 
     const getSortParams = (sortValue: number | null): { sort_by: string; sort: 'ASC' | 'DESC' } => {
         switch (sortValue) {
