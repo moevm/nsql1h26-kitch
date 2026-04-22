@@ -1,4 +1,3 @@
-// frontend/src/pages/AdminEmployeesPage/AdminEmployeesPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkers } from '../../hooks/useWorkers';
@@ -61,7 +60,6 @@ export const AdminEmployeesPage: React.FC = () => {
                                         title="Профиль"
                                         variant="text"
                                         onClick={() => {
-                                            console.log('Переход на профиль с ID:', worker.id);
                                             navigate(`/admin/employees/${worker.id}`);
                                         }}
                                     />
