@@ -64,7 +64,10 @@ async def get_worker_by_id(worker_id: str) -> WorkerInDB | None:
 
 
 async def create_new_worker(worker: WorkerInDB) -> str:
-    result = await users_collection.insert_one(worker.model_dump(by_alias=True))
+    data = worker.model_dump(by_alias=True)
+    if "_id" in data and isinstance(data["_id"], str):
+        data["_id"] = ObjectId(data["_id"])
+    result = await users_collection.insert_one(data)
     return str(result.inserted_id)
 
 
@@ -82,9 +85,10 @@ async def edit_worker_by_id(worker_id: str, update_dict: dict) -> bool:
 async def delete_worker_by_id(worker_id: str) -> bool:
     result = await users_collection.update_one(
         {"_id": ObjectId(worker_id), "role": "worker"},
-        {"$set":{
+        {"$set": {
             "worker_info.date_of_remove": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }}
     )
+    print(f"Matched: {result.matched_count}, Modified: {result.modified_count}")
     return result.modified_count > 0

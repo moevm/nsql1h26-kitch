@@ -1,14 +1,22 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { LoginPage } from "./pages/LoginPage/LoginPage.tsx";
-import { RegisterPage } from "./pages/RegisterPage/RegisterPage.tsx";
-import { PasswordRecoverPage } from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
-import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute.tsx";
+import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 
-import { ClientLayout } from "./layouts/ClientLayout/ClientLayout.tsx";
-import { ProductsPage } from "./pages/ProductsPage/ProductsPage.tsx";
+// common elements
+import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
+import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
+import {PasswordRecoverPage} from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
+import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
-import { WorkerLayout } from "./layouts/WorkerLayout/WorkerLayout.tsx";
+// client elements
+import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
+import {ProductsPage} from "./pages/ClientPages/ProductsPage/ProductsPage.tsx";
+import {CreateOrderPage} from "./pages/ClientPages/CreateOrderPage/CreateOrderPage.tsx";
+import {OrdersPage} from "./pages/ClientPages/OrdersPage/OrdersPage.tsx";
+import {OrderDetailsPage} from "./pages/OrderDatailsPage/OrderDatailsPage.tsx";
 
+// worker elements
+import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
+
+// admin elements
 import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
 import { AdminEmployeesPage } from "./pages/AdminEmployeesPage/AdminEmployeesPage.tsx";
 import { EmployeeProfilePage } from "./pages/EmployeeProfilePage/EmployeeProfilePage.tsx";
@@ -22,14 +30,18 @@ function AppRoutes() {
             <Route path="/register"         element={<RegisterPage />} />
             <Route path="/password_recover" element={<PasswordRecoverPage />} />
 
+            <Route element={<ClientLayout />}>
+                <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+            </Route>
+
             <Route element={
                 <ProtectedRoute allowedRoles={['client']}>
                     <ClientLayout />
                 </ProtectedRoute>
             }>
                 <Route path="/products"         element={<ProductsPage />}/>
-                <Route path="/orders/create"    element={<div>CREATE ORDER</div>}/>
-                <Route path="/orders"           element={<div>ORDERS</div>}/>
+                <Route path="/orders/create"    element={<CreateOrderPage />}/>
+                <Route path="/orders"           element={<OrdersPage />}/>
             </Route>
 
             <Route element={

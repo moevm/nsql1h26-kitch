@@ -34,9 +34,9 @@ class Times(BaseModel):
     deadline: Optional[datetime] = None
     start: Optional[datetime] = None
     end: Optional[datetime] = None
-    est_time: int #оценочное время выполнения в минутах
-    spent: int #фактически затраченное время в минутах
-    expired_time: int #время просрочки в минутах
+    est_time: int  # оценочное время выполнения в минутах
+    spent: int  # фактически затраченное время в минутах
+    expired_time: int  # время просрочки в минутах
 
 
 class TypeStage(str, Enum):
@@ -61,6 +61,7 @@ class TypeStatus(str, Enum):
     In_progress = "В процессе"
     Completed = "Завершён"
     Canceled = "Отменён"
+
 
 class Stages(BaseModel):
     name_stage: TypeStage
@@ -100,6 +101,7 @@ class Order(BaseModel):
     color: Color
     need_material: int
     blueprint: int
+    created_at: datetime
 
 
 class OrderInDB(MongoBase):
@@ -154,3 +156,16 @@ class OrderCreate(BaseModel):
     material_price: int
     delivery_price: int
     comment_price: int
+
+
+class Task(BaseModel):
+    order_id: str
+    stage_index: int
+    stage_name: TypeStage
+    status: TypeTask
+    name_design: str
+    type: TypeDesign
+    color: Color
+    material: str
+    times: Times
+    worker_id: str

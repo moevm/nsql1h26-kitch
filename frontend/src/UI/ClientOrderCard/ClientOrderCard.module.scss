@@ -1,0 +1,75 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.cardContainer {
+  width: 1332px;
+  height: 128px;
+  background: $surface-color;
+  box-shadow: $box-shadow;
+  overflow: visible;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.10);
+  outline-offset: -1px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(1, 1fr);
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.mainTitle {
+  @include text-style(24px, 600, $on-surface-color, 28.8px);
+}
+
+.subTitle {
+  @include text-style(16px, 400, $secondary-color, 22.4px);
+}
+
+.statusChip {
+  width: 130px;
+  height: 65px;
+  padding: 10px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.statusCancelled {
+  background: $red-color;
+}
+
+.statusCompleted {
+  background: $green-color;
+}
+
+.statusProcessing {
+  background: $yellow-color;
+}
+
+.statusText {
+  @include text-style(16px, 600, $on-primary-color, 19.2px);
+  text-align: center;
+  width: 100%;
+}
+
+/* ---------- grid items ---------- */
+
+.orderIdGridItem {
+  grid-column: span 3;
+  grid-row: span 1;
+  align-content: center;
+}
+
+.totalPriceGridItem,
+.creationDateGridItem,
+.endDateGridItem,
+.statusGridItem,
+.infoButtonGridItem {
+  grid-column: span 1;
+  grid-row: span 1;
+  align-content: center;
+}

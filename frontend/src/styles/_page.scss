@@ -1,16 +1,20 @@
 .page {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: white;
+  overflow: hidden;
 }
 
 .layoutBody {
   width: 100%;
   padding: 96px 64px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center;
+  align-items: flex-start;
   gap: 32px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
