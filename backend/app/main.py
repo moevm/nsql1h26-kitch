@@ -8,6 +8,7 @@ from app.web.material_router import router as material_router
 from app.web.design_router import router as design_router
 from app.web.order_router import router as order_router
 from app.web.task_router import router as task_router
+from app.web.worker_router import router as worker_router
 
 
 @asynccontextmanager
@@ -40,6 +41,7 @@ app.include_router(material_router)
 app.include_router(design_router)
 app.include_router(order_router)
 app.include_router(task_router)
+app.include_router(worker_router)
 
 
 @app.get("/")
