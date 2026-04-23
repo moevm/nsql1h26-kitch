@@ -1,16 +1,24 @@
-import {type ReactElement, useState} from 'react';
+import { type ReactElement, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useWorkers } from '../../../hooks/useWorkers.ts';
+import { useFilteredWorkers } from '../../../hooks/useWorkers.ts';
 import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
 import { AddEmployeeModal } from './AddEmployeeModal.tsx';
+import { WorkerCard } from '../../../UI/WorkerCard/WorkerCard.tsx';
+import { WorkersFilter } from '../../../components/WorkersFilter/WorkersFilter.tsx';
+import type { WorkerFilterParams } from '../../../api/workers.ts';
 import styles from './AdminEmployeesPage.module.scss';
 import type {WorkerPublic} from "../../../types/worker.ts";
-import {WorkerCard} from "../../../UI/WorkerCard/WorkerCard.tsx";
 
 export function AdminEmployeesPage(): ReactElement {
     const navigate = useNavigate();
-    const { data: workers, isLoading, error, refetch } = useWorkers();
     const [modalOpen, setModalOpen] = useState(false);
+    const [filters, setFilters] = useState<WorkerFilterParams>({});
+
+    const { data: workers, isLoading, error, refetch } = useFilteredWorkers(filters);
+
+    const handleFilterChange = useCallback((newFilters: Partial<WorkerFilterParams>) => {
+        setFilters(newFilters);
+    }, []);
 
     const handleModalClose = () => {
         setModalOpen(false);
@@ -31,6 +39,11 @@ export function AdminEmployeesPage(): ReactElement {
 
     return (
         <div className={styles.container}>
+            <WorkersFilter
+                onFilterChange={handleFilterChange}
+                initialFilters={filters}
+            />
+
             <div className={styles.addButtonWrapper}>
                 <CommonButton
                     title="Добавить сотрудника"
@@ -40,7 +53,11 @@ export function AdminEmployeesPage(): ReactElement {
             </div>
 
             {workers && workers.length === 0 ? (
-                <div className={styles.empty}>Нет сотрудников. Добавьте первого.</div>
+                <div className={styles.empty}>
+                    {Object.keys(filters).length > 0
+                        ? 'Нет сотрудников, соответствующих фильтрам'
+                        : 'Нет сотрудников. Добавьте первого.'}
+                </div>
             ) : (
                 <div className={styles.cardsContainer}>
                     {workers?.map((worker) => (
@@ -52,7 +69,6 @@ export function AdminEmployeesPage(): ReactElement {
                     ))}
                 </div>
             )}
-
 
             <AddEmployeeModal open={modalOpen} onClose={handleModalClose} />
         </div>

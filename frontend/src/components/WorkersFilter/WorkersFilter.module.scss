@@ -1,0 +1,102 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.filterContainer {
+  width: 100%;
+  margin-bottom: 32px;
+  background: $surface-color;
+  box-shadow: $box-shadow;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.10);
+  outline-offset: -1px;
+  padding: 24px;
+}
+
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px;
+  width: 100%;
+}
+
+.searchField {
+  flex: 2;
+  min-width: 200px;
+}
+
+.filterField {
+  flex: 1;
+  min-width: 160px;
+}
+
+.workdayRangeField {
+  flex: 1.5;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.taskRangeField {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dateRangeField {
+  flex: 1.5;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  @include text-style(16px, 400, $on-surface-color, 22.4px);
+  align-self: stretch;
+}
+
+.timeInputs, .rangeInputs, .dateInputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  > div {
+    flex: 1;
+    min-height: auto;
+
+    > div:first-child {
+      display: none;
+    }
+  }
+}
+
+.separator {
+  color: $on-surface-color;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+
+  button {
+    white-space: nowrap;
+    padding: 0 24px;
+    width: auto;
+    min-width: 120px;
+  }
+}

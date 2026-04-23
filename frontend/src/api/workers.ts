@@ -1,9 +1,39 @@
 import { apiClient } from './client';
 import type { WorkerCreate, WorkerUpdate, WorkerPublic } from '../types/worker';
 
+export interface WorkerFilterParams {
+    name_worker?: string;
+    worker_position?: string;
+    start_workday?: string;
+    end_workday?: string;
+    min_completed_tasks?: number;
+    max_completed_tasks?: number;
+    min_overdue_tasks?: number;
+    max_overdue_tasks?: number;
+    min_failed_tasks?: number;
+    max_failed_tasks?: number;
+    from_created?: string;
+    to_created?: string;
+    sort_by?:
+        'created_at' |
+        'name_worker' |
+        'worker_position' |
+        'count_completed_tasks' |
+        'count_overdue_tasks' |
+        'count_failed_tasks';
+    sort?: 'ASC' | 'DESC';
+    start?: number;
+    limit?: number;
+}
+
 export const workersAPI = {
     getAll: async (): Promise<WorkerPublic[]> => {
         const response = await apiClient.get<WorkerPublic[]>('/workers');
+        return response.data;
+    },
+
+    getFiltered: async (params: WorkerFilterParams): Promise<WorkerPublic[]> => {
+        const response = await apiClient.get<WorkerPublic[]>('/workers/filter', { params });
         return response.data;
     },
 
