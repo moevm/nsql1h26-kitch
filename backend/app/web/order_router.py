@@ -7,6 +7,7 @@ from app.service.order_service import (
     cancel_order,
     get_orders_by_user_role,
     get_filtered_orders_for_client,
+    next_stage
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
@@ -185,3 +186,23 @@ async def cancel_order_endpoint(
         order_id=order_id, user_id=current_user["user_id"], role=current_user["role"]
     )
     return result
+
+
+
+@router.post(
+    "/next_stage/{order_id}",
+    status_code=200,
+    response_model=dict,
+    summary="Перевести заказ на следующий этап",
+    description="""
+    Добавляет новый этап в заказ после завершения текущего.
+    Последовательность: Раскрой → Производство → Доставка → Монтаж → Завершён
+    - **WORKER**: только для своих заказов
+    - **ADMIN**: для любого заказа
+    """
+)
+async def next_stage_endpoint(
+    order_id: str,
+    current_user: dict = Depends(get_current_user_dep)
+):
+    return await next_stage(order_id, current_user["role"])
