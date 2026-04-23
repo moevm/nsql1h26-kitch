@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useWorker, useUpdateWorker, useDeleteWorker } from '../../hooks/useWorkers';
-import { CommonInputField } from '../../UI/CommonInputField/CommonInputField';
-import { CommonButton } from '../../UI/CommonButton/CommonButton';
-import type { WorkerUpdate } from '../../types/worker';
+import { useWorker, useUpdateWorker, useDeleteWorker } from '../../../hooks/useWorkers.ts';
+import { CommonInputField } from '../../../UI/CommonInputField/CommonInputField.tsx';
+import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
+import type { WorkerUpdate } from '../../../types/worker.ts';
 import styles from './EmployeeProfilePage.module.scss';
 
 export const EmployeeProfilePage: React.FC = () => {

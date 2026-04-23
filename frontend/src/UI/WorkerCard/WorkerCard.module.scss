@@ -1,0 +1,36 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.card {
+  width: 1400px;
+  padding: 10px;
+  background: $surface-color;
+  box-shadow: $box-shadow;
+  border-radius: 16px;
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+
+.field {
+  flex: 1 1 0;
+  min-width: 0;
+
+  &:last-child {
+    width: 208px;
+    flex: 0 0 auto;
+  }
+}
+
+.buttonWrapper {
+  flex: 0 0 auto;
+  width: 208px;
+
+  button {
+    padding-left: 73px;
+    padding-right: 73px;
+  }
+}

@@ -1,7 +1,7 @@
 import {useState, type ReactElement} from "react";
 import styles from "./PasswordRecoverPage.module.scss"
-import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
-import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
+import {CommonInputField} from "../../../UI/CommonInputField/CommonInputField.tsx";
+import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
 import {useNavigate} from "react-router-dom";
 import {Container} from "@mui/material";
 

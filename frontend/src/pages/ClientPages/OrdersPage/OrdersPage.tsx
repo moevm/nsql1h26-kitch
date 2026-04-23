@@ -43,7 +43,6 @@ export function OrdersPage(): ReactElement {
     }
 
     if (error) {
-        console.log(error);
         return <div className={styles.errorState}>Ошибка загрузки: {error.message}</div>;
     }
 
