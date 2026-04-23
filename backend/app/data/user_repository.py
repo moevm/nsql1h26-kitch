@@ -1,9 +1,17 @@
 from bson import ObjectId
 from app.data.database import db
 from app.models.user import UserInDB, WorkerInDB
-from typing import List
 from datetime import datetime, timezone
+from typing import Optional, List
 
+SORT_FIELD_MAP = {
+    "name_worker": "username",
+    "worker_position": "last_position",
+    "count_completed_tasks": "completed_tasks",
+    "count_overdue_tasks": "overdue_tasks",
+    "count_failed_tasks": "failed_tasks",
+    "created_at": "created_at"
+}
 
 users_collection = db["users"]
 
@@ -92,3 +100,192 @@ async def delete_worker_by_id(worker_id: str) -> bool:
     )
     print(f"Matched: {result.matched_count}, Modified: {result.modified_count}")
     return result.modified_count > 0
+
+
+async def get_filtered_workers_for_admin(
+        name_worker: Optional[str],
+        worker_position: Optional[str],
+        start_workday: Optional[str],
+        end_workday: Optional[str],
+        min_completed_tasks: int,
+        max_completed_tasks: int,
+        min_overdue_tasks: int,
+        max_overdue_tasks: int,
+        min_failed_tasks: int,
+        max_failed_tasks: int,
+        from_created: Optional[datetime],
+        to_created: Optional[datetime],
+        sort_by: str,
+        sort_direction: int,
+        skip: int,
+        limit: int
+) -> List[dict]:
+    if limit == 0:
+        return []
+    elif limit <= -1:
+        limit = 1000
+
+    try:
+        match_filter = {"role": "worker"}
+
+        if name_worker is not None:
+            match_filter["username"] = {"$regex": name_worker, "$options": "i"}
+
+        workday_filter = {}
+        if start_workday is not None:
+            workday_filter["$gte"] = start_workday
+        if end_workday is not None:
+            workday_filter["$lte"] = end_workday
+        if workday_filter:
+            match_filter["worker_info.work_day_start"] = workday_filter
+            match_filter["worker_info.work_day_end"] = workday_filter
+
+        created_filter = {}
+        if from_created is not None:
+            created_filter["$gte"] = from_created
+        if to_created is not None:
+            created_filter["$lte"] = to_created
+        if created_filter:
+            match_filter["created_at"] = created_filter
+
+        pipeline = [{"$match": match_filter}]
+
+        # Поиск заказов, в которых работник
+        pipeline.append({
+            "$lookup": {
+                "from": "orders",
+                "let": {"worker_id_str": {"$toString": "$_id"}},
+                "pipeline": [
+                    {"$match": {"$expr": {"$in": ["$$worker_id_str", "$stages.worker_id"]}}}
+                ],
+                "as": "orders",
+            }
+        })
+
+        # Сборка всех этапов из заказов в массив
+        pipeline.append({
+            "$addFields": {
+                "allStages": {
+                    "$reduce": {
+                        "input": "$orders",
+                        "initialValue": [],
+                        "in": {"$concatArrays": ["$$value", "$$this.stages"]}
+                    }
+                }
+            }
+        })
+
+        # Фильтрация этапов под конкретного работника
+        pipeline.append({
+            "$addFields": {
+                "workerStages": {
+                    "$filter": {
+                        "input": "$allStages",
+                        "cond": {"$eq": ["$$this.worker_id", {"$toString": "$_id"}]}
+                    }
+                }
+            }
+        })
+
+        # Подсчёт всех задач по статусам
+        pipeline.append({
+            "$addFields": {
+                "completed_tasks": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$workerStages",
+                            "cond": {"$eq": ["$$this.task_status", "Выполнена"]}
+                        }
+                    }
+                },
+                "overdue_tasks": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$workerStages",
+                            "cond": {"$eq": ["$$this.task_status", "Просрочена"]}
+                        }
+                    }
+                },
+                "failed_tasks": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$workerStages",
+                            "cond": {"$eq": ["$$this.task_status", "Отменена"]}
+                        }
+                    }
+                }
+            }
+        })
+
+        tasks_filter = {}
+        completed_tasks_filter = {}
+        if min_completed_tasks is not None:
+            completed_tasks_filter["$gte"] = min_completed_tasks
+        if max_completed_tasks is not None:
+            completed_tasks_filter["$lte"] = max_completed_tasks
+        if completed_tasks_filter:
+            tasks_filter["completed_tasks"] = completed_tasks_filter
+
+        overdue_tasks_filter = {}
+        if min_overdue_tasks is not None:
+            overdue_tasks_filter["$gte"] = min_overdue_tasks
+        if max_overdue_tasks is not None:
+            overdue_tasks_filter["$lte"] = max_overdue_tasks
+        if overdue_tasks_filter:
+            tasks_filter["overdue_tasks"] = overdue_tasks_filter
+
+        failed_tasks_filter = {}
+        if min_failed_tasks is not None:
+            failed_tasks_filter["$gte"] = min_failed_tasks
+        if max_failed_tasks is not None:
+            failed_tasks_filter["$lte"] = max_failed_tasks
+        if failed_tasks_filter:
+            tasks_filter["failed_tasks"] = failed_tasks_filter
+
+        if tasks_filter:
+            pipeline.append({"$match": tasks_filter})
+
+        pipeline.append({
+            "$addFields": {
+                "last_position": {"$arrayElemAt": ["$worker_positions.position", -1]},
+            }
+        })
+
+        if worker_position is not None:
+            pipeline.append({
+                "$match": {"last_position": {"$regex": worker_position, "$options": "i"}}
+
+            })
+
+        sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
+        pipeline.append({"$sort": {sort_field: sort_direction}})
+
+        if skip > 0:
+            pipeline.append({"$skip": skip})
+        pipeline.append({"$limit": limit})
+
+        pipeline.append({
+            "$project": {
+                "orders": 0,
+                "allStages": 0,
+                "workerStages": 0,
+                "last_position": 0,
+                "completed_tasks": 0,
+                "overdue_tasks": 0,
+                "failed_tasks": 0
+            }
+        })
+
+        cursor = users_collection.aggregate(pipeline)
+        docs = await cursor.to_list(length=limit)
+
+        result = []
+        for doc in docs:
+            doc["id"] = str(doc["_id"])
+            doc.pop("_id", None)
+            result.append(doc)
+
+        return result
+    except Exception as e:
+        print(f"Error getting workers in worker_repository.get_filtered_workers_for_admin: {e}")
+        return []
