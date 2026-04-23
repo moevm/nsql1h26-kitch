@@ -19,6 +19,19 @@ SORT_FIELD_MAP = {
 orders_collection = db["orders"]
 
 
+
+async def push_stage(order_id: str, stage: dict) -> bool:
+    now = datetime.now(timezone.utc)
+    result = await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$push": {"stages": stage},
+            "$set": {"updated_at": now}
+        }
+    )
+    return result.modified_count > 0
+
+
 async def get_by_id(order_id: str) -> Optional[OrderInDB]:
     try:
         doc = await orders_collection.find_one({"_id": ObjectId(order_id)})
