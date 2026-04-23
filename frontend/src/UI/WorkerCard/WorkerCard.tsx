@@ -3,6 +3,7 @@ import styles from "./WorkerCard.module.scss";
 import type {WorkerPublic} from "../../types/worker.ts";
 import {CommonInfoField} from "../CommonInfoField/CommonInfoField.tsx";
 import {CommonButton} from "../CommonButton/CommonButton.tsx";
+import {useTasksByWorker} from "../../hooks/useTasks.ts";
 
 interface WorkerCardProps {
     worker: WorkerPublic;
@@ -10,6 +11,12 @@ interface WorkerCardProps {
 }
 
 export function WorkerCard({worker, onProfileClick}: WorkerCardProps): ReactElement {
+    const { data: tasks, isLoading } = useTasksByWorker(worker.id);
+
+    const completedTasks = tasks?.filter(task => task.status === "Выполнена").length || 0;
+
+    const overdueTasks = tasks?.filter(task => task.status === "Просрочена").length || 0;
+
     const workingHours =
         worker.work_day_start && worker.work_day_end
             ? `${worker.work_day_start}-${worker.work_day_end}`
@@ -42,14 +49,14 @@ export function WorkerCard({worker, onProfileClick}: WorkerCardProps): ReactElem
             <div className={styles.field}>
                 <CommonInfoField
                     label="Выполненые задачи"
-                    value="100"
+                    value={isLoading ? "..." : completedTasks}
                 />
             </div>
 
             <div className={styles.field}>
                 <CommonInfoField
                     label="Просроченные задачи"
-                    value="0"
+                    value={isLoading ? "..." : overdueTasks}
                 />
             </div>
 
