@@ -58,6 +58,47 @@ def seed_users():
             "created_at": datetime.now(),
             "updated_at": datetime.now(),
         },
+        {
+            "email": "worker2@example.com",
+            "role": "worker",
+            "phone": "+7 999 222-33-44",
+            "username": "Смирнов Игорь",
+            "hashed_password": hash_password("worker234"),
+            "created_at": datetime.now(),
+            "updated_at": datetime.now(),
+            "worker_info": {
+                "date_of_birth": datetime(1992, 4, 10),
+                "date_of_employment": datetime(2019, 6, 1),
+                "comment": "Опытный сборщик",
+                "work_day_start": "09:00",
+                "work_day_end": "18:00",
+                "start_experience": 0,
+            },
+            "worker_positions": [
+                {"position": "Сборщик", "date": datetime(2019, 6, 1)},
+                {"position": "Старший сборщик", "date": datetime(2022, 3, 1)},
+            ],
+        },
+        {
+            "email": "worker3@example.com",
+            "role": "worker",
+            "phone": "+7 999 333-44-55",
+            "username": "Павлов Артём",
+            "hashed_password": hash_password("worker345"),
+            "created_at": datetime.now(),
+            "updated_at": datetime.now(),
+            "worker_info": {
+                "date_of_birth": datetime(1995, 9, 15),
+                "date_of_employment": datetime(2023, 1, 10),
+                "comment": "Монтажник (без задач)",
+                "work_day_start": "10:00",
+                "work_day_end": "19:00",
+                "start_experience": 0,
+            },
+            "worker_positions": [
+                {"position": "Монтажник", "date": datetime(2023, 1, 10)},
+            ],
+        },
     ]
     for user in users:
         db.users.update_one({"email": user["email"]}, {"$set": user}, upsert=True)
@@ -141,56 +182,51 @@ def seed_designs():
 
 
 def seed_orders():
+    db.orders.delete_many({})
+    print("Old orders deleted.")
+
     client_user = db.users.find_one({"email": "client@example.com"})
-    worker_user = db.users.find_one({"email": "worker@example.com"})
-    if not client_user or not worker_user:
-        print("Client or worker user not found, skipping orders seeding")
+    worker1_user = db.users.find_one({"email": "worker@example.com"})
+    worker2_user = db.users.find_one({"email": "worker2@example.com"})
+    worker3_user = db.users.find_one({"email": "worker3@example.com"})
+
+    if not client_user or not worker1_user or not worker2_user or not worker3_user:
+        print("Client or workers not found, skipping orders seeding")
         return
-    worker_id = str(worker_user["_id"])
+
+    worker1_id = str(worker1_user["_id"])
+    worker2_id = str(worker2_user["_id"])
+    # worker3_id не используется
+
     designs = {d["name"]: d for d in db.designs.find({})}
     materials = {m["name"]: m for m in db.materials.find({})}
 
-    # Генерируем 15 базовых заказов
     orders_data = []
     for i in range(1, 16):
-        orders_data.append(
-            {
-                "item": f"Кухонный гарнитур №{i}",
-                "design_name": [
-                    "Классическая кухня",
-                    "Современная кухня",
-                    "Кухня-остров",
-                ][i % 3],
-                "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
-                "address": f"ул. Тестовая, д. {i}",
-                "floor": i % 5 + 1,
-                "has_lift": i % 2 == 0,
-                "total_price": 100000 + i * 5000,
-                "type_price": 50000 + i * 1000,
-                "material_price": 30000 + i * 800,
-                "delivery_price": 5000 + i * 200,
-                "comment_price": 1000 + i * 100,
-                "comment": f"Тестовый заказ {i}",
-                "color": {
-                    "red": 100 + i,
-                    "green": 50,
-                    "blue": 200 - i,
-                    "name": f"Цвет {i}",
-                },
-            }
-        )
+        orders_data.append({
+            "item": f"Кухонный гарнитур №{i}",
+            "design_name": ["Классическая кухня", "Современная кухня", "Кухня-остров"][i % 3],
+            "material_name": ["ЛДСП 16мм", "МДФ 19мм", "Кромка ПВХ"][i % 3],
+            "address": f"ул. Тестовая, д. {i}",
+            "floor": i % 5 + 1,
+            "has_lift": i % 2 == 0,
+            "total_price": 100000 + i * 5000,
+            "type_price": 50000 + i * 1000,
+            "material_price": 30000 + i * 800,
+            "delivery_price": 5000 + i * 200,
+            "comment_price": 1000 + i * 100,
+            "comment": f"Тестовый заказ {i}",
+            "color": {"red": 100 + i, "green": 50, "blue": 200 - i, "name": f"Цвет {i}"},
+        })
 
     orders = []
     now = datetime.now(timezone.utc)
 
-    # Функция для добавления заказа
     def add_order(order_data, stages):
         design = designs.get(order_data["design_name"])
         material = materials.get(order_data["material_name"])
         if not design or not material:
-            print(
-                f"Skipping order '{order_data['item']}': design or material not found"
-            )
+            print(f"Skipping order '{order_data['item']}': design or material not found")
             return
         order = {
             "material_id": str(material["_id"]),
@@ -227,87 +263,68 @@ def seed_orders():
         }
         orders.append(order)
 
-    # 1. Базовые 15 заказов (разные статусы)
     for idx, data in enumerate(orders_data):
         stages = []
-
-        # Раскрой (доступен)
-        stages.append(
-            {
-                "name_stage": TypeStage.Cutting,
-                "worker_id": "",
-                "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
-                "task_status": TypeTask.Available,
+        stages.append({
+            "name_stage": TypeStage.Cutting,
+            "worker_id": "",
+            "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
+            "task_status": TypeTask.Available,
+            "times": {
+                "deadline": now + timedelta(days=3 + idx),
+                "start": None,
+                "end": None,
+                "est_time": 4,
+                "spent": 0,
+                "expired_time": 0,
+            },
+        })
+        stages.append({
+            "name_stage": TypeStage.Production,
+            "worker_id": worker1_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.In_progress,
+            "times": {
+                "deadline": now + timedelta(days=5 + idx),
+                "start": now - timedelta(days=1),
+                "end": None,
+                "est_time": 8,
+                "spent": 2,
+                "expired_time": 0,
+            },
+        })
+        if idx % 2 == 0:
+            stages.append({
+                "name_stage": TypeStage.Delivery,
+                "worker_id": worker1_id,
+                "status": TypeStatus.Canceled,
+                "task_status": TypeTask.Overdue,
                 "times": {
-                    "deadline": now + timedelta(days=3 + idx),
+                    "deadline": now - timedelta(days=1),
+                    "start": now - timedelta(days=3),
+                    "end": None,
+                    "est_time": 2,
+                    "spent": 2,
+                    "expired_time": 1,
+                },
+            })
+        if idx == 5:
+            stages.append({
+                "name_stage": TypeStage.Montage,
+                "worker_id": worker1_id,
+                "status": TypeStatus.Canceled,
+                "task_status": TypeTask.Canceled,
+                "times": {
+                    "deadline": now + timedelta(days=10),
                     "start": None,
                     "end": None,
-                    "est_time": 4,
+                    "est_time": 5,
                     "spent": 0,
                     "expired_time": 0,
                 },
-            }
-        )
-
-        # Производство (в процессе)
-        stages.append(
-            {
-                "name_stage": TypeStage.Production,
-                "worker_id": worker_id,
-                "status": TypeStatus.Completed,
-                "task_status": TypeTask.In_progress,
-                "times": {
-                    "deadline": now + timedelta(days=5 + idx),
-                    "start": now - timedelta(days=1),
-                    "end": None,
-                    "est_time": 8,
-                    "spent": 2,
-                    "expired_time": 0,
-                },
-            }
-        )
-
-        # Доставка (просрочена) для чётных индексов
-        if idx % 2 == 0:
-            stages.append(
-                {
-                    "name_stage": TypeStage.Delivery,
-                    "worker_id": worker_id,
-                    "status": TypeStatus.Canceled,
-                    "task_status": TypeTask.Overdue,
-                    "times": {
-                        "deadline": now - timedelta(days=1),
-                        "start": now - timedelta(days=3),
-                        "end": None,
-                        "est_time": 2,
-                        "spent": 2,
-                        "expired_time": 1,
-                    },
-                }
-            )
-
-        # Монтаж (отменён) только для idx == 5
-        if idx == 5:
-            stages.append(
-                {
-                    "name_stage": TypeStage.Montage,
-                    "worker_id": worker_id,
-                    "status": TypeStatus.Canceled,
-                    "task_status": TypeTask.Canceled,
-                    "times": {
-                        "deadline": now + timedelta(days=10),
-                        "start": None,
-                        "end": None,
-                        "est_time": 5,
-                        "spent": 0,
-                        "expired_time": 0,
-                    },
-                }
-            )
-
+            })
         add_order(data, stages)
 
-        # 2. Полностью завершённый заказ (все этапы выполнены + финальный этап "Завершён")
     completed_order_data = {
         "item": "Кухонный гарнитур (полностью завершён)",
         "design_name": "Классическая кухня",
@@ -326,7 +343,7 @@ def seed_orders():
     completed_stages = [
         {
             "name_stage": TypeStage.Cutting,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Completed,
             "times": {
@@ -340,7 +357,7 @@ def seed_orders():
         },
         {
             "name_stage": TypeStage.Production,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Overdue,
             "times": {
@@ -354,7 +371,7 @@ def seed_orders():
         },
         {
             "name_stage": TypeStage.Delivery,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Completed,
             "times": {
@@ -368,7 +385,7 @@ def seed_orders():
         },
         {
             "name_stage": TypeStage.Montage,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Overdue,
             "times": {
@@ -382,7 +399,7 @@ def seed_orders():
         },
         {
             "name_stage": TypeStage.Completed,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Completed,
             "times": {
@@ -397,7 +414,6 @@ def seed_orders():
     ]
     add_order(completed_order_data, completed_stages)
 
-    # 3. Заказ, отменённый после раскроя
     canceled_order_data = {
         "item": "Кухонный гарнитур (отменён после раскроя)",
         "design_name": "Современная кухня",
@@ -416,7 +432,7 @@ def seed_orders():
     canceled_stages = [
         {
             "name_stage": TypeStage.Cutting,
-            "worker_id": worker_id,
+            "worker_id": worker1_id,
             "status": TypeStatus.Completed,
             "task_status": TypeTask.Completed,
             "times": {
@@ -429,8 +445,8 @@ def seed_orders():
             },
         },
         {
-            "name_stage": TypeStage.Canceled,  # специальный этап "Отменён"
-            "worker_id": worker_id,
+            "name_stage": TypeStage.Canceled,
+            "worker_id": worker1_id,
             "status": TypeStatus.Canceled,
             "task_status": TypeTask.Canceled,
             "times": {
@@ -445,11 +461,56 @@ def seed_orders():
     ]
     add_order(canceled_order_data, canceled_stages)
 
-    # Сохраняем все заказы в БД
+    worker2_order_data = {
+        "item": "Заказ для worker2 (1 выполнен, 1 просрочен)",
+        "design_name": "Классическая кухня",
+        "material_name": "ЛДСП 16мм",
+        "address": "ул. Рабочая, д. 10",
+        "floor": 3,
+        "has_lift": True,
+        "total_price": 120000,
+        "type_price": 50000,
+        "material_price": 30000,
+        "delivery_price": 5000,
+        "comment_price": 1000,
+        "comment": "Специальный заказ для worker2",
+        "color": {"red": 200, "green": 100, "blue": 50, "name": "Оранжевый"},
+    }
+    worker2_stages = [
+        {
+            "name_stage": TypeStage.Production,
+            "worker_id": worker2_id,
+            "status": TypeStatus.Completed,
+            "task_status": TypeTask.Completed,
+            "times": {
+                "deadline": now - timedelta(days=2),
+                "start": now - timedelta(days=5),
+                "end": now - timedelta(days=3),
+                "est_time": 8,
+                "spent": 8,
+                "expired_time": 0,
+            },
+        },
+        {
+            "name_stage": TypeStage.Delivery,
+            "worker_id": worker2_id,
+            "status": TypeStatus.Canceled,
+            "task_status": TypeTask.Overdue,
+            "times": {
+                "deadline": now - timedelta(days=1),
+                "start": now - timedelta(days=2),
+                "end": None,
+                "est_time": 2,
+                "spent": 0,
+                "expired_time": 1,
+            },
+        },
+    ]
+    add_order(worker2_order_data, worker2_stages)
+
     for order in orders:
         db.orders.update_one({"item": order["item"]}, {"$set": order}, upsert=True)
     print(f"Seeded {db.orders.count_documents({})} orders with stages")
-
 
 if __name__ == "__main__":
     try:
