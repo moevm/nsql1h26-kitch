@@ -11,7 +11,17 @@ async def register(data: UserCreate):
     return RegisterResponse(id=user_id)
 
 
-@router.post("/auth", response_model=AuthResponse, status_code=200)
+@router.post(
+    "/auth",
+    response_model=AuthResponse,
+    status_code=200,
+    summary="авторизация пользователей",
+    description="""
+    клиент: client@example.com client123
+    рабочий: worker@example.com worker123
+    админ: admin@example.com admin123
+    """
+)
 async def auth(data: UserAuth):
     token = await authenticate_user(data)
     return AuthResponse(token=token)
