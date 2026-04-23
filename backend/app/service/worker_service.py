@@ -5,6 +5,7 @@ from typing import List, Tuple
 from datetime import datetime, timezone
 import secrets
 from passlib.context import CryptContext
+from typing import Optional
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -27,7 +28,8 @@ def _time_str_to_datetime(time_str: str) -> datetime:
 def _calculate_experience_years(date_of_employment: datetime, start_experience: int) -> int:
     now = datetime.now(timezone.utc)
     years = now.year - date_of_employment.year
-    if now.month < date_of_employment.month or (now.month == date_of_employment.month and now.day < date_of_employment.day):
+    if now.month < date_of_employment.month or (
+            now.month == date_of_employment.month and now.day < date_of_employment.day):
         years -= 1
     return max(0, years + start_experience)
 
@@ -41,7 +43,8 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
 
     exp_years = 0
     if worker_db.worker_info and worker_db.worker_info.date_of_employment:
-        exp_years = _calculate_experience_years(worker_db.worker_info.date_of_employment,worker_db.worker_info.start_experience)
+        exp_years = _calculate_experience_years(worker_db.worker_info.date_of_employment,
+                                                worker_db.worker_info.start_experience)
 
     work_start = None
     work_end = None
@@ -65,8 +68,8 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
         work_day_start=work_start,
         work_day_end=work_end,
         comment=worker_db.worker_info.comment if worker_db.worker_info else None,
-        date_of_employment = worker_db.worker_info.date_of_employment if worker_db.worker_info else None,
-        date_of_remove = worker_db.worker_info.date_of_remove,
+        date_of_employment=worker_db.worker_info.date_of_employment if worker_db.worker_info else None,
+        date_of_remove=worker_db.worker_info.date_of_remove,
         is_active=is_active,
         created_at=worker_db.created_at,
         updated_at=worker_db.updated_at
@@ -165,3 +168,48 @@ async def delete_worker_by_id(worker_id: str) -> dict:
     if not success:
         raise HTTPException(status_code=500, detail="Не удалось уволить работника")
     return {"id": worker_id, "message": "Работник уволен"}
+
+
+async def get_filtered_workers_for_admin(
+        name_worker: str,
+        worker_position: str,
+        start_workday: str,
+        end_workday: str,
+        min_completed_tasks: int,
+        max_completed_tasks: int,
+        min_overdue_tasks: int,
+        max_overdue_tasks: int,
+        min_failed_tasks: int,
+        max_failed_tasks: int,
+        from_created: Optional[datetime],
+        to_created: Optional[datetime],
+        sort_by: str,
+        sort_direction: int,
+        skip: int,
+        limit: int
+) -> List[WorkerPublic]:
+    raw = await user_repo.get_filtered_workers_for_admin(
+        name_worker=name_worker,
+        worker_position=worker_position,
+        start_workday=start_workday,
+        end_workday=end_workday,
+        min_completed_tasks=min_completed_tasks,
+        max_completed_tasks=max_completed_tasks,
+        min_overdue_tasks=min_overdue_tasks,
+        max_overdue_tasks=max_overdue_tasks,
+        min_failed_tasks=min_failed_tasks,
+        max_failed_tasks=max_failed_tasks,
+        from_created=from_created,
+        to_created=to_created,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        skip=skip,
+        limit=limit
+    )
+
+    result = []
+    for doc in raw:
+        worker_db = WorkerInDB(**doc)
+        result.append(_worker_to_public(worker_db))
+
+    return result
