@@ -1,5 +1,5 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import { tasksAPI } from '../api/tasks';
+import {type TaskFilterParams, tasksAPI} from '../api/tasks';
 
 export const useTasks = () => {
     return useQuery({
@@ -7,6 +7,15 @@ export const useTasks = () => {
         queryFn: tasksAPI.getAll,
     });
 };
+
+export const useFilteredTasks = (params: TaskFilterParams) => {
+    return useQuery({
+        queryKey: ['tasks', 'filtered', params],
+        queryFn: () => tasksAPI.getFiltered(params),
+        enabled: true,
+    });
+};
+
 
 export const useTasksByWorker = (workerId: string) => {
     return useQuery({

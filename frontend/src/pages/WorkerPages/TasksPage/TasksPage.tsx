@@ -1,14 +1,18 @@
-import { type ReactElement, useState, useMemo } from "react";
+import {type ReactElement, useState, useMemo, useCallback} from "react";
 import { Pagination } from "@mui/material";
 import styles from "./TasksPage.module.scss";
 import { TaskCard } from "../../../UI/CommonCards/TaskCard/TaskCard.tsx";
-import { useTasks } from "../../../hooks/useTasks.ts";
+import {useFilteredTasks} from "../../../hooks/useTasks.ts";
+import type { TaskFilterParams } from "../../../api/tasks.ts";
+import {TasksFilter} from "../../../components/TasksFIlter/TasksFIlter.tsx";
 
 const ITEMS_PER_PAGE = 3;
 
 export function TasksPage(): ReactElement {
     const [page, setPage] = useState(1);
-    const { data: tasks, isLoading, error } = useTasks();
+    const [filters, setFilters] = useState<TaskFilterParams>({});
+
+    const { data: tasks, isLoading, error } = useFilteredTasks(filters);
 
     const paginatedTasks = useMemo(() => {
         if (!tasks) return [];
@@ -24,7 +28,14 @@ export function TasksPage(): ReactElement {
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
+
+    const handleFilterChange = useCallback((newFilters: Partial<TaskFilterParams>) => {
+        setFilters(newFilters);
+        setPage(1);
+    }, []);
+
 
     if (isLoading) {
         return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
@@ -36,6 +47,7 @@ export function TasksPage(): ReactElement {
 
     return (
         <div className={styles.tasksPageContainer}>
+            <TasksFilter onFilterChange={handleFilterChange} initialFilters={filters} />
 
             {!tasks || tasks.length === 0 ? (
                 <div className={styles.emptyState}>
