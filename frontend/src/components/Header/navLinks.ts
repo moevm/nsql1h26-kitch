@@ -1,4 +1,4 @@
-import type {HeaderLinkProps} from "../../UI/HeaderLink/HeaderLink.tsx";
+import type {HeaderLinkProps} from "./HeaderLink/HeaderLink.tsx";
 
 export const clientHeaderLinks: HeaderLinkProps[] = [
     { text: "Продукция", path: "/products" },

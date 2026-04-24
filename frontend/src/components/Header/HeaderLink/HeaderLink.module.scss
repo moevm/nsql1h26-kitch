@@ -1,5 +1,5 @@
-@use "../../styles/variables" as *;
-@use "../../styles/mixins" as *;
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
 
 .link {
   @include text-style(16px, 500, $on-surface-color, $line-height: 23px);

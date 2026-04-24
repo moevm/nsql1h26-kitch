@@ -4,7 +4,7 @@ import { Pagination } from '@mui/material';
 import { useFilteredWorkers } from '../../../hooks/useWorkers.ts';
 import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
 import { AddEmployeeModal } from './AddEmployeeModal.tsx';
-import { WorkerCard } from '../../../UI/WorkerCard/WorkerCard.tsx';
+import { WorkerCard } from '../../../UI/CommonCards/WorkerCard/WorkerCard.tsx';
 import { WorkersFilter } from '../../../components/WorkersFilter/WorkersFilter.tsx';
 import type { WorkerFilterParams } from '../../../api/workers.ts';
 import styles from './AdminEmployeesPage.module.scss';

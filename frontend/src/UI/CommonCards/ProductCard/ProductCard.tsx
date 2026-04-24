@@ -1,5 +1,5 @@
 import type {ReactElement} from "react";
-import defaultImage from "../../assets/image_sample.png";
+import defaultImage from "../../../assets/image_sample.png";
 import style from "./ProductCard.module.scss"
 
 export interface ProductCardProps {

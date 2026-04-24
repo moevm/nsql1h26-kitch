@@ -1,14 +1,13 @@
 import type {ReactElement} from "react";
 import styles from "./ClientOrderCard.module.scss"
-import {CommonInfoField} from "../CommonInfoField/CommonInfoField.tsx";
-import {CommonButton} from "../CommonButton/CommonButton.tsx";
-import type {Order} from "../../types/order.ts";
+import {CommonInfoField} from "../../CommonInfoField/CommonInfoField.tsx";
+import {CommonButton} from "../../CommonButton/CommonButton.tsx";
+import type {Order} from "../../../types/order.ts";
 import {useNavigate} from "react-router-dom";
-import {formatDate} from "../FormatFunctions.ts";
-import style from "../../pages/ClientPages/CreateOrderPage/CreateOrderPage.module.scss";
+import {formatDate} from "../../FormatFunctions.ts";
+import style from "../../../pages/ClientPages/CreateOrderPage/CreateOrderPage.module.scss";
 
 const getOrderStatus = (stages: Order['stages']): { text: string; className: string } => {
-    console.log(stages);
 
     const lastStage = stages[stages.length - 1];
     if (lastStage?.name_stage === "Отменён") {

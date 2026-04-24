@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
 import styles from "./WorkerCard.module.scss";
-import type {WorkerPublic} from "../../types/worker.ts";
-import {CommonInfoField} from "../CommonInfoField/CommonInfoField.tsx";
-import {CommonButton} from "../CommonButton/CommonButton.tsx";
-import {useTasksByWorker} from "../../hooks/useTasks.ts";
+import type {WorkerPublic} from "../../../types/worker.ts";
+import {CommonInfoField} from "../../CommonInfoField/CommonInfoField.tsx";
+import {CommonButton} from "../../CommonButton/CommonButton.tsx";
+import {useTasksByWorker} from "../../../hooks/useTasks.ts";
 
 interface WorkerCardProps {
     worker: WorkerPublic;

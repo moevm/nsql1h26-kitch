@@ -1,6 +1,6 @@
 import {Fragment, type ReactElement} from "react";
 import {useNavigate} from "react-router-dom";
-import {ProductCard} from "../../../UI/ProductCard/ProductCard.tsx";
+import {ProductCard} from "../../../UI/CommonCards/ProductCard/ProductCard.tsx";
 import {kitchenTypesMap} from "../../../utils/kitchenTypesMap.ts";
 import {useDesignTypes} from "../../../hooks/useDesigns.ts";
 

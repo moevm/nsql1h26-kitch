@@ -2,7 +2,7 @@ import {Fragment} from "react";
 import {Outlet} from "react-router-dom";
 import {Header} from "../../components/Header/Header.tsx";
 import {clientHeaderLinks} from "../../components/Header/navLinks";
-import {HeaderLink} from "../../UI/HeaderLink/HeaderLink.tsx";
+import {HeaderLink} from "../../components/Header/HeaderLink/HeaderLink.tsx";
 import style from "./ClientLayout.module.scss"
 import {useAuth} from "../../hooks/useAuth.ts";
 

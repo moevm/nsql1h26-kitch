@@ -20,6 +20,7 @@ import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
 import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
 import { AdminEmployeesPage } from "./pages/AdminPages/AdminEmployeesPage/AdminEmployeesPage.tsx";
 import { EmployeeProfilePage } from "./pages/CommonPages/EmployeeProfilePage/EmployeeProfilePage.tsx";
+import {TasksPage} from "./pages/WorkerPages/TasksPage/TasksPage.tsx";
 
 function AppRoutes() {
     return (
@@ -49,7 +50,7 @@ function AppRoutes() {
                     <WorkerLayout />
                 </ProtectedRoute>
             }>
-                <Route path="/worker/tasks"             element={<div>WORKER TASKS</div>}/>
+                <Route path="/worker/tasks"             element={<TasksPage />}/>
                 <Route path="/worker/tasks/overdue"     element={<div>WORKER TASKS OVERDUE</div>}/>
                 <Route path="/worker/tasks/completed"   element={<div>WORKER TASKS COMPLETED</div>}/>
             </Route>

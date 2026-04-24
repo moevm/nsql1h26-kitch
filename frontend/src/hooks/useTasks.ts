@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import { tasksAPI } from '../api/tasks';
 
 export const useTasks = () => {
@@ -13,5 +13,41 @@ export const useTasksByWorker = (workerId: string) => {
         queryKey: ['tasks', 'worker', workerId],
         queryFn: () => tasksAPI.getByWorker(workerId),
         enabled: !!workerId,
+    });
+};
+
+export const useTakeTask = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({orderId, stageIndex, workerId}: {
+            orderId: string;
+            stageIndex: number;
+            workerId: string;
+        }) => tasksAPI.takeTask(orderId, stageIndex, workerId),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasks', 'worker', variables.workerId] });
+        },
+        onError: (error) => {
+            console.error('Error taking task:', error);
+        },
+    });
+};
+
+export const useCompleteTask = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({orderId, stageIndex}: {
+            orderId: string;
+            stageIndex: number;
+            workerId: string;
+        }) => tasksAPI.completeTask(orderId, stageIndex),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasks', 'worker', variables.workerId] });
+        },
+        onError: (error) => {
+            console.error('Error completing task:', error);
+        },
     });
 };

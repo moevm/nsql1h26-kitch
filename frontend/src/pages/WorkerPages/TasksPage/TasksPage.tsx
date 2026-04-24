@@ -1,42 +1,30 @@
-import {type ReactElement, useCallback, useMemo, useState, Fragment} from "react";
-import {Pagination} from "@mui/material";
-import styles from "./OrdersPage.module.scss"
-
-import {ClientOrderCard} from "../../../UI/CommonCards/ClientOrderCard/ClientOrderCard.tsx";
-import type {Order} from "../../../types/order.ts";
-import {useFilteredOrders} from "../../../hooks/useOrders.ts";
-import type {FilterParams} from "../../../api/orders.ts";
-import {OrdersFilter} from "../../../components/OrdersFilter/OrdersFilter.tsx";
+import { type ReactElement, useState, useMemo } from "react";
+import { Pagination } from "@mui/material";
+import styles from "./TasksPage.module.scss";
+import { TaskCard } from "../../../UI/CommonCards/TaskCard/TaskCard.tsx";
+import { useTasks } from "../../../hooks/useTasks.ts";
 
 const ITEMS_PER_PAGE = 3;
 
-export function OrdersPage(): ReactElement {
-    const [filters, setFilters] = useState<Partial<FilterParams>>({});
+export function TasksPage(): ReactElement {
     const [page, setPage] = useState(1);
+    const { data: tasks, isLoading, error } = useTasks();
 
-    const { data: orders, isLoading, error } = useFilteredOrders(filters as FilterParams);
-
-    const paginatedOrders = useMemo(() => {
-        if (!orders) return [];
-
+    const paginatedTasks = useMemo(() => {
+        if (!tasks) return [];
         const start = (page - 1) * ITEMS_PER_PAGE;
         const end = start + ITEMS_PER_PAGE;
-        return orders.slice(start, end);
-    }, [orders, page])
+        return tasks.slice(start, end);
+    }, [tasks, page]);
 
     const totalPages = useMemo(() => {
-        if (!orders) return 0;
-        return Math.ceil(orders.length / ITEMS_PER_PAGE);
-    }, [orders]);
+        if (!tasks) return 0;
+        return Math.ceil(tasks.length / ITEMS_PER_PAGE);
+    }, [tasks]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
     };
-
-    const handleFilterChange = useCallback((newFilters: Partial<FilterParams>) => {
-        setFilters(newFilters);
-        setPage(1);
-    }, []);
 
     if (isLoading) {
         return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
@@ -47,21 +35,21 @@ export function OrdersPage(): ReactElement {
     }
 
     return (
-        <div className={styles.ordersPageContainer}>
-            <OrdersFilter onFilterChange={handleFilterChange} initialFilters={filters} />
+        <div className={styles.tasksPageContainer}>
 
-            {orders && orders.length === 0 ? (
+            {!tasks || tasks.length === 0 ? (
                 <div className={styles.emptyState}>
-                    <p>Заказы не найдены</p>
+                    <p>Нет доступных задач</p>
                 </div>
             ) : (
                 <>
-                    <div className={styles.ordersGrid}>
-                        <Fragment>
-                            {paginatedOrders.map((order: Order) => (
-                                <ClientOrderCard key={order.id} order={order} />
-                            ))}
-                        </Fragment>
+                    <div className={styles.tasksGrid}>
+                        {paginatedTasks.map((task) => (
+                            <TaskCard
+                                key={`${task.order_id}-${task.stage_index}`}
+                                task={task}
+                            />
+                        ))}
                     </div>
 
                     {totalPages > 1 && (
