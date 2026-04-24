@@ -58,6 +58,7 @@ class TypeTask(str, Enum):
 
 
 class TypeStatus(str, Enum):
+    Available = "Доступна"
     In_progress = "В процессе"
     Completed = "Завершён"
     Canceled = "Отменён"

@@ -268,7 +268,7 @@ def seed_orders():
         stages.append({
             "name_stage": TypeStage.Cutting,
             "worker_id": "",
-            "status": TypeStatus.Completed if idx % 2 == 0 else TypeStatus.Canceled,
+            "status": TypeStatus.Available,
             "task_status": TypeTask.Available,
             "times": {
                 "deadline": now + timedelta(days=3 + idx),
@@ -283,7 +283,7 @@ def seed_orders():
             "name_stage": TypeStage.Production,
             "worker_id": worker1_id,
             "status": TypeStatus.Completed,
-            "task_status": TypeTask.In_progress,
+            "task_status": TypeTask.Completed,
             "times": {
                 "deadline": now + timedelta(days=5 + idx),
                 "start": now - timedelta(days=1),

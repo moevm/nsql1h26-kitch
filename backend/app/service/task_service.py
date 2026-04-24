@@ -1,7 +1,9 @@
 from fastapi import HTTPException
-from app.models.order import Task, TypeTask
+from app.models.order import Task, TypeStage, TypeStatus, TypeTask
+from app.models.design import TypeDesign
 from app.data import task_repository as task_repo
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 
 
 async def get_tasks(user_id: str, role: str) -> List[Task]:
@@ -78,3 +80,56 @@ async def complete_task(
         "stage_index": stage_index,
         "message": "Задача завершена",
     }
+
+async def get_filtered_tasks_for_worker(
+    worker_id: str,
+    name_design: str,
+    type_kitchen: TypeDesign,
+    material: str,
+    order_id: str,
+    design_id: str,
+    material_id: str,
+    name_stage: TypeStage,
+    stage_status: TypeStatus,
+    task_status: TypeTask,
+    min_estimated_time: int,
+    max_estimated_time: int,
+    from_created: Optional[datetime],
+    to_created: Optional[datetime],
+    from_deadline: Optional[datetime],
+    to_deadline: Optional[datetime],
+    sort_by: str,
+    sort_direction: int,
+    skip: int,
+    limit: int
+) -> List[Task]:
+    raw = await task_repo.get_filtered_tasks_for_worker(
+        worker_id=worker_id,
+        name_design=name_design,
+        type_kitchen=type_kitchen,
+        material=material,
+        order_id=order_id,
+        design_id=design_id,
+        material_id=material_id,
+        name_stage=name_stage,
+        stage_status=stage_status,
+        task_status=task_status,
+        min_estimated_time=min_estimated_time,
+        max_estimated_time=max_estimated_time,
+        from_created=from_created,
+        to_created=to_created,
+        from_deadline=from_deadline,
+        to_deadline=to_deadline,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        skip=skip,
+        limit=limit
+    )
+
+    tasks = []
+    for doc in raw:
+        doc.pop("remaining_time_minutes", None)
+        tasks.append(Task(**doc))
+
+    return tasks
+
