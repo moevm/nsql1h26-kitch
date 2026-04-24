@@ -2,7 +2,7 @@ version: '3.8'
 
 
 services:
-  mongodb:
+  db:
     image: mongo:8.0
     container_name: nsql1h26-kitch_mongodb
     ports:
