@@ -1,11 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { workersAPI } from '../api/workers';
+import { workersAPI, type WorkerFilterParams } from '../api/workers';
 import type { WorkerCreate, WorkerUpdate } from '../types/worker';
 
 export const useWorkers = () => {
     return useQuery({
         queryKey: ['workers'],
         queryFn: workersAPI.getAll
+    });
+};
+
+export const useFilteredWorkers = (params: WorkerFilterParams) => {
+    return useQuery({
+        queryKey: ['workers', 'filtered', params],
+        queryFn: () => workersAPI.getFiltered(params),
+        enabled: true,
     });
 };
 

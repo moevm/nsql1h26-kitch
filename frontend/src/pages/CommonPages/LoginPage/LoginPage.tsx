@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import {Alert, Container} from "@mui/material";
 import { AxiosError } from 'axios';
 import styles from "./LoginPage.module.scss"
-import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
-import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
-import {useAuth} from "../../hooks/useAuth.ts";
+import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
+import {CommonInputField} from "../../../UI/CommonInputField/CommonInputField.tsx";
+import {useAuth} from "../../../hooks/useAuth.ts";
 
 interface LoginFormData {
     email: string;

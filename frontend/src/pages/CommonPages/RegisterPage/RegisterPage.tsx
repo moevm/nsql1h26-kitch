@@ -1,10 +1,10 @@
 import {type ReactElement, useState} from "react";
 import {Alert, Container} from "@mui/material";
 import styles from "../LoginPage/LoginPage.module.scss";
-import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
-import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
+import {CommonInputField} from "../../../UI/CommonInputField/CommonInputField.tsx";
+import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
 import {useNavigate} from "react-router-dom";
-import {useAuth} from "../../hooks/useAuth.ts";
+import {useAuth} from "../../../hooks/useAuth.ts";
 import {AxiosError} from "axios";
 
 interface RegisterFormData {

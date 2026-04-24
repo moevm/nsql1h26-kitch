@@ -1,12 +1,12 @@
 import type {ReactElement} from "react";
 import style from "./OrderDatailsPage.module.scss"
-import type {Order} from "../../types/order.ts";
+import type {Order} from "../../../types/order.ts";
 import {useLocation, useNavigate} from "react-router-dom";
-import {CommonInfoField} from "../../UI/CommonInfoField/CommonInfoField.tsx";
-import {useDesign} from "../../hooks/useDesigns.ts";
-import defaultImage from "../../assets/image_sample.png";
-import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
-import {formatDate} from "../../UI/FormatFunctions.ts";
+import {CommonInfoField} from "../../../UI/CommonInfoField/CommonInfoField.tsx";
+import {useDesign} from "../../../hooks/useDesigns.ts";
+import defaultImage from "../../../assets/image_sample.png";
+import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
+import {formatDate} from "../../../UI/FormatFunctions.ts";
 
 const getStageEndDate = (order: Order, stageName: string): string => {
     const stage = order.stages.find(s => s.name_stage === stageName);

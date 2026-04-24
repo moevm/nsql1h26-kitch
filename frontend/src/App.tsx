@@ -1,9 +1,9 @@
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 
 // common elements
-import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
-import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
-import {PasswordRecoverPage} from "./pages/PasswordRecoverPage/PasswordRecoverPage.tsx";
+import {LoginPage} from "./pages/CommonPages/LoginPage/LoginPage.tsx";
+import {RegisterPage} from "./pages/CommonPages/RegisterPage/RegisterPage.tsx";
+import {PasswordRecoverPage} from "./pages/CommonPages/PasswordRecoverPage/PasswordRecoverPage.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
 
 // client elements
@@ -11,15 +11,15 @@ import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
 import {ProductsPage} from "./pages/ClientPages/ProductsPage/ProductsPage.tsx";
 import {CreateOrderPage} from "./pages/ClientPages/CreateOrderPage/CreateOrderPage.tsx";
 import {OrdersPage} from "./pages/ClientPages/OrdersPage/OrdersPage.tsx";
-import {OrderDetailsPage} from "./pages/OrderDatailsPage/OrderDatailsPage.tsx";
+import {OrderDetailsPage} from "./pages/CommonPages/OrderDatailsPage/OrderDatailsPage.tsx";
 
 // worker elements
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
 
 // admin elements
 import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
-import { AdminEmployeesPage } from "./pages/AdminEmployeesPage/AdminEmployeesPage.tsx";
-import { EmployeeProfilePage } from "./pages/EmployeeProfilePage/EmployeeProfilePage.tsx";
+import { AdminEmployeesPage } from "./pages/AdminPages/AdminEmployeesPage/AdminEmployeesPage.tsx";
+import { EmployeeProfilePage } from "./pages/CommonPages/EmployeeProfilePage/EmployeeProfilePage.tsx";
 
 function AppRoutes() {
     return (
