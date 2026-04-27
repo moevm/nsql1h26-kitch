@@ -27,6 +27,8 @@ services:
     container_name: nsql1h26-kitch_backend-python-fastapi
     restart: unless-stopped
     env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
