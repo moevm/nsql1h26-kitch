@@ -30,6 +30,7 @@ app.add_middleware(
         "http://localhost",
         "http://localhost:80",
         "http://frontend",
+        "http://localhost:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
