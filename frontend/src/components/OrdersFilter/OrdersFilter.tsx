@@ -12,6 +12,15 @@ interface OrdersFilterProps {
     initialFilters?: Partial<FilterParams>;
 }
 
+interface ValidationErrors {
+    dateFrom?: string;
+    dateTo?: string;
+    deadlineFrom?: string;
+    deadlineTo?: string;
+    priceMin?: string;
+    priceMax?: string;
+}
+
 const sortOptions: Option[] = [
     { value: 1, label: 'По умолчанию' },
     { value: 2, label: 'Цена (по возрастанию)' },
@@ -70,28 +79,90 @@ const getSortValueFromParams = (sortBy: string | undefined, sort: 'ASC' | 'DESC'
     return 1;
 };
 
+const formatDateTimeForInput = (dateTimeStr: string | undefined): string => {
+    if (!dateTimeStr) return '';
+    try {
+        const date = new Date(dateTimeStr);
+        if (isNaN(date.getTime())) return '';
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    } catch {
+        return '';
+    }
+};
+
+const convertToUTC = (dateTimeStr: string, isEndOfDay: boolean = false): string | undefined => {
+    if (!dateTimeStr) return undefined;
+    try {
+        const parts = dateTimeStr.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+        if (!parts) return undefined;
+
+        const [ , day, month, year, hours, minutes] = parts;
+        const hour = parseInt(hours);
+        const minute = parseInt(minutes);
+
+        let localDate: Date;
+
+        if (isEndOfDay && hour === 0 && minute === 0) {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
+        } else if (isEndOfDay) {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 59, 999);
+        } else {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 0, 0);
+        }
+
+        if (isNaN(localDate.getTime())) return undefined;
+
+        console.log(localDate.toISOString())
+
+        return localDate.toISOString();
+    } catch {
+        return undefined;
+    }
+};
+
+const validateDateTime = (value: string): boolean => {
+    if (!value) return true;
+    const regex = /^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}$/;
+    if (!regex.test(value)) return false;
+
+    const parts = value.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!parts) return false;
+
+    const [, day, month, year, hours, minutes] = parts;
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+    return !isNaN(date.getTime());
+};
+
 export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps): ReactElement {
     const [searchQuery, setSearchQuery] = useState(initialFilters?.name_design || "");
     const [sortBy, setSortBy] = useState<number | null>(getSortValueFromParams(initialFilters?.sort_by, initialFilters?.sort));
     const [designType, setDesignType] = useState<number | null>(getDesignTypeValueFromString(initialFilters?.type));
     const [stage, setStage] = useState<number | null>(getStageValueFromString(initialFilters?.stage));
-    const [dateFrom, setDateFrom] = useState(initialFilters?.from_created || "");
-    const [dateTo, setDateTo] = useState(initialFilters?.to_created || "");
+
+    const [dateFrom, setDateFrom] = useState(formatDateTimeForInput(initialFilters?.from_created));
+    const [dateTo, setDateTo] = useState(formatDateTimeForInput(initialFilters?.to_created));
+    const [deadlineFrom, setDeadlineFrom] = useState(formatDateTimeForInput(initialFilters?.from_deadline));
+    const [deadlineTo, setDeadlineTo] = useState(formatDateTimeForInput(initialFilters?.to_deadline));
+
     const [priceMin, setPriceMin] = useState(initialFilters?.min_price ? String(initialFilters.min_price) : "");
     const [priceMax, setPriceMax] = useState(initialFilters?.max_price ? String(initialFilters.max_price) : "");
 
+    const [errors, setErrors] = useState<ValidationErrors>({});
+
     const getSortParams = (sortValue: number | null): { sort_by: string; sort: 'ASC' | 'DESC' } => {
         switch (sortValue) {
-            case 2:
-                return { sort_by: 'total_price', sort: 'ASC' };
-            case 3:
-                return { sort_by: 'total_price', sort: 'DESC' };
-            case 4:
-                return { sort_by: 'created_at', sort: 'DESC' };
-            case 5:
-                return { sort_by: 'created_at', sort: 'ASC' };
-            default:
-                return { sort_by: 'created_at', sort: 'DESC' };
+            case 2: return { sort_by: 'total_price', sort: 'ASC' };
+            case 3: return { sort_by: 'total_price', sort: 'DESC' };
+            case 4: return { sort_by: 'created_at', sort: 'DESC' };
+            case 5: return { sort_by: 'created_at', sort: 'ASC' };
+            default: return { sort_by: 'created_at', sort: 'DESC' };
         }
     };
 
@@ -118,7 +189,56 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
         }
     };
 
+    const validateDateRanges = useCallback((): boolean => {
+        const newErrors: ValidationErrors = {};
+
+        if (dateFrom && !validateDateTime(dateFrom)) {
+            newErrors.dateFrom = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (dateTo && !validateDateTime(dateTo)) {
+            newErrors.dateTo = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (dateFrom && dateTo) {
+            const fromDate = new Date(dateFrom.split('.').reverse().join('-').replace(' ', 'T'));
+            const toDate = new Date(dateTo.split('.').reverse().join('-').replace(' ', 'T'));
+            if (fromDate > toDate) {
+                newErrors.dateTo = 'Дата "по" не может быть раньше даты "с"';
+            }
+        }
+
+        if (deadlineFrom && !validateDateTime(deadlineFrom)) {
+            newErrors.deadlineFrom = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (deadlineTo && !validateDateTime(deadlineTo)) {
+            newErrors.deadlineTo = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (deadlineFrom && deadlineTo) {
+            const fromDate = new Date(deadlineFrom.split('.').reverse().join('-').replace(' ', 'T'));
+            const toDate = new Date(deadlineTo.split('.').reverse().join('-').replace(' ', 'T'));
+            if (fromDate > toDate) {
+                newErrors.deadlineTo = 'Дата "по" не может быть раньше даты "с"';
+            }
+        }
+
+        if (priceMin && Number(priceMin) < 0) {
+            newErrors.priceMin = 'Цена не может быть отрицательной';
+        }
+        if (priceMax && Number(priceMax) < 0) {
+            newErrors.priceMax = 'Цена не может быть отрицательной';
+        }
+        if (priceMin && priceMax && Number(priceMin) > Number(priceMax)) {
+            newErrors.priceMax = 'Максимальная цена не может быть меньше минимальной';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }, [dateFrom, dateTo, deadlineFrom, deadlineTo, priceMin, priceMax]);
+
     const handleApplyFilters = useCallback(() => {
+        if (!validateDateRanges()) {
+            return;
+        }
+
         const { sort_by, sort } = getSortParams(sortBy);
 
         const filters: Partial<FilterParams> = {
@@ -127,13 +247,16 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
             stage: getStageValue(stage) || undefined,
             min_price: priceMin ? Number(priceMin) : undefined,
             max_price: priceMax ? Number(priceMax) : undefined,
-            from_created: dateFrom || undefined,
-            to_created: dateTo || undefined,
+            from_created: convertToUTC(dateFrom, false),
+            to_created: convertToUTC(dateTo, true),
+            from_deadline: convertToUTC(deadlineFrom, false),
+            to_deadline: convertToUTC(deadlineTo, true),
             sort_by: sortBy === 1 ? undefined : sort_by,
             sort: sortBy === 1 ? undefined : sort,
         };
+
         onFilterChange(filters);
-    }, [searchQuery, sortBy, designType, stage, dateFrom, dateTo, priceMin, priceMax, onFilterChange]);
+    }, [searchQuery, sortBy, designType, stage, dateFrom, dateTo, deadlineFrom, deadlineTo, priceMin, priceMax, onFilterChange, validateDateRanges]);
 
     const handleResetFilters = useCallback(() => {
         setSearchQuery('');
@@ -142,10 +265,49 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
         setStage(1);
         setDateFrom('');
         setDateTo('');
+        setDeadlineFrom('');
+        setDeadlineTo('');
         setPriceMin('');
         setPriceMax('');
+        setErrors({});
         onFilterChange({});
     }, [onFilterChange]);
+
+    const handleDateFromChange = (value: string) => {
+        setDateFrom(value);
+        if (errors.dateFrom) setErrors(prev => ({ ...prev, dateFrom: undefined }));
+        if (errors.dateTo) setErrors(prev => ({ ...prev, dateTo: undefined }));
+    };
+
+    const handleDateToChange = (value: string) => {
+        setDateTo(value);
+        if (errors.dateFrom) setErrors(prev => ({ ...prev, dateFrom: undefined }));
+        if (errors.dateTo) setErrors(prev => ({ ...prev, dateTo: undefined }));
+    };
+
+    const handleDeadlineFromChange = (value: string) => {
+        setDeadlineFrom(value);
+        if (errors.deadlineFrom) setErrors(prev => ({ ...prev, deadlineFrom: undefined }));
+        if (errors.deadlineTo) setErrors(prev => ({ ...prev, deadlineTo: undefined }));
+    };
+
+    const handleDeadlineToChange = (value: string) => {
+        setDeadlineTo(value);
+        if (errors.deadlineFrom) setErrors(prev => ({ ...prev, deadlineFrom: undefined }));
+        if (errors.deadlineTo) setErrors(prev => ({ ...prev, deadlineTo: undefined }));
+    };
+
+    const handlePriceMinChange = (value: string) => {
+        setPriceMin(value);
+        if (errors.priceMin) setErrors(prev => ({ ...prev, priceMin: undefined }));
+        if (errors.priceMax) setErrors(prev => ({ ...prev, priceMax: undefined }));
+    };
+
+    const handlePriceMaxChange = (value: string) => {
+        setPriceMax(value);
+        if (errors.priceMin) setErrors(prev => ({ ...prev, priceMin: undefined }));
+        if (errors.priceMax) setErrors(prev => ({ ...prev, priceMax: undefined }));
+    };
 
     return (
         <div className={styles.filterContainer}>
@@ -193,40 +355,74 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
                         <div className={styles.label}>Дата создания</div>
                         <div className={styles.dateInputs}>
                             <CommonInputField
-                                label=""
+                                label="От"
                                 value={dateFrom}
-                                onChange={setDateFrom}
-                                placeholder="с (ГГГГ-ММ-ДД)"
+                                onChange={handleDateFromChange}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
                                 type="text"
+                                error={!!errors.dateFrom}
+                                helperText={errors.dateFrom || ""}
                             />
                             <CommonInputField
-                                label=""
+                                label="До"
                                 value={dateTo}
-                                onChange={setDateTo}
-                                placeholder="по (ГГГГ-ММ-ДД)"
+                                onChange={handleDateToChange}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
                                 type="text"
+                                error={!!errors.dateTo}
+                                helperText={errors.dateTo || ""}
                             />
                         </div>
                     </div>
 
+                    <div className={styles.dateRangeField}>
+                        <div className={styles.label}>Дата завершения</div>
+                        <div className={styles.dateInputs}>
+                            <CommonInputField
+                                label="От"
+                                value={deadlineFrom}
+                                onChange={handleDeadlineFromChange}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
+                                type="text"
+                                error={!!errors.deadlineFrom}
+                                helperText={errors.deadlineFrom || ""}
+                            />
+                            <CommonInputField
+                                label="До"
+                                value={deadlineTo}
+                                onChange={handleDeadlineToChange}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
+                                type="text"
+                                error={!!errors.deadlineTo}
+                                helperText={errors.deadlineTo || ""}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.filterRow}>
                     <div className={styles.priceRangeField}>
                         <div className={styles.label}>Цена</div>
                         <div className={styles.priceInputs}>
                             <CommonInputField
-                                label=""
+                                label="От"
                                 value={priceMin}
-                                onChange={setPriceMin}
+                                onChange={handlePriceMinChange}
                                 placeholder="от"
                                 type="number"
                                 min={0}
+                                error={!!errors.priceMin}
+                                helperText={errors.priceMin || ""}
                             />
                             <CommonInputField
-                                label=""
+                                label="До"
                                 value={priceMax}
-                                onChange={setPriceMax}
+                                onChange={handlePriceMaxChange}
                                 placeholder="до"
                                 type="number"
                                 min={0}
+                                error={!!errors.priceMax}
+                                helperText={errors.priceMax || ""}
                             />
                         </div>
                     </div>

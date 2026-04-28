@@ -1,6 +1,5 @@
 version: '3.8'
 
-
 services:
   db:
     image: mongo:8.0
@@ -14,10 +13,10 @@ services:
       - app-net
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   backend:
     image: nsql1h26-kitch_backend-python-fastapi:v.0.5
@@ -36,10 +35,10 @@ services:
       - app-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   frontend:
     image: nsql1h26-kitch_frontend-nginx-react:v.0.5
@@ -60,10 +59,10 @@ services:
       - app-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
 
 volumes:

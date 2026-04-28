@@ -25,6 +25,11 @@
   align-items: flex-end;
   gap: 20px;
   width: 100%;
+
+  .dateRangeField {
+    flex: 1;
+    min-width: 260px;
+  }
 }
 
 .searchField {
@@ -45,13 +50,15 @@
   gap: 8px;
 }
 
-.priceRangeField {
+.dateTimeInputWrapper,
+.priceInputWrapper {
   flex: 1;
-  min-width: 240px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  width: 100%;
 }
+
 
 .label {
   @include text-style(16px, 400, $on-surface-color, 22.4px);
@@ -62,15 +69,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-
-  > div {
-    flex: 1;
-    min-height: auto;
-
-    > div:first-child {
-      display: none;
-    }
-  }
 }
 
 .separator {
