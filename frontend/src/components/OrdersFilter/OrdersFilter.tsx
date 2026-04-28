@@ -25,8 +25,10 @@ const sortOptions: Option[] = [
     { value: 1, label: 'По умолчанию' },
     { value: 2, label: 'Цена (по возрастанию)' },
     { value: 3, label: 'Цена (по убыванию)' },
-    { value: 4, label: 'Дате создания (новые)' },
-    { value: 5, label: 'Дате создания (старые)' },
+    { value: 4, label: 'Дате и времени создания (новые)' },
+    { value: 5, label: 'Дате и времени создания (старые)' },
+    { value: 6, label: 'Дате и времени завершения (ближайшие)' },
+    { value: 7, label: 'Дате и времени завершения (дальние)' },
 ];
 
 const designTypeOptions: Option[] = [
@@ -76,6 +78,8 @@ const getSortValueFromParams = (sortBy: string | undefined, sort: 'ASC' | 'DESC'
     if (sortBy === 'total_price' && sort === 'DESC') return 3;
     if (sortBy === 'created_at' && sort === 'DESC') return 4;
     if (sortBy === 'created_at' && sort === 'ASC') return 5;
+    if (sortBy === 'deadline' && sort === 'ASC') return 6;
+    if (sortBy === 'deadline' && sort === 'DESC') return 7;
     return 1;
 };
 

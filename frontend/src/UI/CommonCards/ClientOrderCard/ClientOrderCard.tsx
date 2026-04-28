@@ -8,8 +8,15 @@ import {formatDate} from "../../FormatFunctions.ts";
 import style from "../../../pages/ClientPages/CreateOrderPage/CreateOrderPage.module.scss";
 
 const getOrderStatus = (stages: Order['stages']): { text: string; className: string } => {
+    if (!stages || stages.length === 0) {
+        return {
+            text: "В процессе",
+            className: styles.statusProcessing
+        };
+    }
 
     const lastStage = stages[stages.length - 1];
+
     if (lastStage?.name_stage === "Отменён") {
         return {
             text: "Отменён",
@@ -25,7 +32,10 @@ const getOrderStatus = (stages: Order['stages']): { text: string; className: str
     }
 
     const currentStage = stages.find(stage =>
-        stage.task_status === "В процессе" || stage.task_status === "Доступна"
+        stage.task_status !== "Выполнена" &&
+        stage.task_status !== "Закрыта" &&
+        stage.name_stage !== "Завершён" &&
+        stage.name_stage !== "Отменён"
     );
 
     return {
@@ -42,15 +52,32 @@ export function ClientOrderCard({order}: ClientOrderCardProps): ReactElement {
     const navigate = useNavigate();
     const { text: statusText, className: statusClassName } = getOrderStatus(order.stages);
 
+    console.log(order.id, order.stages);
+
     const handleSubmit = () => {
         navigate(`/orders/${order.id}`, { state: { order } });
     };
 
     const getEstimatedCompletionDate = (): string => {
-        if (!order.created_at) return "—";
-        const date = new Date(order.created_at);
-        date.setDate(date.getDate() + 30);
-        return formatDate(date);
+        if (!order.stages || order.stages.length === 0) return "—";
+
+        const lastStage = order.stages[order.stages.length - 1];
+
+        let targetStage = lastStage;
+        if (lastStage?.name_stage === "Завершён" || lastStage?.name_stage === "Отменён") {
+            const realStages = order.stages.filter(stage =>
+                stage.name_stage !== "Завершён" && stage.name_stage !== "Отменён"
+            );
+            targetStage = realStages[realStages.length - 1];
+        }
+
+        const deadline = targetStage?.times?.deadline;
+        if (!deadline) return "—";
+
+        const deadlineDate = deadline instanceof Date ? deadline : new Date(deadline);
+        if (isNaN(deadlineDate.getTime())) return "—";
+
+        return formatDate(deadlineDate);
     };
 
     return (
