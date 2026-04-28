@@ -158,14 +158,6 @@ async def get_filtered_orders_for_client(
         if created_filter:
             filter_query["created_at"] = created_filter
 
-        deadline_filter = {}
-        if from_deadline is not None:
-            deadline_filter["$gte"] = from_deadline
-        if to_deadline is not None:
-            deadline_filter["$lte"] = to_deadline
-        if deadline_filter:
-            filter_query["stages.times.deadline"] = deadline_filter
-
         pipeline = [
             {"$match": filter_query},
             {
@@ -180,6 +172,21 @@ async def get_filtered_orders_for_client(
 
         if stage is not None:
             pipeline.append({"$match": {"last_stage_status": stage.value}})
+
+
+        deadline_filter = {}
+        if from_deadline is not None:
+            deadline_filter["$gte"] = from_deadline
+        if to_deadline is not None:
+            deadline_filter["$lte"] = to_deadline
+        if deadline_filter:
+            pipeline.append({
+                "$match": {
+                    "$and":[
+                        {"last_stage_deadline": deadline_filter}
+                    ]
+                }
+            })
 
         sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
         pipeline.append({"$sort": {sort_field: sort_direction}})
