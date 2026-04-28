@@ -13,7 +13,8 @@ from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List, Optional
 from app.models.design import TypeDesign
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 
 STAGE_SEQUENCE = [
@@ -247,6 +248,17 @@ async def get_filtered_orders_for_client(
     skip: int,
     limit: int,
 ) -> List[Order]:
+    
+    def normalize_by_time_zone(dt: Optional[datetime]) -> Optional[datetime]:
+        if dt is None:
+            return None
+        return dt + timedelta(hours=3)
+
+    from_created = normalize_by_time_zone(from_created)
+    to_created = normalize_by_time_zone(to_created)
+    from_deadline = normalize_by_time_zone(from_deadline)
+    to_deadline = normalize_by_time_zone(to_deadline)
+    
     orders_db = await order_repo.get_filtered_orders_for_client(
         client_id,
         name_design,
