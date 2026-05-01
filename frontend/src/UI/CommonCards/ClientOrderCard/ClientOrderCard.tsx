@@ -124,6 +124,12 @@ export function ClientOrderCard({order}: ClientOrderCardProps): ReactElement {
                 />
             </div>
 
+            <div className={styles.detailsGridItem}>
+                <CommonInfoField label="Адрес" value={order.delivery.address} />
+                <CommonInfoField label="Материал" value={order.material} />
+                <CommonInfoField label="Комментарий" value={order.comment || "—"} />
+            </div>
+
         </div>
     );
 }

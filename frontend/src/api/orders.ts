@@ -8,6 +8,8 @@ export interface FilterParams {
     type?: TypeDesign | '';
     material?: string;
     stage?: TypeStage | '';
+    address?: string;
+    comment?: string;
     min_price?: number;
     max_price?: number;
     from_created?: string;
@@ -38,6 +40,8 @@ export const ordersAPI = {
         if (filters.type)                                                   params.append('type', filters.type);
         if (filters.material && filters.material.trim())                    params.append('material', filters.material);
         if (filters.stage)                                                  params.append('stage', filters.stage);
+        if (filters.address && filters.address.trim())                      params.append('address', filters.address);
+        if (filters.comment && filters.comment.trim())                      params.append('comment', filters.comment);
         if (filters.min_price !== undefined && filters.min_price > 0)       params.append('min_price', String(filters.min_price));
         if (filters.max_price !== undefined && filters.max_price < 1000000) params.append('max_price', String(filters.max_price));
         if (filters.from_created)                                           params.append('from_created', filters.from_created);
