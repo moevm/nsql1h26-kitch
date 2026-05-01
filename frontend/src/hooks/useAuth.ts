@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../api/auth';
 import type { UserCreate, UserAuth } from '../types/user';
-import {useEffect, useState} from "react";
+import { useEffect, useState } from 'react';
 
 export const useAuth = () => {
     const queryClient = useQueryClient();
@@ -14,6 +14,13 @@ export const useAuth = () => {
         }
         return null;
     });
+    const [userId, setUserId] = useState<string | null>(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            return authAPI.getUserId();
+        }
+        return null;
+    });
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         return !!localStorage.getItem('token');
     });
@@ -21,13 +28,10 @@ export const useAuth = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         const role = token ? authAPI.getUserRole() : null;
-
-        const updateState = () => {
-            setIsAuthenticated(true);
-            setUserRole(role);
-        };
-
-        updateState();
+        const uid = token ? authAPI.getUserId() : null;
+        setIsAuthenticated(!!token);
+        setUserRole(role);
+        setUserId(uid);
     }, []);
 
     const loginMutation = useMutation({
@@ -35,7 +39,9 @@ export const useAuth = () => {
         onSuccess: (data) => {
             localStorage.setItem('token', data.token);
             const role = authAPI.getUserRole();
+            const uid = authAPI.getUserId();
             setUserRole(role);
+            setUserId(uid);
             setIsAuthenticated(true);
 
             if (role === 'client') {
@@ -70,6 +76,7 @@ export const useAuth = () => {
         },
         onSuccess: () => {
             setUserRole(null);
+            setUserId(null);
             setIsAuthenticated(false);
             queryClient.clear();
             navigate('/login');
@@ -85,6 +92,7 @@ export const useAuth = () => {
         logout: logoutMutation.mutate,
 
         userRole: userRole,
+        userId: userId,
         isAuthenticated: isAuthenticated,
         isClient: userRole === 'client',
         isWorker: userRole === 'worker',

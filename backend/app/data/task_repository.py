@@ -266,6 +266,7 @@ async def get_filtered_tasks_for_worker(
                 "times": "$stages.times",
                 "worker_id": "$stages.worker_id",
                 "created_at": 1,
+                "updated_at": 1,
                 "remaining_time_minutes": 1
             }
         })

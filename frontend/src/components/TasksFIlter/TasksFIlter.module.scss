@@ -37,7 +37,7 @@
   min-width: 160px;
 }
 
-.timeRangeField {
+.timeRangeField, .dateRangeField {
   flex: 1;
   min-width: 240px;
   display: flex;
@@ -50,7 +50,7 @@
   align-self: stretch;
 }
 
-.rangeInputs {
+.rangeInputs, .dateInputs {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -84,4 +84,3 @@
     min-width: 120px;
   }
 }
-

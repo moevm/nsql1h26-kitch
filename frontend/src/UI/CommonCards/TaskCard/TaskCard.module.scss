@@ -3,7 +3,6 @@
 
 .cardContainer {
   width: 1350px;
-  height: 230px;
   background: $surface-color;
   box-shadow: $box-shadow;
   overflow: visible;
@@ -61,8 +60,6 @@
   width: 100%;
 }
 
-/* ---------- grid items ---------- */
-
 .orderIdGridItem,
 .designGridItem,
 .materialGridItem {
@@ -75,6 +72,8 @@
 .deadlineTimeGridItem,
 .estTimeGridItem,
 .statusGridItem,
+.createdAtGridItem,
+.updatedAtGridItem,
 .firstButtonGridItem,
 .secondButtonGridItem {
   grid-column: span 1;
