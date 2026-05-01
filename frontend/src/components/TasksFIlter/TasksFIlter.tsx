@@ -123,6 +123,7 @@ const getSortValueFromParams = (sortBy?: string, sort?: 'ASC' | 'DESC'): number 
 
 export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps): ReactElement {
     const [searchQuery, setSearchQuery] = useState(initialFilters?.name_design || '');
+    const [material, setMaterial] = useState(initialFilters?.material || '');   // добавлено
     const [statusValue, setStatusValue] = useState<number | null>(getStatusValue(initialFilters?.task_status));
     const [stageValue, setStageValue] = useState<number | null>(getStageValue(initialFilters?.name_stage));
     const [sortValue, setSortValue] = useState<number | null>(getSortValueFromParams(initialFilters?.sort_by, initialFilters?.sort));
@@ -134,6 +135,7 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
 
         const filters: Partial<TaskFilterParams> = {
             name_design: searchQuery || undefined,
+            material: material || undefined,        // добавлено
             task_status: getStatusFromValue(statusValue ?? 0),
             name_stage: getStageFromValue(stageValue ?? 0),
             min_estimated_time: minTime ? Number(minTime) : undefined,
@@ -142,10 +144,11 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
             sort: sortValue === 1 ? undefined : sort,
         };
         onFilterChange(filters);
-    }, [searchQuery, statusValue, stageValue, sortValue, minTime, maxTime, onFilterChange]);
+    }, [searchQuery, material, statusValue, stageValue, sortValue, minTime, maxTime, onFilterChange]);
 
     const handleResetFilters = useCallback(() => {
         setSearchQuery('');
+        setMaterial('');          // добавлено
         setStatusValue(0);
         setStageValue(0);
         setSortValue(1);
@@ -164,6 +167,16 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             value={searchQuery}
                             onChange={setSearchQuery}
                             placeholder="Введите название дизайна..."
+                        />
+                    </div>
+
+                    {/* Добавлен фильтр по материалу */}
+                    <div className={styles.filterField}>
+                        <CommonInputField
+                            label="Материал"
+                            value={material}
+                            onChange={setMaterial}
+                            placeholder="Введите материал..."
                         />
                     </div>
 
