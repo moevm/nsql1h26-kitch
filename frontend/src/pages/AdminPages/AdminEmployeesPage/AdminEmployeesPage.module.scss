@@ -59,3 +59,11 @@
   border-radius: 12px;
   width: 100%;
 }
+
+.statsInfo {
+  align-self: flex-start;
+  font-size: 14px;
+  color: $secondary-color;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}

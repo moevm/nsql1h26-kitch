@@ -82,6 +82,11 @@ export function AdminEmployeesPage(): ReactElement {
                 </div>
             ) : (
                 <>
+                    {workers && workers.length > 0 && (
+                        <div className={styles.statsInfo}>
+                            Показано {paginatedWorkers.length} из {workers.length} сотрудников
+                        </div>
+                    )}
                     <div className={styles.cardsContainer}>
                         <Fragment>
                             {paginatedWorkers.map((worker) => (

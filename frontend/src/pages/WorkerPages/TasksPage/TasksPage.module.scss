@@ -42,3 +42,23 @@
   width: 100%;
   box-shadow: $box-shadow;
 }
+
+.loadingState,
+.errorState {
+  text-align: center;
+  padding: 48px;
+  font-size: 16px;
+  color: $secondary-color;
+}
+
+.errorState {
+  color: $red-color;
+}
+
+.statsInfo {
+  align-self: flex-start;
+  font-size: 14px;
+  color: $secondary-color;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}
