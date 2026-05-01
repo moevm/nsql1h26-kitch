@@ -4,6 +4,7 @@ import { useWorker, useUpdateWorker, useDeleteWorker } from '../../../hooks/useW
 import { CommonInputField } from '../../../UI/CommonInputField/CommonInputField.tsx';
 import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
 import type { WorkerUpdate } from '../../../types/worker.ts';
+import { formatDate } from '../../../UI/FormatFunctions.ts';
 import styles from './EmployeeProfilePage.module.scss';
 
 export const EmployeeProfilePage: React.FC = () => {
@@ -64,9 +65,7 @@ export const EmployeeProfilePage: React.FC = () => {
 
     const handleDelete = async () => {
         if (!window.confirm('Уволить сотрудника? Это действие нельзя отменить.')) return;
-
         try {
-            console.log('Увольнение сотрудника с ID:', id);
             await deleteWorker.mutateAsync(id!);
             alert('Сотрудник успешно уволен');
             navigate('/admin/employees');
@@ -74,7 +73,7 @@ export const EmployeeProfilePage: React.FC = () => {
             console.error('Ошибка при увольнении:', err);
             const errorDetail = err?.response?.data?.detail;
             const errorMessage = errorDetail || err?.message || 'Не удалось уволить сотрудника';
-            alert(`Ошибка: ${errorMessage}\n${JSON.stringify(err?.response?.data, null, 2)}`);
+            alert(`Ошибка: ${errorMessage}`);
         }
     };
 
@@ -105,17 +104,15 @@ export const EmployeeProfilePage: React.FC = () => {
     }
 
     const age = calculateAge(worker.date_of_birth);
-    const createdAt = worker.created_at ? new Date(worker.created_at).toLocaleDateString() : '—';
-    const updatedAt = worker.updated_at ? new Date(worker.updated_at).toLocaleDateString() : '—';
+    const createdAt = worker.created_at ? formatDate(worker.created_at) : '—';
+    const updatedAt = worker.updated_at ? formatDate(worker.updated_at) : '—';
 
     return (
         <div className={styles.container}>
             <div className={styles.backButtonWrapper}>
                 <CommonButton title="← Назад" variant="text" onClick={() => navigate('/admin/employees')} />
             </div>
-
             <div className={styles.profileCard}>
-                {/* Строка 1 */}
                 <div className={styles.row}>
                     <div className={styles.leftColumn}>
                         <div className={styles.headerSection}>
@@ -151,7 +148,6 @@ export const EmployeeProfilePage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
                 <div className={styles.rowCompact}>
                     <CommonInputField
                         label="Email сотрудника"
@@ -191,7 +187,6 @@ export const EmployeeProfilePage: React.FC = () => {
                         onChange={handleChange('position')}
                     />
                 </div>
-
                 <div className={styles.rowExtended}>
                     <div className={styles.leftColumn}>
                         <div className={styles.commentField}>
