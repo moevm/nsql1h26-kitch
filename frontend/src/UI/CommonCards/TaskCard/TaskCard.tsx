@@ -5,6 +5,9 @@ import {CommonInfoField} from "../../CommonInfoField/CommonInfoField.tsx";
 import {CommonButton} from "../../CommonButton/CommonButton.tsx";
 import {useNavigate} from "react-router-dom";
 import {useOrder} from "../../../hooks/useOrders.ts";
+import {useAuth} from "../../../hooks/useAuth.ts";
+import {useTakeTask} from "../../../hooks/useTasks.ts";
+import {formatDate} from "../../FormatFunctions.ts";
 
 interface TaskCardProps {
     task: Task;
@@ -33,17 +36,47 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
     const navigate = useNavigate();
     const { text: statusText, className: statusClassName } = getStatusConfig(task.status);
     const {data: order} = useOrder(task.order_id);
+    const { userId } = useAuth();
+    const takeTask = useTakeTask();
 
     const handleOrderClick = () => {
         navigate(`/orders/${task.order_id}`, { state: { order } });
     };
 
     const handleTakeTask = () => {
+        if (!userId) {
+            alert('Не удалось определить ID пользователя. Пожалуйста, выйдите и зайдите снова.');
+            console.error("No worker ID found");
+            return;
+        }
 
+        console.log("Trying to take task:", {
+            orderId: task.order_id,
+            stageIndex: task.stage_index,
+            workerId: userId
+        });
+
+        takeTask.mutate(
+            {
+                orderId: task.order_id,
+                stageIndex: task.stage_index,
+                workerId: userId
+            },
+            {
+                onSuccess: (data) => {
+                    alert(`✅ Задача успешно взята в работу: ${data.message}`);
+                },
+                onError: (error: any) => {
+                    console.error("Take task error:", error);
+                    const message = error?.response?.data?.detail || error?.message || 'Ошибка при взятии задачи';
+                    alert(`❌ Ошибка: ${message}`);
+                }
+            }
+        );
     };
 
     const handleCompleteTask = () => {
-
+        console.log("Complete task", task.order_id, task.stage_index);
     };
 
     const isTaskAvailable = task.status === "Доступна";
@@ -118,6 +151,20 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
                 />
             </div>
 
+            <div className={styles.createdAtGridItem}>
+                <CommonInfoField
+                    label={"Создана"}
+                    value={task.created_at ? formatDate(task.created_at) : "—"}
+                />
+            </div>
+
+            <div className={styles.updatedAtGridItem}>
+                <CommonInfoField
+                    label={"Изменён"}
+                    value={task.updated_at ? formatDate(task.updated_at) : "—"}
+                />
+            </div>
+
             <div className={styles.firstButtonGridItem}>
                 <CommonButton
                     title={"Заказ"}
@@ -129,9 +176,10 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
             <div className={styles.secondButtonGridItem}>
                 {shouldShowTakeButton && (
                     <CommonButton
-                        title={"Взять"}
+                        title={takeTask.isPending ? "Взятие..." : "Взять"}
                         variant="primary"
                         onClick={handleTakeTask}
+                        disabled={takeTask.isPending}
                     />
                 )}
                 {shouldShowCompleteButton && (

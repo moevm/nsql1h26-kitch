@@ -121,39 +121,118 @@ const getSortValueFromParams = (sortBy?: string, sort?: 'ASC' | 'DESC'): number 
     return 1;
 };
 
+const formatDateTimeForInput = (dateTimeStr: string | undefined): string => {
+    if (!dateTimeStr) return '';
+    try {
+        const date = new Date(dateTimeStr);
+        if (isNaN(date.getTime())) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    } catch {
+        return '';
+    }
+};
+
+const convertToUTC = (dateTimeStr: string, isEndOfDay: boolean = false): string | undefined => {
+    if (!dateTimeStr) return undefined;
+    try {
+        const parts = dateTimeStr.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+        if (!parts) return undefined;
+        const [ , day, month, year, hours, minutes] = parts;
+        const hour = parseInt(hours);
+        const minute = parseInt(minutes);
+        let localDate: Date;
+        if (isEndOfDay && hour === 0 && minute === 0) {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
+        } else if (isEndOfDay) {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 59, 999);
+        } else {
+            localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), hour, minute, 0, 0);
+        }
+        if (isNaN(localDate.getTime())) return undefined;
+        return localDate.toISOString();
+    } catch {
+        return undefined;
+    }
+};
+
+const validateDateTime = (value: string): boolean => {
+    if (!value) return true;
+    const regex = /^\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}$/;
+    if (!regex.test(value)) return false;
+    const parts = value.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!parts) return false;
+    const [, day, month, year, hours, minutes] = parts;
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+    return !isNaN(date.getTime());
+};
+
 export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps): ReactElement {
     const [searchQuery, setSearchQuery] = useState(initialFilters?.name_design || '');
-    const [material, setMaterial] = useState(initialFilters?.material || '');   // добавлено
+    const [material, setMaterial] = useState(initialFilters?.material || '');
     const [statusValue, setStatusValue] = useState<number | null>(getStatusValue(initialFilters?.task_status));
     const [stageValue, setStageValue] = useState<number | null>(getStageValue(initialFilters?.name_stage));
     const [sortValue, setSortValue] = useState<number | null>(getSortValueFromParams(initialFilters?.sort_by, initialFilters?.sort));
     const [minTime, setMinTime] = useState(initialFilters?.min_estimated_time?.toString() || '');
     const [maxTime, setMaxTime] = useState(initialFilters?.max_estimated_time?.toString() || '');
+    const [fromCreated, setFromCreated] = useState(formatDateTimeForInput(initialFilters?.from_created));
+    const [toCreated, setToCreated] = useState(formatDateTimeForInput(initialFilters?.to_created));
+    const [errors, setErrors] = useState<{ fromCreated?: string; toCreated?: string }>({});
+
+    const validateDateRanges = useCallback((): boolean => {
+        const newErrors: { fromCreated?: string; toCreated?: string } = {};
+        if (fromCreated && !validateDateTime(fromCreated)) {
+            newErrors.fromCreated = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (toCreated && !validateDateTime(toCreated)) {
+            newErrors.toCreated = 'Неверный формат (ДД.ММ.ГГГГ ЧЧ:мм)';
+        }
+        if (fromCreated && toCreated) {
+            const fromDate = new Date(fromCreated.split('.').reverse().join('-').replace(' ', 'T'));
+            const toDate = new Date(toCreated.split('.').reverse().join('-').replace(' ', 'T'));
+            if (fromDate > toDate) {
+                newErrors.toCreated = 'Дата "по" не может быть раньше даты "с"';
+            }
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }, [fromCreated, toCreated]);
 
     const handleApplyFilters = useCallback(() => {
+        if (!validateDateRanges()) return;
+
         const { sort_by, sort } = getSortParams(sortValue);
 
         const filters: Partial<TaskFilterParams> = {
             name_design: searchQuery || undefined,
-            material: material || undefined,        // добавлено
+            material: material || undefined,
             task_status: getStatusFromValue(statusValue ?? 0),
             name_stage: getStageFromValue(stageValue ?? 0),
             min_estimated_time: minTime ? Number(minTime) : undefined,
             max_estimated_time: maxTime ? Number(maxTime) : undefined,
+            from_created: convertToUTC(fromCreated, false),
+            to_created: convertToUTC(toCreated, true),
             sort_by: sortValue === 1 ? undefined : sort_by,
             sort: sortValue === 1 ? undefined : sort,
         };
         onFilterChange(filters);
-    }, [searchQuery, material, statusValue, stageValue, sortValue, minTime, maxTime, onFilterChange]);
+    }, [searchQuery, material, statusValue, stageValue, sortValue, minTime, maxTime, fromCreated, toCreated, onFilterChange, validateDateRanges]);
 
     const handleResetFilters = useCallback(() => {
         setSearchQuery('');
-        setMaterial('');          // добавлено
+        setMaterial('');
         setStatusValue(0);
         setStageValue(0);
         setSortValue(1);
         setMinTime('');
         setMaxTime('');
+        setFromCreated('');
+        setToCreated('');
+        setErrors({});
         onFilterChange({});
     }, [onFilterChange]);
 
@@ -169,8 +248,6 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             placeholder="Введите название дизайна..."
                         />
                     </div>
-
-                    {/* Добавлен фильтр по материалу */}
                     <div className={styles.filterField}>
                         <CommonInputField
                             label="Материал"
@@ -179,7 +256,6 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             placeholder="Введите материал..."
                         />
                     </div>
-
                     <div className={styles.filterField}>
                         <CommonSelectField
                             label="Статус"
@@ -188,7 +264,6 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             onChange={setStatusValue}
                         />
                     </div>
-
                     <div className={styles.filterField}>
                         <CommonSelectField
                             label="Этап"
@@ -197,7 +272,6 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             onChange={setStageValue}
                         />
                     </div>
-
                     <div className={styles.filterField}>
                         <CommonSelectField
                             label="Сортировка"
@@ -231,7 +305,30 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             />
                         </div>
                     </div>
-
+                    <div className={styles.dateRangeField}>
+                        <div className={styles.label}>Дата создания</div>
+                        <div className={styles.dateInputs}>
+                            <CommonInputField
+                                label=""
+                                value={fromCreated}
+                                onChange={setFromCreated}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
+                                type="text"
+                                error={!!errors.fromCreated}
+                                helperText={errors.fromCreated || ""}
+                            />
+                            <span className={styles.separator}>—</span>
+                            <CommonInputField
+                                label=""
+                                value={toCreated}
+                                onChange={setToCreated}
+                                placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
+                                type="text"
+                                error={!!errors.toCreated}
+                                helperText={errors.toCreated || ""}
+                            />
+                        </div>
+                    </div>
                     <div className={styles.actions}>
                         <CommonButton
                             title="Применить"

@@ -14,4 +14,6 @@ export interface Task {
     material: string;
     times: Times;
     worker_id: string;
+    created_at?: string;
+    updated_at?: string;
 }

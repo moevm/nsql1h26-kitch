@@ -170,3 +170,5 @@ class Task(BaseModel):
     material: str
     times: Times
     worker_id: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
