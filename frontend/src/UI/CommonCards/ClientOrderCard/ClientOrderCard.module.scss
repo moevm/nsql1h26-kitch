@@ -3,7 +3,6 @@
 
 .cardContainer {
   width: 1332px;
-  height: 128px;
   background: $surface-color;
   box-shadow: $box-shadow;
   overflow: visible;
@@ -12,7 +11,6 @@
   outline-offset: -1px;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(1, 1fr);
   gap: 24px;
   padding: 24px;
   box-sizing: border-box;
@@ -60,7 +58,7 @@
 
 .orderIdGridItem {
   grid-column: span 3;
-  grid-row: span 1;
+  grid-row: 1;
   align-content: center;
 }
 
@@ -70,6 +68,17 @@
 .statusGridItem,
 .infoButtonGridItem {
   grid-column: span 1;
-  grid-row: span 1;
+  grid-row: 1;
   align-content: center;
+}
+
+.detailsGridItem {
+  grid-column: span 8;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 16px;
 }

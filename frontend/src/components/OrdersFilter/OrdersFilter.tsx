@@ -146,6 +146,9 @@ const validateDateTime = (value: string): boolean => {
 
 export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps): ReactElement {
     const [searchQuery, setSearchQuery] = useState(initialFilters?.name_design || "");
+    const [searchMaterial, setSearchMaterial] = useState(initialFilters?.material || "");
+    const [searchAddress, setSearchAddress] = useState(initialFilters?.address || "");
+    const [searchComment, setSearchComment] = useState(initialFilters?.comment || "");
     const [sortBy, setSortBy] = useState<number | null>(getSortValueFromParams(initialFilters?.sort_by, initialFilters?.sort));
     const [designType, setDesignType] = useState<number | null>(getDesignTypeValueFromString(initialFilters?.type));
     const [stage, setStage] = useState<number | null>(getStageValueFromString(initialFilters?.stage));
@@ -247,6 +250,9 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
 
         const filters: Partial<FilterParams> = {
             name_design: searchQuery || undefined,
+            material: searchMaterial || undefined,
+            address: searchAddress || undefined,
+            comment: searchComment || undefined,
             type: getDesignTypeValue(designType) || undefined,
             stage: getStageValue(stage) || undefined,
             min_price: priceMin ? Number(priceMin) : undefined,
@@ -260,10 +266,13 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
         };
 
         onFilterChange(filters);
-    }, [searchQuery, sortBy, designType, stage, dateFrom, dateTo, deadlineFrom, deadlineTo, priceMin, priceMax, onFilterChange, validateDateRanges]);
+    }, [searchQuery, searchMaterial, searchAddress, searchComment, sortBy, designType, stage, dateFrom, dateTo, deadlineFrom, deadlineTo, priceMin, priceMax, onFilterChange, validateDateRanges]);
 
     const handleResetFilters = useCallback(() => {
         setSearchQuery('');
+        setSearchMaterial('');
+        setSearchAddress('');
+        setSearchComment('');
         setSortBy(1);
         setDesignType(1);
         setStage(1);
@@ -323,6 +332,33 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
                             value={searchQuery}
                             onChange={setSearchQuery}
                             placeholder="Поиск по дизайну..."
+                        />
+                    </div>
+
+                    <div className={styles.filterField}>
+                        <CommonInputField
+                            label="Материал"
+                            value={searchMaterial}
+                            onChange={setSearchMaterial}
+                            placeholder="Материал..."
+                        />
+                    </div>
+
+                    <div className={styles.filterField}>
+                        <CommonInputField
+                            label="Адрес"
+                            value={searchAddress}
+                            onChange={setSearchAddress}
+                            placeholder="Адрес доставки..."
+                        />
+                    </div>
+
+                    <div className={styles.filterField}>
+                        <CommonInputField
+                            label="Комментарий"
+                            value={searchComment}
+                            onChange={setSearchComment}
+                            placeholder="Комментарий..."
                         />
                     </div>
 
