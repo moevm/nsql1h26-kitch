@@ -116,6 +116,8 @@ async def get_filtered_orders_for_client(
     type: TypeDesign,
     material: str,
     stage: TypeStage,
+    address: str,
+    comment: str,
     min_price: int,
     max_price: int,
     from_created: Optional[datetime],
@@ -138,6 +140,12 @@ async def get_filtered_orders_for_client(
 
         if material is not None:
             filter_query["material"] = {"$regex": material, "$options": "i"}
+
+        if comment is not None:
+            filter_query["comment"] = {"$regex": comment, "$options": "i"}
+
+        if address is not None:
+            filter_query["delivery.address"] = {"$regex": address, "$options": "i"}
 
         if type is not None:
             filter_query["type"] = type.value
