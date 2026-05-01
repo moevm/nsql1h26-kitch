@@ -36,7 +36,6 @@ export function TasksPage(): ReactElement {
         setPage(1);
     }, []);
 
-
     if (isLoading) {
         return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
     }
@@ -55,6 +54,11 @@ export function TasksPage(): ReactElement {
                 </div>
             ) : (
                 <>
+                    {tasks.length > 0 && (
+                        <div className={styles.statsInfo}>
+                            Показано {paginatedTasks.length} из {tasks.length} задач
+                        </div>
+                    )}
                     <div className={styles.tasksGrid}>
                         {paginatedTasks.map((task) => (
                             <TaskCard

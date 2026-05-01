@@ -18,7 +18,6 @@ export function OrdersPage(): ReactElement {
 
     const paginatedOrders = useMemo(() => {
         if (!orders) return [];
-
         const start = (page - 1) * ITEMS_PER_PAGE;
         const end = start + ITEMS_PER_PAGE;
         return orders.slice(start, end);
@@ -56,6 +55,11 @@ export function OrdersPage(): ReactElement {
                 </div>
             ) : (
                 <>
+                    {orders && orders.length > 0 && (
+                        <div className={styles.statsInfo}>
+                            Показано {paginatedOrders.length} из {orders.length} заказов
+                        </div>
+                    )}
                     <div className={styles.ordersGrid}>
                         <Fragment>
                             {paginatedOrders.map((order: Order) => (

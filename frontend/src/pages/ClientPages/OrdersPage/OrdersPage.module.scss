@@ -50,3 +50,11 @@
 .emptyState {
   color: $secondary-color;
 }
+
+.statsInfo {
+  align-self: flex-start;
+  font-size: 14px;
+  color: $secondary-color;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}
