@@ -60,7 +60,7 @@ async def complete_task(
         raise HTTPException(status_code=403, detail="Доступ только для worker и admin")
 
     stage = await task_repo.get_stage(order_id, stage_index)
-    if not stage:
+    if stage is None:
         raise HTTPException(status_code=404, detail="Этап не найден")
 
     if role == "worker" and stage.get("worker_id") != worker_id:
@@ -68,7 +68,8 @@ async def complete_task(
 
     if stage.get("task_status") != TypeTask.In_progress.value:
         raise HTTPException(
-            status_code=400, detail="Можно завершить только задачу в процессе"
+            status_code=400,
+            detail=f"Можно завершить только задачу в процессе (текущий статус: {stage.get('task_status')})"
         )
 
     success = await task_repo.complete_task(order_id, stage_index)
@@ -78,8 +79,9 @@ async def complete_task(
     return {
         "order_id": order_id,
         "stage_index": stage_index,
-        "message": "Задача завершена",
+        "message": "Задача завершена"
     }
+
 
 async def get_filtered_tasks_for_worker(
     worker_id: str,
@@ -132,4 +134,3 @@ async def get_filtered_tasks_for_worker(
         tasks.append(Task(**doc))
 
     return tasks
-
