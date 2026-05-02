@@ -3,19 +3,16 @@ import style from "./CreateOrderPage.module.scss"
 
 import {Alert} from "@mui/material";
 
-// elements
 import {CommonInputField} from "../../../UI/CommonInputField/CommonInputField.tsx";
 import {CommonButton} from "../../../UI/CommonButton/CommonButton.tsx";
 import {CommonInfoField} from "../../../UI/CommonInfoField/CommonInfoField.tsx";
 import {CommonSelectField} from "../../../UI/CommonSelectField/CommonSelectField.tsx";
 
-// hooks
 import {useMaterials} from "../../../hooks/useMaterials.ts";
 import {useDesigns} from "../../../hooks/useDesigns.ts";
 import {useCreateOrder} from "../../../hooks/useOrders.ts";
 import {useNavigate} from "react-router-dom";
 
-//types
 import {colors} from "../../../types/color.ts";
 import {AxiosError} from "axios";
 import type {TypeDesign} from "../../../types/design.ts";
@@ -36,14 +33,12 @@ export function CreateOrderPage(): ReactElement {
     const navigate = useNavigate();
     const createOrder = useCreateOrder()
 
-    // text
     const [username, setUsername] = useState<string>("");
     const [phone, setPhone] = useState<string>("");
     const [address, setAddress] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
     const [validationErrors, setValidationErrors] = useState<FormErrors>({});
 
-    // design type
     const {data: designs, isLoading: designsLoading} = useDesigns();
     const [selectedDesignIndex, setSelectedDesignIndex] = useState<number | null>(0);
     const selectedDesign = selectedDesignIndex !== null ? designs?.[selectedDesignIndex] : null;
@@ -52,7 +47,6 @@ export function CreateOrderPage(): ReactElement {
         label: `${design.name} (${design.type})`
     })) ?? [];
 
-    // color
     const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(0);
     const selectedColor = selectedColorIndex !== null ? colors[selectedColorIndex] : null;
     const colorOptions = colors?.map((color, index) => ({
@@ -60,7 +54,6 @@ export function CreateOrderPage(): ReactElement {
         label: color.name
     })) ?? [];
 
-    // materials
     const { data: materials, isLoading: materialsLoading } = useMaterials();
     const [selectedMaterialIndex, setSelectedMaterialIndex] = useState<number | null>(0);
     const selectedMaterial = selectedMaterialIndex !== null ? materials?.[selectedMaterialIndex] : null;
@@ -69,11 +62,9 @@ export function CreateOrderPage(): ReactElement {
         label: material.name
     })) ?? [];
 
-    // lift and delivery
     const [hasLift, setHasLift] = useState<boolean | null>(true);
     const [floor, setFloor] = useState<string>("1");
 
-    // prices
     const typePrice = useMemo(() => {
         return selectedDesign?.design_price ?? 0;
     }, [selectedDesign]);
@@ -91,17 +82,27 @@ export function CreateOrderPage(): ReactElement {
 
     const totalPrice = typePrice + materialPrice + deliveryPrice;
 
+    const validatePhone = (phone: string) => {
+        const digits = phone.replace(/\D/g, '');
+        return digits.length >= 10 && digits.length <= 12;
+    };
+
     const validateForm = (): boolean => {
         const errors: FormErrors = {};
 
         if (!username.trim()) errors.username = "Укажите имя заказчика";
         if (!phone.trim()) errors.phone = "Укажите номер телефона";
+        else if (!validatePhone(phone)) errors.phone = "Введите корректный номер (10–12 цифр)";
         if (!address.trim()) errors.address = "Укажите адрес доставки";
         if (selectedDesignIndex === null) errors.design = "Выберите дизайн";
         if (selectedColorIndex === null) errors.color = "Выберите цвет";
         if (selectedMaterialIndex === null) errors.material = "Выберите материал";
-
         if (hasLift === null) errors.lift = "Укажите наличие лифта";
+
+        const floorNum = parseInt(floor);
+        if (isNaN(floorNum) || floorNum < 1 || floorNum > 100) {
+            errors.floor = "Этаж должен быть целым числом от 1 до 100";
+        }
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
