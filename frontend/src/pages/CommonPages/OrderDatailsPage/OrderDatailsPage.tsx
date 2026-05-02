@@ -27,6 +27,10 @@ export function OrderDetailsPage(): ReactElement {
         navigate(-1);
     };
 
+    if (!order) {
+        return <div>Заказ не найден</div>;
+    }
+
     if (isLoading) {
         return (<div>Загружаем ваш заказ...</div>);
     }
@@ -48,35 +52,35 @@ export function OrderDetailsPage(): ReactElement {
             <div className={style.clientNameGridItem}>
                 <CommonInfoField
                     label={"Имя заказчика"}
-                    value={order?.client.username || "-"}
+                    value={order?.client?.username || "-"}
                 />
             </div>
 
             <div className={style.phoneGridItem}>
                 <CommonInfoField
                     label={"Номер телефона"}
-                    value={order?.client.phone || "-"}
+                    value={order?.client?.phone || "-"}
                 />
             </div>
 
             <div className={style.addressGridItem}>
                 <CommonInfoField
                     label={"Адрес заказа"}
-                    value={order?.delivery.address || "-"}
+                    value={order?.delivery?.address || "-"}
                 />
             </div>
 
             <div className={style.floorGridItem}>
                 <CommonInfoField
                     label={"Этаж"}
-                    value={`${order?.delivery.floor || "-"} этаж, ${order?.delivery.has_lift ? "лифт" : "без лифта"}`}
+                    value={`${order?.delivery?.floor || "-"} этаж, ${order?.delivery?.has_lift ? "лифт" : "без лифта"}`}
                 />
             </div>
 
             <div className={style.kitchenTypeGridItem}>
                 <CommonInfoField
                     label={"Дизайн, Тип, Цвет"}
-                    value={`${design?.name || "-"} (${design?.type || "-"}, ${order?.color.name || "-"})`}
+                    value={`${design?.name || "-"} (${design?.type || "-"}, ${order?.color?.name || "-"})`}
                 />
             </div>
 
@@ -95,16 +99,16 @@ export function OrderDetailsPage(): ReactElement {
             </div>
 
             <div className={style.imageGridItem}>
-                <img src={defaultImage} className={style.cardImage} />
+                <img src={defaultImage} className={style.cardImage} alt="Дизайн" />
             </div>
 
             <div className={style.pricingGridItem}>
                 <CommonInfoField
-                    label={`Общая стоимость: ${order.pricing.total_price.toLocaleString() || "-"} ₽`}
+                    label={`Общая стоимость: ${order?.pricing?.total_price?.toLocaleString() || "-"} ₽`}
                     value={`
-                        ${design?.name || "-"}: ${order.pricing.type_price.toLocaleString()} ₽; 
-                        ${order?.material || "-"}: ${order.pricing.material_price.toLocaleString()} ₽; 
-                        ${order?.delivery.floor || "-"} этаж, ${order?.delivery.has_lift ? "лифт" : "без лифта"}: ${order.pricing.delivery_price.toLocaleString()} ₽
+                        ${design?.name || "-"}: ${order?.pricing?.type_price?.toLocaleString() || "0"} ₽; 
+                        ${order?.material || "-"}: ${order?.pricing?.material_price?.toLocaleString() || "0"} ₽; 
+                        ${order?.delivery?.floor || "-"} этаж, ${order?.delivery?.has_lift ? "лифт" : "без лифта"}: ${order?.pricing?.delivery_price?.toLocaleString() || "0"} ₽
                     `}
                 />
             </div>
