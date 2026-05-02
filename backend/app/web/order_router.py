@@ -7,7 +7,8 @@ from app.service.order_service import (
     cancel_order,
     get_orders_by_user_role,
     get_filtered_orders_for_client,
-    next_stage
+    next_stage,
+    can_worker_view_order
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
@@ -26,6 +27,7 @@ ALLOWED_SORTED_FIELDS = {
 
 router = APIRouter(prefix="/api", tags=["orders"])
 
+
 @router.get(
     "/orders/filter",
     response_model=List[Order],
@@ -34,7 +36,8 @@ router = APIRouter(prefix="/api", tags=["orders"])
     Возвращает отфильтрованные заказы для клиента с регистронезависимым поиском
     """,
 )
-async def get_filtered_orders_client(name_design: str = None,
+async def get_filtered_orders_client(
+    name_design: str = None,
     type: TypeDesign = None,
     material: str = None,
     stage: TypeStage = None,
@@ -89,6 +92,7 @@ async def get_filtered_orders_client(name_design: str = None,
 
     return orders
 
+
 @router.get(
     "/orders",
     response_model=List[Order],
@@ -114,7 +118,7 @@ async def get_orders(current_user: dict = Depends(get_current_user_dep)):
     description="""
     Возвращает заказ по ID с проверкой прав:
     - **CLIENT**: только свой заказ
-    - **WORKER**: если участвует в заказе
+    - **WORKER**: если участвует в заказе или стадия заказа Доступна
     - **ADMIN**: любой заказ
     """,
 )
@@ -132,9 +136,7 @@ async def get_order(order_id: str, current_user: dict = Depends(get_current_user
         return order
 
     if current_user["role"] == "worker":
-        is_participating = any(
-            stage.worker_id == current_user["user_id"] for stage in order.stages
-        )
+        is_participating = await can_worker_view_order(order, current_user["user_id"])
         if not is_participating:
             raise HTTPException(
                 status_code=403,
@@ -143,6 +145,7 @@ async def get_order(order_id: str, current_user: dict = Depends(get_current_user
         return order
 
     raise HTTPException(status_code=403, detail="Недостаточно прав")
+
 
 @router.post(
     "/orders/new",
@@ -190,7 +193,6 @@ async def cancel_order_endpoint(
         order_id=order_id, user_id=current_user["user_id"], role=current_user["role"]
     )
     return result
-
 
 
 @router.post(

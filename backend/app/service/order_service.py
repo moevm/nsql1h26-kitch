@@ -13,6 +13,7 @@ from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
 from typing import List, Optional
 from app.models.design import TypeDesign
+from app.models.order import TypeTask
 from datetime import datetime, timedelta
 
 
@@ -229,6 +230,14 @@ async def cancel_order(order_id: str, user_id: str, role: str) -> dict:
         raise HTTPException(status_code=500, detail="Не удалось отменить заказ")
 
     return {"order_id": order_id, "message": "Заказ успешно отменён"}
+
+
+async def can_worker_view_order(order: Order, worker_id: str) -> bool:
+    if any(stage.worker_id == worker_id for stage in order.stages):
+        return True
+    if any(not stage.worker_id and stage.task_status == TypeTask.Available for stage in order.stages):
+        return True
+    return False
 
 
 async def get_filtered_orders_for_client(

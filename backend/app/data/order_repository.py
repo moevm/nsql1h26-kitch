@@ -80,6 +80,8 @@ async def get_by_worker_id(worker_id: str) -> List[OrderInDB]:
 
 async def create(order: OrderInDB) -> str:
     doc = order.model_dump(by_alias=True)
+    if "_id" in doc and isinstance(doc["_id"], str):
+        doc["_id"] = ObjectId(doc["_id"])
     result = await orders_collection.insert_one(doc)
     return str(result.inserted_id)
 
