@@ -3,14 +3,14 @@ from app.models.order import OrderInDB, TypeTask, Task, TypeStage, TypeStatus
 from app.models.design import TypeDesign
 from typing import List, Optional
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 SORT_FIELD_MAP = {
     "created_at": "created_at",
     "material": "material",
     "name_design": "name_design",
-    "name_stage": "stage_name", #
+    "name_stage": "stage_name",
     "task_status": "task_status",
     "type_kitchen": "type",
     "estimated_time":"times.est_time",
@@ -83,9 +83,10 @@ async def take_task(order_id: str, stage_index: int, worker_id: str) -> bool:
 
 async def complete_task(order_id: str, stage_index: int) -> bool:
     """Завершить этап и открыть следующий"""
-    from datetime import timedelta
-
     now = datetime.now(timezone.utc)
+    
+    if not ObjectId.is_valid(order_id):
+        return False
 
     doc = await orders_collection.find_one({"_id": ObjectId(order_id)})
     if not doc:
@@ -97,38 +98,91 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
 
     stage = stages[stage_index]
     deadline = stage.get("times", {}).get("deadline")
-
-    if deadline and deadline.tzinfo is None:
-        deadline = deadline.replace(tzinfo=timezone.utc)
-
-    # просрочена или выполнена
-    if deadline and now > deadline:
-        final_status = TypeTask.Overdue.value
+    if deadline is not None:
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if now > deadline:
+            final_status = TypeTask.Overdue.value
+        else:
+            final_status = TypeTask.Completed.value
     else:
         final_status = TypeTask.Completed.value
 
-    update = {
-        f"stages.{stage_index}.task_status": final_status,
-        f"stages.{stage_index}.times.end": now,
-        "updated_at": now,
-    }
+    # Обновляем текущий этап
+    result = await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                f"stages.{stage_index}.task_status": final_status,
+                f"stages.{stage_index}.times.end": now,
+                "updated_at": now,
+            }
+        }
+    )
 
-    # открываем след этап если есть
+    # Определяем следующий этап
+    from app.service.order_service import STAGE_SEQUENCE  # импорт внутри функции
+    current_stage_name = stage["name_stage"]
     next_index = stage_index + 1
-    if next_index < len(stages):
-        update[f"stages.{next_index}.task_status"] = TypeTask.Available.value
-        update[f"stages.{next_index}.times.start"] = now
-        # дедлайн следующего = старт + est_time минут
-        next_est = stages[next_index].get("times", {}).get("est_time", 2880)
-        from datetime import timedelta
 
-        update[f"stages.{next_index}.times.deadline"] = now + timedelta(
-            minutes=next_est
+    # Если следующего этапа нет в массиве, создаём его
+    if next_index >= len(stages):
+        try:
+            pos = STAGE_SEQUENCE.index(current_stage_name)
+            next_stage_type = STAGE_SEQUENCE[pos + 1]
+        except (ValueError, IndexError):
+            return result.modified_count > 0  # нет следующего этапа (возможно, уже Completed)
+
+        from app.models.order import TypeStatus, Times
+        if next_stage_type == TypeStage.Completed:
+            new_stage = {
+                "name_stage": TypeStage.Completed.value,
+                "worker_id": "",
+                "status": TypeStatus.Completed.value,
+                "task_status": TypeTask.Completed.value,
+                "times": {
+                    "deadline": now,
+                    "start": now,
+                    "end": now,
+                    "est_time": 0,
+                    "spent": 0,
+                    "expired_time": 0,
+                }
+            }
+        else:
+            new_stage = {
+                "name_stage": next_stage_type.value,
+                "worker_id": "",
+                "status": TypeStatus.In_progress.value,
+                "task_status": TypeTask.Available.value,
+                "times": {
+                    "deadline": now + timedelta(minutes=2880),
+                    "start": now,
+                    "end": None,
+                    "est_time": 2880,
+                    "spent": 0,
+                    "expired_time": 0,
+                }
+            }
+        await orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$push": {"stages": new_stage}, "$set": {"updated_at": now}}
+        )
+    else:
+        # Открываем существующий следующий этап
+        next_est = stages[next_index].get("times", {}).get("est_time", 2880)
+        await orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {
+                "$set": {
+                    f"stages.{next_index}.task_status": TypeTask.Available.value,
+                    f"stages.{next_index}.times.start": now,
+                    f"stages.{next_index}.times.deadline": now + timedelta(minutes=next_est),
+                    "updated_at": now,
+                }
+            }
         )
 
-    result = await orders_collection.update_one(
-        {"_id": ObjectId(order_id)}, {"$set": update}
-    )
     return result.modified_count > 0
 
 

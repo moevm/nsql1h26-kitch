@@ -6,7 +6,7 @@ import {CommonButton} from "../../CommonButton/CommonButton.tsx";
 import {useNavigate} from "react-router-dom";
 import {useOrder} from "../../../hooks/useOrders.ts";
 import {useAuth} from "../../../hooks/useAuth.ts";
-import {useTakeTask} from "../../../hooks/useTasks.ts";
+import {useTakeTask, useCompleteTask} from "../../../hooks/useTasks.ts";
 import {formatDate} from "../../FormatFunctions.ts";
 
 interface TaskCardProps {
@@ -38,6 +38,7 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
     const {data: order} = useOrder(task.order_id);
     const { userId } = useAuth();
     const takeTask = useTakeTask();
+    const completeTask = useCompleteTask();
 
     const handleOrderClick = () => {
         navigate(`/orders/${task.order_id}`, { state: { order } });
@@ -79,7 +80,37 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
     };
 
     const handleCompleteTask = () => {
-        console.log("Complete task", task.order_id, task.stage_index);
+        if (!userId) {
+            alert('Не удалось определить ID пользователя.');
+            return;
+        }
+
+        completeTask.mutate(
+            {
+                orderId: task.order_id,
+                stageIndex: task.stage_index,
+                workerId: userId
+            },
+            {
+                onSuccess: (data) => {
+                    alert(`✅ Задача завершена: ${data.message}`);
+                },
+                onError: (error: any) => {
+                    console.error("Complete task error:", error);
+                    let errorMessage = 'Ошибка при завершении задачи';
+                    if (error?.response?.data) {
+                        const data = error.response.data;
+                        if (typeof data === 'string') errorMessage = data;
+                        else if (data.detail) errorMessage = data.detail;
+                        else if (data.message) errorMessage = data.message;
+                        else if (data.error) errorMessage = data.error;
+                    } else if (error?.message) {
+                        errorMessage = error.message;
+                    }
+                    alert(`❌ Ошибка: ${errorMessage}`);
+                }
+            }
+        );
     };
 
     const isTaskAvailable = task.status === "Доступна";
@@ -187,9 +218,10 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
                 )}
                 {shouldShowCompleteButton && (
                     <CommonButton
-                        title={"Завершить"}
+                        title={completeTask.isPending ? "Завершение..." : "Завершить"}
                         variant="primary"
                         onClick={handleCompleteTask}
+                        disabled={completeTask.isPending}
                     />
                 )}
             </div>
