@@ -50,12 +50,6 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
             return;
         }
 
-        console.log("Trying to take task:", {
-            orderId: task.order_id,
-            stageIndex: task.stage_index,
-            workerId: userId
-        });
-
         takeTask.mutate(
             {
                 orderId: task.order_id,
@@ -67,9 +61,18 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
                     alert(`✅ Задача успешно взята в работу: ${data.message}`);
                 },
                 onError: (error: any) => {
-                    console.error("Take task error:", error);
-                    const message = error?.response?.data?.detail || error?.message || 'Ошибка при взятии задачи';
-                    alert(`❌ Ошибка: ${message}`);
+                    console.error("Take task error full:", error);
+                    let errorMessage = 'Ошибка при взятии задачи';
+                    if (error?.response?.data) {
+                        const data = error.response.data;
+                        if (typeof data === 'string') errorMessage = data;
+                        else if (data.detail) errorMessage = data.detail;
+                        else if (data.message) errorMessage = data.message;
+                        else if (data.error) errorMessage = data.error;
+                    } else if (error?.message) {
+                        errorMessage = error.message;
+                    }
+                    alert(`❌ Ошибка: ${errorMessage}`);
                 }
             }
         );
