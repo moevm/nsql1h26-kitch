@@ -6,6 +6,7 @@ import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
 import type { WorkerUpdate } from '../../../types/worker.ts';
 import { formatDate } from '../../../UI/FormatFunctions.ts';
 import styles from './EmployeeProfilePage.module.scss';
+import { formatTimeMask, formatDateMask } from '../../../utils/formatters';
 
 export const EmployeeProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -51,6 +52,21 @@ export const EmployeeProfilePage: React.FC = () => {
     const handleChange = (field: keyof WorkerUpdate) => (value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+    };
+
+    const handleWorkDayStartChange = (value: string) => {
+        const masked = formatTimeMask(value);
+        handleChange('work_day_start')(masked);
+    };
+
+    const handleWorkDayEndChange = (value: string) => {
+        const masked = formatTimeMask(value);
+        handleChange('work_day_end')(masked);
+    };
+
+    const handleDateOfBirthChange = (value: string) => {
+        const masked = formatDateMask(value);
+        handleChange('date_of_birth')(masked);
     };
 
     const handleSave = async () => {
@@ -161,7 +177,7 @@ export const EmployeeProfilePage: React.FC = () => {
                         type="text"
                         placeholder="ГГГГ-ММ-ДД"
                         value={formData.date_of_birth || ''}
-                        onChange={handleChange('date_of_birth')}
+                        onChange={handleDateOfBirthChange}
                         error={!!errors.date_of_birth}
                         helperText={errors.date_of_birth}
                     />
@@ -169,7 +185,7 @@ export const EmployeeProfilePage: React.FC = () => {
                         label="Начало смены"
                         placeholder="ЧЧ:ММ"
                         value={formData.work_day_start || ''}
-                        onChange={handleChange('work_day_start')}
+                        onChange={handleWorkDayStartChange}
                         error={!!errors.work_day_start}
                         helperText={errors.work_day_start}
                     />
@@ -177,7 +193,7 @@ export const EmployeeProfilePage: React.FC = () => {
                         label="Конец смены"
                         placeholder="ЧЧ:ММ"
                         value={formData.work_day_end || ''}
-                        onChange={handleChange('work_day_end')}
+                        onChange={handleWorkDayEndChange}
                         error={!!errors.work_day_end}
                         helperText={errors.work_day_end}
                     />

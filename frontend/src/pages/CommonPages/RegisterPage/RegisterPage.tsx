@@ -22,17 +22,27 @@ export function RegisterPage(): ReactElement {
     });
     const [validationErrors, setValidationErrors] = useState<Partial<RegisterFormData>>({});
 
+    const validatePhone = (phone: string) => {
+        if (!phone) return true;
+        const digits = phone.replace(/\D/g, '');
+        return digits.length >= 10 && digits.length <= 12;
+    };
+
     const validateForm = (): boolean => {
         const errors: Partial<RegisterFormData> = {};
 
-        if (!formData.username.trim())          errors.username = "Имя пользователя обязательно";
-        else if (formData.username.length < 2)  errors.username = "Имя пользователя должно содержать минимум 2 символа";
+        if (!formData.username.trim()) errors.username = "Имя пользователя обязательно";
+        else if (formData.username.length < 2) errors.username = "Имя пользователя должно содержать минимум 2 символа";
 
-        if (!formData.email.trim())                     errors.email = "Email обязателен";
-        else if (!/\S+@\S+\.\S+/.test(formData.email))  errors.email = "Введите корректный email";
+        if (!formData.email.trim()) errors.email = "Email обязателен";
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Введите корректный email";
 
-        if (!formData.password)                 errors.password = "Пароль обязателен";
-        else if (formData.password.length < 8)  errors.password = "Пароль должен содержать минимум 8 символов";
+        if (!formData.password) errors.password = "Пароль обязателен";
+        else if (formData.password.length < 8) errors.password = "Пароль должен содержать минимум 8 символов";
+
+        if (formData.phone && !validatePhone(formData.phone)) {
+            errors.phone = "Введите корректный номер телефона (10–12 цифр)";
+        }
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -68,10 +78,10 @@ export function RegisterPage(): ReactElement {
         if (!error) return null;
 
         if (error instanceof AxiosError) {
-            if (error.response?.data?.detail)   return error.response.data.detail;
-            if (error.response?.data?.message)  return error.response.data.message;
-            if (error.response?.data?.error)    return error.response.data.error;
-            if (error.message)                  return error.message;
+            if (error.response?.data?.detail) return error.response.data.detail;
+            if (error.response?.data?.message) return error.response.data.message;
+            if (error.response?.data?.error) return error.response.data.error;
+            if (error.message) return error.message;
         }
 
         if (error.message) return error.message;

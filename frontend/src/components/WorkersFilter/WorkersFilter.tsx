@@ -4,6 +4,7 @@ import type { WorkerFilterParams } from '../../api/workers.ts';
 import { CommonSelectField, type Option } from '../../UI/CommonSelectField/CommonSelectField.tsx';
 import { CommonInputField } from '../../UI/CommonInputField/CommonInputField.tsx';
 import { CommonButton } from '../../UI/CommonButton/CommonButton.tsx';
+import { formatTimeMask, formatDateMask } from '../../utils/formatters';
 
 interface WorkersFilterProps {
     onFilterChange: (filters: Partial<WorkerFilterParams>) => void;
@@ -77,6 +78,22 @@ export function WorkersFilter({ onFilterChange, initialFilters }: WorkersFilterP
     const [maxOverdue, setMaxOverdue] = useState(initialFilters?.max_overdue_tasks?.toString() || '');
     const [dateFrom, setDateFrom] = useState(initialFilters?.from_created || '');
     const [dateTo, setDateTo] = useState(initialFilters?.to_created || '');
+
+    const handleWorkdayStartChange = (value: string) => {
+        setWorkdayStart(formatTimeMask(value));
+    };
+
+    const handleWorkdayEndChange = (value: string) => {
+        setWorkdayEnd(formatTimeMask(value));
+    };
+
+    const handleDateFromChange = (value: string) => {
+        setDateFrom(formatDateMask(value));
+    };
+
+    const handleDateToChange = (value: string) => {
+        setDateTo(formatDateMask(value));
+    };
 
     const handleApplyFilters = useCallback(() => {
         const { sort_by, sort } = getSortParams(sortValue);
@@ -152,14 +169,14 @@ export function WorkersFilter({ onFilterChange, initialFilters }: WorkersFilterP
                             <CommonInputField
                                 label=""
                                 value={workdayStart}
-                                onChange={setWorkdayStart}
+                                onChange={handleWorkdayStartChange}
                                 placeholder="Начало (HH:MM)"
                             />
                             <span className={styles.separator}>—</span>
                             <CommonInputField
                                 label=""
                                 value={workdayEnd}
-                                onChange={setWorkdayEnd}
+                                onChange={handleWorkdayEndChange}
                                 placeholder="Конец (HH:MM)"
                             />
                         </div>
@@ -219,14 +236,14 @@ export function WorkersFilter({ onFilterChange, initialFilters }: WorkersFilterP
                             <CommonInputField
                                 label=""
                                 value={dateFrom}
-                                onChange={setDateFrom}
+                                onChange={handleDateFromChange}
                                 placeholder="с (ГГГГ-ММ-ДД)"
                             />
                             <span className={styles.separator}>—</span>
                             <CommonInputField
                                 label=""
                                 value={dateTo}
-                                onChange={setDateTo}
+                                onChange={handleDateToChange}
                                 placeholder="по (ГГГГ-ММ-ДД)"
                             />
                         </div>

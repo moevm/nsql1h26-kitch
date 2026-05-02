@@ -5,6 +5,7 @@ import { CommonSelectField, type Option } from '../../UI/CommonSelectField/Commo
 import { CommonInputField } from '../../UI/CommonInputField/CommonInputField.tsx';
 import { CommonButton } from '../../UI/CommonButton/CommonButton.tsx';
 import type { TypeStage, TypeTask } from '../../types/stages.ts';
+import { formatDateTimeMask } from '../../utils/formatters';
 
 interface TasksFilterProps {
     onFilterChange: (filters: Partial<TaskFilterParams>) => void;
@@ -236,6 +237,18 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
         onFilterChange({});
     }, [onFilterChange]);
 
+    const handleFromCreatedChange = (value: string) => {
+        setFromCreated(formatDateTimeMask(value));
+        if (errors.fromCreated) setErrors(prev => ({ ...prev, fromCreated: undefined }));
+        if (errors.toCreated) setErrors(prev => ({ ...prev, toCreated: undefined }));
+    };
+
+    const handleToCreatedChange = (value: string) => {
+        setToCreated(formatDateTimeMask(value));
+        if (errors.fromCreated) setErrors(prev => ({ ...prev, fromCreated: undefined }));
+        if (errors.toCreated) setErrors(prev => ({ ...prev, toCreated: undefined }));
+    };
+
     return (
         <div className={styles.filterContainer}>
             <div className={styles.filterBar}>
@@ -311,7 +324,7 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             <CommonInputField
                                 label=""
                                 value={fromCreated}
-                                onChange={setFromCreated}
+                                onChange={handleFromCreatedChange}
                                 placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
                                 type="text"
                                 error={!!errors.fromCreated}
@@ -321,7 +334,7 @@ export function TasksFilter({ onFilterChange, initialFilters }: TasksFilterProps
                             <CommonInputField
                                 label=""
                                 value={toCreated}
-                                onChange={setToCreated}
+                                onChange={handleToCreatedChange}
                                 placeholder="ДД.ММ.ГГГГ ЧЧ:мм"
                                 type="text"
                                 error={!!errors.toCreated}

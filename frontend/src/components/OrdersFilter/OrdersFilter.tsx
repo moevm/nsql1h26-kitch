@@ -6,6 +6,7 @@ import type {TypeDesign} from "../../types/design.ts";
 import type {TypeStage} from "../../types/stages.ts";
 import {CommonInputField} from "../../UI/CommonInputField/CommonInputField.tsx";
 import {CommonButton} from "../../UI/CommonButton/CommonButton.tsx";
+import { formatDateTimeMask } from '../../utils/formatters';
 
 interface OrdersFilterProps {
     onFilterChange: (filters: Partial<FilterParams>) => void;
@@ -287,25 +288,25 @@ export function OrdersFilter({onFilterChange, initialFilters}: OrdersFilterProps
     }, [onFilterChange]);
 
     const handleDateFromChange = (value: string) => {
-        setDateFrom(value);
+        setDateFrom(formatDateTimeMask(value));
         if (errors.dateFrom) setErrors(prev => ({ ...prev, dateFrom: undefined }));
         if (errors.dateTo) setErrors(prev => ({ ...prev, dateTo: undefined }));
     };
 
     const handleDateToChange = (value: string) => {
-        setDateTo(value);
+        setDateTo(formatDateTimeMask(value));
         if (errors.dateFrom) setErrors(prev => ({ ...prev, dateFrom: undefined }));
         if (errors.dateTo) setErrors(prev => ({ ...prev, dateTo: undefined }));
     };
 
     const handleDeadlineFromChange = (value: string) => {
-        setDeadlineFrom(value);
+        setDeadlineFrom(formatDateTimeMask(value));
         if (errors.deadlineFrom) setErrors(prev => ({ ...prev, deadlineFrom: undefined }));
         if (errors.deadlineTo) setErrors(prev => ({ ...prev, deadlineTo: undefined }));
     };
 
     const handleDeadlineToChange = (value: string) => {
-        setDeadlineTo(value);
+        setDeadlineTo(formatDateTimeMask(value));
         if (errors.deadlineFrom) setErrors(prev => ({ ...prev, deadlineFrom: undefined }));
         if (errors.deadlineTo) setErrors(prev => ({ ...prev, deadlineTo: undefined }));
     };
