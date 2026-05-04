@@ -140,7 +140,7 @@ export function TaskCard({task}: TaskCardProps): ReactElement {
 
             <div className={styles.orderIdGridItem}>
                 <div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
-                    <div className={styles.mainTitle}>{`Заказ №${task.order_id} (${task.stage_index})`}</div>
+                    <div className={styles.mainTitle}>{`Заказ №${task.order_id}`}</div>
                 </div>
             </div>
 
