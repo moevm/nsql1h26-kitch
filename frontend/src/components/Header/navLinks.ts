@@ -7,9 +7,7 @@ export const clientHeaderLinks: HeaderLinkProps[] = [
 ];
 
 export const workerHeaderLinks: HeaderLinkProps[] = [
-    { text: "Задачи на сегодня", path: "/worker/tasks" },
-    { text: "Просроченные задачи", path: "/worker/tasks/overdue" },
-    { text: "Завершенные задачи", path: "/worker/tasks/completed" }
+    { text: "Задачи", path: "/worker/tasks" }
 ];
 
 export const adminHeaderLinks: HeaderLinkProps[] = [

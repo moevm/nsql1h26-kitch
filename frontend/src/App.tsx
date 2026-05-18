@@ -51,8 +51,6 @@ function AppRoutes() {
                 </ProtectedRoute>
             }>
                 <Route path="/worker/tasks"             element={<TasksPage />}/>
-                <Route path="/worker/tasks/overdue"     element={<div>WORKER TASKS OVERDUE</div>}/>
-                <Route path="/worker/tasks/completed"   element={<div>WORKER TASKS COMPLETED</div>}/>
             </Route>
 
             <Route element={
