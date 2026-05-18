@@ -27,6 +27,13 @@ export interface WorkerFilterParams {
 }
 
 export const workersAPI = {
+    getCount: async (allUsers: boolean = false): Promise<number> => {
+        const response = await apiClient.get<number>('/workers/count', {
+            params: { all_users: allUsers }
+        });
+        return response.data;
+    },
+
     getAll: async (): Promise<WorkerPublic[]> => {
         const response = await apiClient.get<WorkerPublic[]>('/workers');
         return response.data;

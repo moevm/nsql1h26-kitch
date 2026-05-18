@@ -2,6 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workersAPI, type WorkerFilterParams } from '../api/workers';
 import type { WorkerCreate, WorkerUpdate } from '../types/worker';
 
+export const useWorkersCount = (allUsers: boolean = false) => {
+    return useQuery({
+        queryKey: ['workers', 'count', { allUsers }],
+        queryFn: () => workersAPI.getCount(allUsers),
+    });
+};
+
 export const useWorkers = () => {
     return useQuery({
         queryKey: ['workers'],

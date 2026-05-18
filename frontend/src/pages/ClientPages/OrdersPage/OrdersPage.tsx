@@ -4,7 +4,7 @@ import styles from "./OrdersPage.module.scss"
 
 import {ClientOrderCard} from "../../../UI/CommonCards/ClientOrderCard/ClientOrderCard.tsx";
 import type {Order} from "../../../types/order.ts";
-import {useFilteredOrders} from "../../../hooks/useOrders.ts";
+import {useFilteredOrders, useOrdersCount} from "../../../hooks/useOrders.ts";
 import type {FilterParams} from "../../../api/orders.ts";
 import {OrdersFilter} from "../../../components/OrdersFilter/OrdersFilter.tsx";
 
@@ -14,35 +14,49 @@ export function OrdersPage(): ReactElement {
     const [filters, setFilters] = useState<Partial<FilterParams>>({});
     const [page, setPage] = useState(1);
 
-    const { data: orders, isLoading, error } = useFilteredOrders(filters as FilterParams);
-
-    const paginatedOrders = useMemo(() => {
-        if (!orders) return [];
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const end = start + ITEMS_PER_PAGE;
-        return orders.slice(start, end);
-    }, [orders, page])
+    const {
+        data: totalOrdersCount,
+        isLoading: isCountLoading,
+        error: countError,
+        refetch: refetchCount,
+    } = useOrdersCount()
 
     const totalPages = useMemo(() => {
-        if (!orders) return 0;
-        return Math.ceil(orders.length / ITEMS_PER_PAGE);
-    }, [orders]);
+        if (!totalOrdersCount) return 0;
+        return Math.ceil(totalOrdersCount / ITEMS_PER_PAGE);
+    }, [totalOrdersCount]);
+
+    const filtersWithPagination: FilterParams = useMemo(() => ({
+        ...filters,
+        start: (page - 1) * ITEMS_PER_PAGE,
+        limit: ITEMS_PER_PAGE,
+        sort_by: filters.sort_by || 'created_at',
+        sort: filters.sort || 'DESC',
+    }), [filters, page]);
+
+    const {
+        data: orders,
+        isLoading: isOrdersLoading,
+        error: ordersError
+    } = useFilteredOrders(filtersWithPagination);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleFilterChange = useCallback((newFilters: Partial<FilterParams>) => {
         setFilters(newFilters);
         setPage(1);
-    }, []);
+        refetchCount();
+    }, [refetchCount]);
 
-    if (isLoading) {
+    if (isCountLoading || isOrdersLoading) {
         return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
     }
 
-    if (error) {
-        return <div className={styles.errorState}>Ошибка загрузки: {error.message}</div>;
+    if (countError || ordersError) {
+        return <div className={styles.errorState}>Ошибка загрузки</div>;
     }
 
     return (
@@ -56,17 +70,17 @@ export function OrdersPage(): ReactElement {
             ) : (
                 <>
                     {orders && orders.length > 0 && (
-                        <div className={styles.statsInfo}>
-                            Показано {paginatedOrders.length} из {orders.length} заказов
+                        <div className={styles.ordersGrid}>
+                            <div className={styles.statsInfo}>
+                                Всего {totalOrdersCount} заказов
+                            </div>
+                            <Fragment>
+                                {orders.map((order: Order) => (
+                                    <ClientOrderCard key={order.id} order={order} />
+                                ))}
+                            </Fragment>
                         </div>
                     )}
-                    <div className={styles.ordersGrid}>
-                        <Fragment>
-                            {paginatedOrders.map((order: Order) => (
-                                <ClientOrderCard key={order.id} order={order} />
-                            ))}
-                        </Fragment>
-                    </div>
 
                     {totalPages > 1 && (
                         <div className={styles.paginationContainer}>
