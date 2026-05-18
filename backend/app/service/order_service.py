@@ -290,3 +290,6 @@ async def get_filtered_orders_for_client(
         limit,
     )
     return [Order(**order.model_dump()) for order in orders_db]
+
+async def get_count_orders(user_id: str, role: str) -> int:
+    return await order_repo.get_count_orders(user_id, role)
