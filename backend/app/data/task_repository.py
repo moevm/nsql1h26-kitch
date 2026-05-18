@@ -345,3 +345,22 @@ async def get_filtered_tasks_for_worker(
     except Exception as e:
         print(f"Error getting tasks in task_repository.get_filtered_tasks: {e}")
         return []
+
+
+async def get_count_tasks(worker_id: str) -> int:
+    try:
+        if worker_id == "":
+            pipeline = [{"$unwind": "$stages"}, {"$count": "total"}]
+        else:
+            pipeline = [
+                {"$match": {"stages.worker_id": worker_id}},
+                {"$unwind": "$stages"},
+                {"$match": {"stages.worker_id": worker_id}},
+                {"$count": "total"}
+            ]
+        cursor = orders_collection.aggregate(pipeline)
+        result = await cursor.to_list(length=1)
+        return result[0]["total"] if result else 0
+    except Exception as e:
+        print(f"Error count tasks in task_repository.py: {e}")
+        return 0
