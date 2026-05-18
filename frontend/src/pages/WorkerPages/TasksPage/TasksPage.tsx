@@ -1,30 +1,44 @@
-import {type ReactElement, useState, useMemo, useCallback} from "react";
+import {type ReactElement, useState, useMemo, useCallback, Fragment} from "react";
 import { Pagination } from "@mui/material";
 import styles from "./TasksPage.module.scss";
 import { TaskCard } from "../../../UI/CommonCards/TaskCard/TaskCard.tsx";
-import {useFilteredTasks} from "../../../hooks/useTasks.ts";
+import {useFilteredTasks, useTasksCount} from "../../../hooks/useTasks.ts";
 import type { TaskFilterParams } from "../../../api/tasks.ts";
 import {TasksFilter} from "../../../components/TasksFIlter/TasksFIlter.tsx";
+import {useAuth} from "../../../hooks/useAuth.ts";
 
 const ITEMS_PER_PAGE = 3;
 
 export function TasksPage(): ReactElement {
+    const {userId} = useAuth();
     const [page, setPage] = useState(1);
     const [filters, setFilters] = useState<TaskFilterParams>({});
 
-    const { data: tasks, isLoading, error } = useFilteredTasks(filters);
-
-    const paginatedTasks = useMemo(() => {
-        if (!tasks) return [];
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const end = start + ITEMS_PER_PAGE;
-        return tasks.slice(start, end);
-    }, [tasks, page]);
+    const {
+        data: totalTasksCount,
+        isLoading: isCountLoading,
+        error: countError,
+        refetch: refetchCount,
+    } = useTasksCount(userId ? userId : "");
 
     const totalPages = useMemo(() => {
-        if (!tasks) return 0;
-        return Math.ceil(tasks.length / ITEMS_PER_PAGE);
-    }, [tasks]);
+        if (!totalTasksCount) return 0;
+        return Math.ceil(totalTasksCount / ITEMS_PER_PAGE);
+    }, [totalTasksCount]);
+
+    const filtersWithPagination: TaskFilterParams = useMemo(() => ({
+        ...filters,
+        start: (page - 1) * ITEMS_PER_PAGE,
+        limit: ITEMS_PER_PAGE,
+        sort_by: filters.sort_by || 'created_at',
+        sort: filters.sort || 'DESC',
+    }), [filters, page]);
+
+    const {
+        data: tasks,
+        isLoading: isTasksLoading,
+        error: tasksError
+    } = useFilteredTasks(filtersWithPagination);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
@@ -34,14 +48,15 @@ export function TasksPage(): ReactElement {
     const handleFilterChange = useCallback((newFilters: Partial<TaskFilterParams>) => {
         setFilters(newFilters);
         setPage(1);
-    }, []);
+        refetchCount();
+    }, [refetchCount]);
 
-    if (isLoading) {
-        return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
+    if (isCountLoading || isTasksLoading) {
+        return <div className={styles.loadingState}>Загружаем задачи...</div>;
     }
 
-    if (error) {
-        return <div className={styles.errorState}>Ошибка загрузки: {error.message}</div>;
+    if (countError || tasksError) {
+        return <div className={styles.errorState}>Ошибка загрузки</div>;
     }
 
     return (
@@ -55,18 +70,20 @@ export function TasksPage(): ReactElement {
             ) : (
                 <>
                     {tasks.length > 0 && (
-                        <div className={styles.statsInfo}>
-                            Показано {paginatedTasks.length} из {tasks.length} задач
+                        <div className={styles.tasksGrid}>
+                            <div className={styles.statsInfo}>
+                                Всего {totalTasksCount} задач
+                            </div>
+                            {tasks.map((task) => (
+                                <Fragment>
+                                    <TaskCard
+                                        key={`${task.order_id}-${task.stage_index}`}
+                                        task={task}
+                                    />
+                                </Fragment>
+                            ))}
                         </div>
                     )}
-                    <div className={styles.tasksGrid}>
-                        {paginatedTasks.map((task) => (
-                            <TaskCard
-                                key={`${task.order_id}-${task.stage_index}`}
-                                task={task}
-                            />
-                        ))}
-                    </div>
 
                     {totalPages > 1 && (
                         <div className={styles.paginationContainer}>

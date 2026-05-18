@@ -2,6 +2,13 @@ import {useMutation, useQuery} from "@tanstack/react-query";
 import {type FilterParams, ordersAPI} from "../api/orders.ts";
 import type {OrderCreate} from "../types/order.ts";
 
+export const useOrdersCount = () => {
+    return useQuery({
+        queryKey: ['orders', 'count'],
+        queryFn: ordersAPI.getCount,
+    });
+};
+
 export const useOrders = () => {
     return useQuery({
         queryKey: ['orders'],

@@ -134,3 +134,7 @@ async def get_filtered_tasks_for_worker(
         tasks.append(Task(**doc))
 
     return tasks
+
+
+async def get_count_tasks(worker_id: str) -> int:
+    return await task_repo.get_count_tasks(worker_id)

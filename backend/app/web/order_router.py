@@ -8,7 +8,8 @@ from app.service.order_service import (
     get_orders_by_user_role,
     get_filtered_orders_for_client,
     next_stage,
-    can_worker_view_order
+    can_worker_view_order,
+    get_count_orders
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
@@ -109,6 +110,21 @@ async def get_orders(current_user: dict = Depends(get_current_user_dep)):
         user_id=current_user["user_id"], role=current_user["role"]
     )
     return orders
+
+
+@router.get(
+    "/orders/count",
+    response_model=int,
+    summary="Получить количество заказов",
+    description="""
+    Возвращает количество заказов
+    - **CLIENT**: только свой заказ
+    - **WORKER**: если участвует в заказе или стадия заказа Доступна
+    - **ADMIN**: любой заказ
+    """
+)
+async def get_count(current_user: dict = Depends(get_current_user_dep)):
+    return await get_count_orders(user_id=current_user["user_id"], role=current_user["role"])
 
 
 @router.get(

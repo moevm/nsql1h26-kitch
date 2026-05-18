@@ -1,6 +1,13 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {type TaskFilterParams, tasksAPI} from '../api/tasks';
 
+export const useTasksCount = (workerId?: string) => {
+    return useQuery({
+        queryKey: ['tasks', 'count', { workerId }],
+        queryFn: () => tasksAPI.getCount(workerId),
+    });
+};
+
 export const useTasks = () => {
     return useQuery({
         queryKey: ['tasks'],

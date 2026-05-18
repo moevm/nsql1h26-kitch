@@ -7,7 +7,8 @@ from app.service.worker_service import (
     create_new_worker,
     edit_worker_by_id,
     delete_worker_by_id,
-    get_filtered_workers_for_admin
+    get_filtered_workers_for_admin,
+    get_count_users
 )
 from app.models.user import WorkerCreate, WorkerPublic, WorkerUpdate
 from datetime import datetime
@@ -102,6 +103,23 @@ async def get_workers_for_admin(current_user: dict = Depends(get_current_user_de
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
 
     return await get_workers()
+
+
+@router.get(
+    "/workers/count",
+    response_model=int,
+    summary="Получить количество работников",
+    description="""
+    Возвращает количество работников для админа
+    False = только работники
+    True = все пользователи
+    """
+)
+async def get_count(all_users: bool = False, current_user: dict = Depends(get_current_user_dep)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
+
+    return await get_count_users(all_users)
 
 
 @router.get(

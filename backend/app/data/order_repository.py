@@ -226,3 +226,15 @@ async def get_filtered_orders_for_client(
             f"Error getting orders in order_repository.get_filtered_orders_for_client: {e}"
         )
         return []
+    
+
+async def get_count_orders(user_id: str, role: str) -> int:
+    try:
+        if role == "admin":
+            return await orders_collection.count_documents({})
+        if role == "worker":
+            return await orders_collection.count_documents({"stages.worker_id": user_id})
+        return await orders_collection.count_documents({"client.client_id": user_id})
+    except Exception as e:
+        print(f"Error count orders in order_repository.py: {e}")
+        return 0

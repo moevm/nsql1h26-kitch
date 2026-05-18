@@ -7,6 +7,7 @@ from app.service.task_service import (
     take_task,
     complete_task,
     get_filtered_tasks_for_worker,
+    get_count_tasks,
 )
 from app.models.order import Task, TypeDesign, TypeStage, TypeStatus, TypeTask
 from pydantic import BaseModel
@@ -115,6 +116,29 @@ async def get_filtered_list_tasks(
 )
 async def get_all_tasks(current_user: dict = Depends(get_current_user_dep)):
     return await get_tasks(current_user["user_id"], current_user["role"])
+
+
+@router.get(
+    "/tasks/count",
+    response_model=int,
+    summary="Получить количество задач",
+    description="""
+    Возвращает количество задач
+    - **WORKER**: только свои задачи
+    - **ADMIN**: задачи любого рабочего
+    """
+)
+async def get_count(worker_id: str = "", current_user: dict = Depends(get_current_user_dep)):
+    if current_user["role"] not in {"admin","worker"}:
+        raise HTTPException(status_code=403, detail="Не хватает прав для доступа к задачам")
+    if current_user["role"] == "worker":
+        if worker_id is not None and worker_id != current_user["user_id"]:
+            raise HTTPException(403, "Доступ запрещён")
+        target_id = current_user["user_id"]
+    else:
+        target_id = worker_id
+
+    return await get_count_tasks(worker_id=target_id)
 
 
 @router.get(

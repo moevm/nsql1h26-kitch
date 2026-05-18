@@ -30,6 +30,12 @@ export interface TakeTaskRequest {
 }
 
 export const tasksAPI = {
+    getCount: async (workerId?: string): Promise<number> => {
+        const params = workerId ? { worker_id: workerId } : {};
+        const response = await apiClient.get<number>('/tasks/count', { params });
+        return response.data;
+    },
+
     getAll: async (): Promise<Task[]> => {
         const response = await apiClient.get<Task[]>('/tasks');
         return response.data;

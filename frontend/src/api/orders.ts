@@ -23,6 +23,11 @@ export interface FilterParams {
 }
 
 export const ordersAPI = {
+    getCount: async (): Promise<number> => {
+        const response = await apiClient.get<number>('/orders/count');
+        return response.data;
+    },
+
     getAll: async (): Promise<Order[]> => {
         const response = await apiClient.get('/orders');
         return response.data;

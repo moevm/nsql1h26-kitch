@@ -289,3 +289,13 @@ async def get_filtered_workers_for_admin(
     except Exception as e:
         print(f"Error getting workers in worker_repository.get_filtered_workers_for_admin: {e}")
         return []
+
+
+async def count_users(all_users: bool = False) -> int:
+    try:
+        if all_users:
+            return await users_collection.count_documents({})
+        return await users_collection.count_documents({"role": "worker"})
+    except Exception as e:
+        print(f"Error count users in user_repository.py: {e}")
+        return 0
