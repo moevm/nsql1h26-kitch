@@ -213,3 +213,7 @@ async def get_filtered_workers_for_admin(
         result.append(_worker_to_public(worker_db))
 
     return result
+
+
+async def get_count_users(all_users: bool) -> int:
+    return await user_repo.count_users(all_users)
