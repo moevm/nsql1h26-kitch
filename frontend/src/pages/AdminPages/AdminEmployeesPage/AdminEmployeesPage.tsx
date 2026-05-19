@@ -1,7 +1,7 @@
 import { type ReactElement, useState, useCallback, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '@mui/material';
-import {useFilteredWorkers, useWorkersCount} from '../../../hooks/useWorkers.ts';
+import {useFilteredWorkers} from '../../../hooks/useWorkers.ts';
 import { CommonButton } from '../../../UI/CommonButton/CommonButton.tsx';
 import { AddEmployeeModal } from './AddEmployeeModal.tsx';
 import { WorkerCard } from '../../../UI/CommonCards/WorkerCard/WorkerCard.tsx';
@@ -18,18 +18,6 @@ export function AdminEmployeesPage(): ReactElement {
     const [filters, setFilters] = useState<WorkerFilterParams>({});
     const [page, setPage] = useState(1);
 
-    const {
-        data: totalWorkersCount,
-        isLoading: isCountLoading,
-        error: countError,
-        refetch: refetchCount,
-    } = useWorkersCount(false);
-
-    const totalPages = useMemo(() => {
-        if (!totalWorkersCount) return 0;
-        return Math.ceil(totalWorkersCount / ITEMS_PER_PAGE);
-    }, [totalWorkersCount]);
-
     const filtersWithPagination: WorkerFilterParams = useMemo(() => ({
         ...filters,
         start: (page - 1) * ITEMS_PER_PAGE,
@@ -39,11 +27,19 @@ export function AdminEmployeesPage(): ReactElement {
     }), [filters, page]);
 
     const {
-        data: workers,
-        isLoading: isWorkersLoading,
-        error: workersError,
-        refetch: refetchWorkers,
+        data: filteredResult,
+        isLoading,
+        error,
+        refetch,
     } = useFilteredWorkers(filtersWithPagination);
+
+    const workers = filteredResult?.items || [];
+    const totalWorkersCount = filteredResult?.total || 0;
+
+    const totalPages = useMemo(() => {
+        if (!totalWorkersCount) return 0;
+        return Math.ceil(totalWorkersCount / ITEMS_PER_PAGE);
+    }, [totalWorkersCount]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
@@ -53,24 +49,23 @@ export function AdminEmployeesPage(): ReactElement {
     const handleFilterChange = useCallback((newFilters: Partial<WorkerFilterParams>) => {
         setFilters(newFilters);
         setPage(1);
-        refetchCount();
-    }, [refetchCount]);
+        refetch();
+    }, [refetch]);
 
     const handleModalClose = () => {
         setModalOpen(false);
-        refetchCount();
-        refetchWorkers();
+        refetch();
     };
 
     const handleProfileClick = (worker: WorkerPublic) => {
         navigate(`/admin/employees/${worker.id}`);
     };
 
-    if (isCountLoading || isWorkersLoading) {
+    if (isLoading) {
         return <div className={styles.loadingState}>Загрузка сотрудников...</div>;
     }
 
-    if (countError || workersError) {
+    if (error) {
         return <div className={styles.errorState}>Ошибка загрузки списка сотрудников</div>;
     }
 
@@ -89,7 +84,7 @@ export function AdminEmployeesPage(): ReactElement {
                 />
             </div>
 
-            {workers && workers.length === 0 ? (
+            {workers.length === 0 ? (
                 <div className={styles.empty}>
                     {Object.keys(filters).length > 0
                         ? 'Нет сотрудников, соответствующих фильтрам'
@@ -97,23 +92,20 @@ export function AdminEmployeesPage(): ReactElement {
                 </div>
             ) : (
                 <>
-                    <></>
-                    {workers && workers.length > 0 && (
-                        <div className={styles.cardsContainer}>
-                            <div className={styles.statsInfo}>
-                                Всего {totalWorkersCount} работников
-                            </div>
-                            <Fragment>
-                                {workers.map((worker) => (
-                                    <WorkerCard
-                                        key={worker.id}
-                                        worker={worker}
-                                        onProfileClick={handleProfileClick}
-                                    />
-                                ))}
-                            </Fragment>
+                    <div className={styles.cardsContainer}>
+                        <div className={styles.statsInfo}>
+                            Всего {totalWorkersCount} работников
                         </div>
-                    )}
+                        <Fragment>
+                            {workers.map((worker) => (
+                                <WorkerCard
+                                    key={worker.id}
+                                    worker={worker}
+                                    onProfileClick={handleProfileClick}
+                                />
+                            ))}
+                        </Fragment>
+                    </div>
 
                     {totalPages > 1 && (
                         <div className={styles.paginationContainer}>
