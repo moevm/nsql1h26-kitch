@@ -11,12 +11,9 @@ from app.models.order import (
 )
 from app.data import order_repository as order_repo
 from app.data import design_data as design_repo
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.models.design import TypeDesign
-from app.models.order import TypeTask
-from datetime import datetime, timedelta
-
-
+from datetime import datetime, timedelta, timezone
 
 STAGE_SEQUENCE = [
     TypeStage.Cutting,
@@ -26,42 +23,27 @@ STAGE_SEQUENCE = [
     TypeStage.Completed,
 ]
 
+
 async def next_stage(order_id: str, role: str) -> dict:
     if role not in ("admin", "worker"):
         raise HTTPException(status_code=403, detail="Доступ только для worker и admin")
-
     order_db = await order_repo.get_by_id(order_id)
     if not order_db:
         raise HTTPException(status_code=404, detail="Заказ не найден")
-
     if not order_db.stages:
         raise HTTPException(status_code=400, detail="У заказа нет этапов")
-
     last_stage = order_db.stages[-1]
-
     if last_stage.task_status not in (TypeTask.Completed, TypeTask.Overdue):
-        raise HTTPException(
-            status_code=400,
-            detail="Текущий этап ещё не завершён"
-        )
-
+        raise HTTPException(status_code=400, detail="Текущий этап ещё не завершён")
     if last_stage.name_stage in (TypeStage.Completed, TypeStage.Canceled):
-        raise HTTPException(
-            status_code=400,
-            detail="Заказ уже завершён или отменён"
-        )
-
+        raise HTTPException(status_code=400, detail="Заказ уже завершён или отменён")
     from app.models.order import Stages, TypeStatus, Times
-    from datetime import datetime, timedelta, timezone
-
     now = datetime.now(timezone.utc)
-
     try:
         current_index = STAGE_SEQUENCE.index(last_stage.name_stage)
         next_stage_type = STAGE_SEQUENCE[current_index + 1]
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Следующий этап не найден")
-
     if next_stage_type == TypeStage.Completed:
         new_stage = Stages(
             name_stage=TypeStage.Completed,
@@ -92,25 +74,16 @@ async def next_stage(order_id: str, role: str) -> dict:
                 expired_time=0,
             )
         )
-
     success = await order_repo.push_stage(order_id, new_stage.model_dump())
     if not success:
         raise HTTPException(status_code=500, detail="Не удалось добавить этап")
-
-    return {
-        "order_id": order_id,
-        "next_stage": next_stage_type.value,
-        "message": "Этап успешно добавлен"
-    }
+    return {"order_id": order_id, "next_stage": next_stage_type.value, "message": "Этап успешно добавлен"}
 
 
 async def get_order_by_id(order_id: str) -> Order:
     order_db = await order_repo.get_by_id(order_id)
     if order_db is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Заказ с ID {order_id} не найден",
-        )
+        raise HTTPException(status_code=404, detail=f"Заказ с ID {order_id} не найден")
     order_dict = order_db.model_dump()
     order_dict["id"] = str(order_db.id)
     return Order(**order_dict)
@@ -125,7 +98,6 @@ async def get_orders_by_user_role(user_id: str, role: str) -> List[Order]:
         orders_db = await order_repo.get_by_worker_id(user_id)
     else:
         raise HTTPException(status_code=403, detail="Неизвестная роль")
-
     orders = []
     for order_db in orders_db:
         order_dict = order_db.model_dump()
@@ -134,23 +106,16 @@ async def get_orders_by_user_role(user_id: str, role: str) -> List[Order]:
     return orders
 
 
-async def create_new_order(
-    order_data: OrderCreate, user_id: str, username: str, role: str
-) -> str:
+async def create_new_order(order_data: OrderCreate, user_id: str, username: str, role: str) -> str:
     if role != "client":
-        raise HTTPException(
-            status_code=403, detail="Только клиенты могут создавать заказы"
-        )
+        raise HTTPException(status_code=403, detail="Только клиенты могут создавать заказы")
     design = await design_repo.get_by_id(order_data.design_id)
     if not design:
         raise HTTPException(status_code=404, detail="Дизайн не найден")
-
     from app.data import material_data as material_repo
-
     material = await material_repo.get_by_name(order_data.material)
     if not material:
         raise HTTPException(status_code=404, detail="Материал не найден")
-
     total_price = (
         order_data.type_price
         + order_data.material_price
@@ -158,10 +123,7 @@ async def create_new_order(
         + order_data.comment_price
     )
     from app.models.order import Stages, TypeStatus, TypeTask, Times
-    from datetime import datetime, timedelta, timezone
-
     now = datetime.now(timezone.utc)
-
     first_stage = Stages(
         name_stage=TypeStage.Cutting,
         worker_id="",
@@ -176,7 +138,6 @@ async def create_new_order(
             expired_time=0,
         )
     )
-
     order_dict = {
         "material_id": str(material.id),
         "design_id": order_data.design_id,
@@ -199,16 +160,11 @@ async def create_new_order(
         "name_design": design.name,
         "type": design.type,
         "material": material.name,
-        "size": (
-            design.size.model_dump()
-            if hasattr(design.size, "model_dump")
-            else dict(design.size)
-        ),
+        "size": design.size.model_dump() if hasattr(design.size, "model_dump") else dict(design.size),
         "color": order_data.color,
         "need_material": design.need_material,
         "blueprint": design.blueprint or 0,
     }
-
     order_in_db = OrderInDB(**order_dict)
     return await order_repo.create(order_in_db)
 
@@ -216,19 +172,12 @@ async def create_new_order(
 async def cancel_order(order_id: str, user_id: str, role: str) -> dict:
     if role == "worker":
         raise HTTPException(status_code=403, detail="Рабочий не может отменять заказы")
-
     order = await get_order_by_id(order_id)
-
-    if role == "client":
-        if order.client.client_id != user_id:
-            raise HTTPException(
-                status_code=403, detail="Вы можете отменить только свои заказы"
-            )
-
+    if role == "client" and order.client.client_id != user_id:
+        raise HTTPException(status_code=403, detail="Вы можете отменить только свои заказы")
     success = await order_repo.cancel(order_id)
     if not success:
         raise HTTPException(status_code=500, detail="Не удалось отменить заказ")
-
     return {"order_id": order_id, "message": "Заказ успешно отменён"}
 
 
@@ -258,19 +207,16 @@ async def get_filtered_orders_for_client(
     sort_direction: int,
     skip: int,
     limit: int,
-) -> List[Order]:
-    
+) -> Tuple[List[Order], int]:
     def normalize_by_time_zone(dt: Optional[datetime]) -> Optional[datetime]:
         if dt is None:
             return None
         return dt + timedelta(hours=3)
-
     from_created = normalize_by_time_zone(from_created)
     to_created = normalize_by_time_zone(to_created)
     from_deadline = normalize_by_time_zone(from_deadline)
     to_deadline = normalize_by_time_zone(to_deadline)
-    
-    orders_db = await order_repo.get_filtered_orders_for_client(
+    orders_db, total = await order_repo.get_filtered_orders_for_client(
         client_id,
         name_design,
         type,
@@ -289,7 +235,4 @@ async def get_filtered_orders_for_client(
         skip,
         limit,
     )
-    return [Order(**order.model_dump()) for order in orders_db]
-
-async def get_count_orders(user_id: str, role: str) -> int:
-    return await order_repo.get_count_orders(user_id, role)
+    return [Order(**order.model_dump()) for order in orders_db], total

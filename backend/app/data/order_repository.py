@@ -2,7 +2,7 @@ from bson import ObjectId
 from app.data.database import db
 from app.models.order import OrderInDB, TypeStage, TypeStatus, TypeTask
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from app.models.design import TypeDesign
 
 SORT_FIELD_MAP = {
@@ -15,19 +15,14 @@ SORT_FIELD_MAP = {
     "deadline": "last_stage_deadline",
 }
 
-
 orders_collection = db["orders"]
-
 
 
 async def push_stage(order_id: str, stage: dict) -> bool:
     now = datetime.now(timezone.utc)
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
-        {
-            "$push": {"stages": stage},
-            "$set": {"updated_at": now}
-        }
+        {"$push": {"stages": stage}, "$set": {"updated_at": now}}
     )
     return result.modified_count > 0
 
@@ -87,14 +82,12 @@ async def create(order: OrderInDB) -> str:
 
 
 async def cancel(order_id: str) -> bool:
-    """Отменить заказ (изменить статус)"""
     now = datetime.now(timezone.utc)
-
     cancel_order = {
-        "name_stage": TypeStage.Canceled.value,  # строка
+        "name_stage": TypeStage.Canceled.value,
         "worker_id": "",
-        "status": TypeStatus.Canceled.value,  # строка
-        "task_status": TypeTask.Canceled.value,  # строка
+        "status": TypeStatus.Canceled.value,
+        "task_status": TypeTask.Canceled.value,
         "times": {
             "deadline": now,
             "start": now,
@@ -104,7 +97,6 @@ async def cancel(order_id: str) -> bool:
             "expired_time": 0,
         },
     }
-
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
         {"$push": {"stages": cancel_order}, "$set": {"updated_at": now}},
@@ -130,25 +122,21 @@ async def get_filtered_orders_for_client(
     sort_direction: int,
     skip: int,
     limit: int,
-) -> List[OrderInDB]:
+) -> Tuple[List[OrderInDB], int]:
     if limit == 0:
-        return []
+        return [], 0
 
     try:
         filter_query = {"client.client_id": client_id}
 
         if name_design is not None:
             filter_query["name_design"] = {"$regex": name_design, "$options": "i"}
-
         if material is not None:
             filter_query["material"] = {"$regex": material, "$options": "i"}
-
         if comment is not None:
             filter_query["comment"] = {"$regex": comment, "$options": "i"}
-
         if address is not None:
             filter_query["delivery.address"] = {"$regex": address, "$options": "i"}
-
         if type is not None:
             filter_query["type"] = type.value
 
@@ -173,9 +161,7 @@ async def get_filtered_orders_for_client(
             {
                 "$addFields": {
                     "last_stage_status": {"$arrayElemAt": ["$stages.name_stage", -1]},
-                    "last_stage_deadline": {
-                        "$arrayElemAt": ["$stages.times.deadline", -1]
-                    },
+                    "last_stage_deadline": {"$arrayElemAt": ["$stages.times.deadline", -1]},
                 }
             },
         ]
@@ -183,27 +169,24 @@ async def get_filtered_orders_for_client(
         if stage is not None:
             pipeline.append({"$match": {"last_stage_status": stage.value}})
 
-
         deadline_filter = {}
         if from_deadline is not None:
             deadline_filter["$gte"] = from_deadline
         if to_deadline is not None:
             deadline_filter["$lte"] = to_deadline
         if deadline_filter:
-            pipeline.append({
-                "$match": {
-                    "$and":[
-                        {"last_stage_deadline": deadline_filter}
-                    ]
-                }
-            })
+            pipeline.append({"$match": {"last_stage_deadline": deadline_filter}})
+
+        count_pipeline = pipeline.copy()
+        count_pipeline.append({"$count": "total"})
+        count_cursor = orders_collection.aggregate(count_pipeline)
+        count_docs = await count_cursor.to_list(length=1)
+        total = count_docs[0]["total"] if count_docs else 0
 
         sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
         pipeline.append({"$sort": {sort_field: sort_direction}})
-
         if skip > 0:
             pipeline.append({"$skip": skip})
-
         if limit > 0:
             pipeline.append({"$limit": limit})
         else:
@@ -219,22 +202,8 @@ async def get_filtered_orders_for_client(
             doc.pop("last_stage_deadline", None)
             result.append(OrderInDB(**doc))
 
-        return result
+        return result, total
 
     except Exception as e:
-        print(
-            f"Error getting orders in order_repository.get_filtered_orders_for_client: {e}"
-        )
-        return []
-    
-
-async def get_count_orders(user_id: str, role: str) -> int:
-    try:
-        if role == "admin":
-            return await orders_collection.count_documents({})
-        if role == "worker":
-            return await orders_collection.count_documents({"stages.worker_id": user_id})
-        return await orders_collection.count_documents({"client.client_id": user_id})
-    except Exception as e:
-        print(f"Error count orders in order_repository.py: {e}")
-        return 0
+        print(f"Error getting filtered orders: {e}")
+        return [], 0

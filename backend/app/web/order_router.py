@@ -9,7 +9,6 @@ from app.service.order_service import (
     get_filtered_orders_for_client,
     next_stage,
     can_worker_view_order,
-    get_count_orders
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
@@ -25,17 +24,14 @@ ALLOWED_SORTED_FIELDS = {
     "total_price",
 }
 
-
 router = APIRouter(prefix="/api", tags=["orders"])
 
 
 @router.get(
     "/orders/filter",
-    response_model=List[Order],
+    response_model=dict,
     summary="Получить отфильтрованные заказы покупателю",
-    description="""
-    Возвращает отфильтрованные заказы для клиента с регистронезависимым поиском
-    """,
+    description="Возвращает отфильтрованные заказы для клиента с регистронезависимым поиском и общее количество без пагинации",
 )
 async def get_filtered_orders_client(
     name_design: str = None,
@@ -57,21 +53,17 @@ async def get_filtered_orders_client(
     current_user: dict = Depends(get_current_user_dep)
 ):
     if current_user["role"] != "client":
-        raise HTTPException(status_code=403, detail="Только клиенты могу фильтровать свои заказы")
-
+        raise HTTPException(status_code=403, detail="Только клиенты могут фильтровать свои заказы")
     if sort_by not in ALLOWED_SORTED_FIELDS:
         raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
-
-    if sort.upper() not in {"ASC","DESC"}:
+    if sort.upper() not in {"ASC", "DESC"}:
         raise HTTPException(status_code=400, detail="sort может быть только 'ASC' или 'DESC'")
     sort_direction = 1 if sort.upper() == "ASC" else -1
-
     if limit < -1:
         limit = 1
     elif limit == 0:
         raise HTTPException(status_code=400, detail="limit должен быть больше 0")
-
-    orders = await get_filtered_orders_for_client(
+    items, total = await get_filtered_orders_for_client(
         client_id=current_user["user_id"],
         name_design=name_design,
         type=type,
@@ -90,76 +82,37 @@ async def get_filtered_orders_client(
         skip=start,
         limit=limit
     )
-
-    return orders
+    return {"items": items, "total": total}
 
 
 @router.get(
     "/orders",
     response_model=List[Order],
     summary="Получить список заказов",
-    description="""
-    Возвращает все заказы текущего пользователя в зависимости от роли:
-    - **CLIENT**: только свои заказы
-    - **WORKER**: заказы, где рабочий участвует
-    - **ADMIN**: все заказы
-    """,
 )
 async def get_orders(current_user: dict = Depends(get_current_user_dep)):
-    orders = await get_orders_by_user_role(
-        user_id=current_user["user_id"], role=current_user["role"]
-    )
+    orders = await get_orders_by_user_role(user_id=current_user["user_id"], role=current_user["role"])
     return orders
-
-
-@router.get(
-    "/orders/count",
-    response_model=int,
-    summary="Получить количество заказов",
-    description="""
-    Возвращает количество заказов
-    - **CLIENT**: только свой заказ
-    - **WORKER**: если участвует в заказе или стадия заказа Доступна
-    - **ADMIN**: любой заказ
-    """
-)
-async def get_count(current_user: dict = Depends(get_current_user_dep)):
-    return await get_count_orders(user_id=current_user["user_id"], role=current_user["role"])
 
 
 @router.get(
     "/orders/{order_id}",
     response_model=Order,
     summary="Получить заказ по ID",
-    description="""
-    Возвращает заказ по ID с проверкой прав:
-    - **CLIENT**: только свой заказ
-    - **WORKER**: если участвует в заказе или стадия заказа Доступна
-    - **ADMIN**: любой заказ
-    """,
 )
 async def get_order(order_id: str, current_user: dict = Depends(get_current_user_dep)):
     order = await get_order_by_id(order_id)
-
     if current_user["role"] == "admin":
         return order
-
     if current_user["role"] == "client":
         if order.client.client_id != current_user["user_id"]:
-            raise HTTPException(
-                status_code=403, detail="Доступ запрещен: это не ваш заказ"
-            )
+            raise HTTPException(status_code=403, detail="Доступ запрещен: это не ваш заказ")
         return order
-
     if current_user["role"] == "worker":
         is_participating = await can_worker_view_order(order, current_user["user_id"])
         if not is_participating:
-            raise HTTPException(
-                status_code=403,
-                detail="Доступ запрещен: вы не участвуете в этом заказе",
-            )
+            raise HTTPException(status_code=403, detail="Доступ запрещен: вы не участвуете в этом заказе")
         return order
-
     raise HTTPException(status_code=403, detail="Недостаточно прав")
 
 
@@ -168,23 +121,11 @@ async def get_order(order_id: str, current_user: dict = Depends(get_current_user
     status_code=201,
     response_model=dict,
     summary="Создать новый заказ",
-    description="Создает новый заказ. Доступно только для клиентов.",
 )
-async def create_order(
-    order_data: OrderCreate, current_user: dict = Depends(get_current_user_dep)
-):
+async def create_order(order_data: OrderCreate, current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "client":
-        raise HTTPException(
-            status_code=403, detail="Только клиенты могут создавать заказы"
-        )
-
-    order_id = await create_new_order(
-        order_data,
-        current_user["user_id"],
-        current_user["username"],
-        current_user["role"],
-    )
-
+        raise HTTPException(status_code=403, detail="Только клиенты могут создавать заказы")
+    order_id = await create_new_order(order_data, current_user["user_id"], current_user["username"], current_user["role"])
     return {"id": order_id, "message": "Заказ успешно создан"}
 
 
@@ -193,21 +134,11 @@ async def create_order(
     status_code=200,
     response_model=dict,
     summary="Отменить заказ",
-    description="""
-    Отмена заказа через PATCH.
-    - **CLIENT**: может отменить только свой заказ
-    - **ADMIN**: может отменить любой заказ
-    - **WORKER**: не может отменять заказы
-    """,
 )
-async def cancel_order_endpoint(
-    order_id: str, current_user: dict = Depends(get_current_user_dep)
-):
+async def cancel_order_endpoint(order_id: str, current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] == "worker":
         raise HTTPException(status_code=403, detail="Рабочие не могут отменять заказы")
-    result = await cancel_order(
-        order_id=order_id, user_id=current_user["user_id"], role=current_user["role"]
-    )
+    result = await cancel_order(order_id=order_id, user_id=current_user["user_id"], role=current_user["role"])
     return result
 
 
@@ -216,15 +147,6 @@ async def cancel_order_endpoint(
     status_code=200,
     response_model=dict,
     summary="Перевести заказ на следующий этап",
-    description="""
-    Добавляет новый этап в заказ после завершения текущего.
-    Последовательность: Раскрой → Производство → Доставка → Монтаж → Завершён
-    - **WORKER**: только для своих заказов
-    - **ADMIN**: для любого заказа
-    """
 )
-async def next_stage_endpoint(
-    order_id: str,
-    current_user: dict = Depends(get_current_user_dep)
-):
+async def next_stage_endpoint(order_id: str, current_user: dict = Depends(get_current_user_dep)):
     return await next_stage(order_id, current_user["role"])
