@@ -8,7 +8,6 @@ from app.service.worker_service import (
     edit_worker_by_id,
     delete_worker_by_id,
     get_filtered_workers_for_admin,
-    get_count_users
 )
 from app.models.user import WorkerCreate, WorkerPublic, WorkerUpdate
 from datetime import datetime
@@ -27,11 +26,9 @@ router = APIRouter(prefix="/api", tags=["workers"])
 
 @router.get(
     "/workers/filter",
-    response_model=List[WorkerPublic],
+    response_model=dict,
     summary="Получить отфильтрованный список работников",
-    description="""
-    Возвращает отфильтрованный список работников для админа с регистронезависимым поиском
-    """
+    description="Возвращает отфильтрованный список работников для админа и общее количество",
 )
 async def get_filtered_workers_admin(
         name_worker: str = None,
@@ -54,21 +51,16 @@ async def get_filtered_workers_admin(
 ):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
     if sort_by not in ALLOWED_SORTED_FIELDS:
-        raise HTTPException(status_code=400,
-                            detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
-
+        raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
     if sort.upper() not in {"ASC", "DESC"}:
         raise HTTPException(status_code=400, detail="sort может быть только 'ASC' или 'DESC'")
     sort_direction = 1 if sort.upper() == "ASC" else -1
-
     if limit < -1:
         limit = 1
     elif limit == 0:
         raise HTTPException(status_code=400, detail="limit должен быть больше 0")
-
-    workers = await get_filtered_workers_for_admin(
+    items, total = await get_filtered_workers_for_admin(
         name_worker=name_worker,
         worker_position=worker_position,
         start_workday=start_workday,
@@ -86,54 +78,28 @@ async def get_filtered_workers_admin(
         skip=start,
         limit=limit
     )
-
-    return workers
+    return {"items": items, "total": total}
 
 
 @router.get(
     "/workers",
     response_model=List[WorkerPublic],
     summary="Получить список работников",
-    description="""
-    Возвращает всех работников для админа
-    """
 )
 async def get_workers_for_admin(current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
     return await get_workers()
-
-
-@router.get(
-    "/workers/count",
-    response_model=int,
-    summary="Получить количество работников",
-    description="""
-    Возвращает количество работников для админа
-    False = только работники
-    True = все пользователи
-    """
-)
-async def get_count(all_users: bool = False, current_user: dict = Depends(get_current_user_dep)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
-    return await get_count_users(all_users)
 
 
 @router.get(
     "/workers/{worker_id}",
     response_model=WorkerPublic,
     summary="Получить работника по id",
-    description="""
-    Возвращает конкретного работника по id для админа
-    """
 )
 async def get_worker(worker_id: str, current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
     return await get_worker_by_id(worker_id)
 
 
@@ -142,16 +108,11 @@ async def get_worker(worker_id: str, current_user: dict = Depends(get_current_us
     status_code=201,
     response_model=dict,
     summary="Создать нового работника",
-    description="""
-    Создаёт аккаунт для нового работника и генерирует случайный пароль
-    """
 )
 async def create_worker(worker_data: WorkerCreate, current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут создавать работников")
-
     worker_id, password = await create_new_worker(worker_data)
-
     return {"id": worker_id, "password": password, "message": "Аккаунт для работника успешно создан"}
 
 
@@ -160,17 +121,12 @@ async def create_worker(worker_data: WorkerCreate, current_user: dict = Depends(
     status_code=200,
     response_model=dict,
     summary="Изменить профиль работника",
-    description="""
-    Изменение профиля о работнике через PATCH только для админа
-    """
 )
 async def edit_worker_profile(worker_id: str, worker_data: WorkerUpdate,
                               current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
     result = await edit_worker_by_id(worker_id, worker_data)
-
     return result
 
 
@@ -179,14 +135,9 @@ async def edit_worker_profile(worker_id: str, worker_data: WorkerUpdate,
     status_code=200,
     response_model=dict,
     summary="Мягкое удаление работника",
-    description="""
-    Мягкое удаление работника, в базе данных ставится дата увольнения работника и освобождаются все заказы. Доступ только для админа
-    """
 )
 async def delete_worker(worker_id: str, current_user: dict = Depends(get_current_user_dep)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Только админы могут просматривать работников")
-
     result = await delete_worker_by_id(worker_id)
-
     return result

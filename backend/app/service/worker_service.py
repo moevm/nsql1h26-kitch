@@ -19,7 +19,6 @@ def _generate_password() -> str:
 
 
 def _time_str_to_datetime(time_str: str) -> datetime:
-    """Преобразует 'HH:MM' в datetime (сегодняшняя дата)"""
     now = datetime.now(timezone.utc)
     hours, minutes = map(int, time_str.split(':'))
     return now.replace(hour=hours, minute=minutes, second=0, microsecond=0)
@@ -40,12 +39,10 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
         sorted_pos = sorted(worker_db.worker_positions, key=lambda x: x.date)
         positions = [p.position for p in sorted_pos]
     current_position = positions[-1] if positions else None
-
     exp_years = 0
     if worker_db.worker_info and worker_db.worker_info.date_of_employment:
         exp_years = _calculate_experience_years(worker_db.worker_info.date_of_employment,
                                                 worker_db.worker_info.start_experience)
-
     work_start = None
     work_end = None
     if worker_db.worker_info:
@@ -53,9 +50,7 @@ def _worker_to_public(worker_db: WorkerInDB) -> WorkerPublic:
             work_start = worker_db.worker_info.work_day_start
         if worker_db.worker_info.work_day_end:
             work_end = worker_db.worker_info.work_day_end
-
     is_active = not (worker_db.worker_info and worker_db.worker_info.date_of_remove)
-
     return WorkerPublic(
         id=str(worker_db.id),
         name=worker_db.username,
@@ -92,11 +87,9 @@ async def create_new_worker(data: WorkerCreate) -> Tuple[str, str]:
     existing = await user_repo.get_user_by_email(data.email)
     if existing:
         raise HTTPException(status_code=409, detail="Email уже зарегистрирован")
-
     plain_password = _generate_password()
     hashed = _hash_password(plain_password)
     now = datetime.now(timezone.utc)
-
     worker_info = WorkerInfo(
         date_of_birth=data.date_of_birth,
         date_of_employment=now,
@@ -106,9 +99,7 @@ async def create_new_worker(data: WorkerCreate) -> Tuple[str, str]:
         work_day_start=data.work_day_start,
         work_day_end=data.work_day_end
     )
-
     worker_positions = [WorkerPosition(position=data.position, date=now)]
-
     worker_in_db = WorkerInDB(
         username=data.name,
         email=data.email,
@@ -119,7 +110,6 @@ async def create_new_worker(data: WorkerCreate) -> Tuple[str, str]:
         worker_info=worker_info,
         worker_positions=worker_positions
     )
-
     worker_id = await user_repo.create_new_worker(worker_in_db)
     return worker_id, plain_password
 
@@ -128,7 +118,6 @@ async def edit_worker_by_id(worker_id: str, update_data: WorkerUpdate) -> dict:
     worker = await user_repo.get_worker_by_id(worker_id)
     if not worker:
         raise HTTPException(status_code=404, detail="Работник не найден или уволен")
-
     update_ops = {}
     if update_data.name is not None:
         update_ops["username"] = update_data.name
@@ -145,17 +134,14 @@ async def edit_worker_by_id(worker_id: str, update_data: WorkerUpdate) -> dict:
         update_ops["worker_info.work_day_end"] = update_data.work_day_end
     if update_data.comment is not None:
         update_ops["worker_info.comment"] = update_data.comment
-
     if update_ops:
         await user_repo.edit_worker_by_id(worker_id, {"$set": update_ops})
-
     if update_data.position is not None:
         current_positions = worker.worker_positions or []
         last_pos = current_positions[-1].position if current_positions else None
         if update_data.position != last_pos:
             new_pos = WorkerPosition(position=update_data.position, date=datetime.now(timezone.utc))
             await user_repo.edit_worker_by_id(worker_id, {"$push": {"worker_positions": new_pos.model_dump()}})
-
     return {"id": worker_id, "message": "Профиль работника обновлён"}
 
 
@@ -163,7 +149,6 @@ async def delete_worker_by_id(worker_id: str) -> dict:
     worker = await user_repo.get_worker_by_id(worker_id)
     if not worker:
         raise HTTPException(status_code=404, detail="Работник не найден или уже уволен")
-
     success = await user_repo.delete_worker_by_id(worker_id)
     if not success:
         raise HTTPException(status_code=500, detail="Не удалось уволить работника")
@@ -187,8 +172,8 @@ async def get_filtered_workers_for_admin(
         sort_direction: int,
         skip: int,
         limit: int
-) -> List[WorkerPublic]:
-    raw = await user_repo.get_filtered_workers_for_admin(
+) -> Tuple[List[WorkerPublic], int]:
+    raw, total = await user_repo.get_filtered_workers_for_admin(
         name_worker=name_worker,
         worker_position=worker_position,
         start_workday=start_workday,
@@ -206,14 +191,8 @@ async def get_filtered_workers_for_admin(
         skip=skip,
         limit=limit
     )
-
     result = []
     for doc in raw:
         worker_db = WorkerInDB(**doc)
         result.append(_worker_to_public(worker_db))
-
-    return result
-
-
-async def get_count_users(all_users: bool) -> int:
-    return await user_repo.count_users(all_users)
+    return result, total
