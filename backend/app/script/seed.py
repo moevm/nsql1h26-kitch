@@ -70,7 +70,7 @@ def seed_users():
         },
         # Работники
         {
-            "email": "worker1@example.com",
+            "email": "worker@example.com",
             "role": "worker",
             "phone": "+7 999 666-66-66",
             "username": "Работник Петров",
