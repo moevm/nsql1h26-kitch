@@ -2,29 +2,15 @@ import {type ReactElement, useState, useMemo, useCallback, Fragment} from "react
 import { Pagination } from "@mui/material";
 import styles from "./TasksPage.module.scss";
 import { TaskCard } from "../../../UI/CommonCards/TaskCard/TaskCard.tsx";
-import {useFilteredTasks, useTasksCount} from "../../../hooks/useTasks.ts";
+import {useFilteredTasks} from "../../../hooks/useTasks.ts";
 import type { TaskFilterParams } from "../../../api/tasks.ts";
 import {TasksFilter} from "../../../components/TasksFIlter/TasksFIlter.tsx";
-import {useAuth} from "../../../hooks/useAuth.ts";
 
 const ITEMS_PER_PAGE = 3;
 
 export function TasksPage(): ReactElement {
-    const {userId} = useAuth();
     const [page, setPage] = useState(1);
     const [filters, setFilters] = useState<TaskFilterParams>({});
-
-    const {
-        data: totalTasksCount,
-        isLoading: isCountLoading,
-        error: countError,
-        refetch: refetchCount,
-    } = useTasksCount(userId ? userId : "");
-
-    const totalPages = useMemo(() => {
-        if (!totalTasksCount) return 0;
-        return Math.ceil(totalTasksCount / ITEMS_PER_PAGE);
-    }, [totalTasksCount]);
 
     const filtersWithPagination: TaskFilterParams = useMemo(() => ({
         ...filters,
@@ -35,10 +21,19 @@ export function TasksPage(): ReactElement {
     }), [filters, page]);
 
     const {
-        data: tasks,
-        isLoading: isTasksLoading,
-        error: tasksError
+        data: filteredResult,
+        isLoading,
+        error,
+        refetch,
     } = useFilteredTasks(filtersWithPagination);
+
+    const tasks = filteredResult?.items || [];
+    const totalTasksCount = filteredResult?.total || 0;
+
+    const totalPages = useMemo(() => {
+        if (!totalTasksCount) return 0;
+        return Math.ceil(totalTasksCount / ITEMS_PER_PAGE);
+    }, [totalTasksCount]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
@@ -48,14 +43,14 @@ export function TasksPage(): ReactElement {
     const handleFilterChange = useCallback((newFilters: Partial<TaskFilterParams>) => {
         setFilters(newFilters);
         setPage(1);
-        refetchCount();
-    }, [refetchCount]);
+        refetch();
+    }, [refetch]);
 
-    if (isCountLoading || isTasksLoading) {
+    if (isLoading) {
         return <div className={styles.loadingState}>Загружаем задачи...</div>;
     }
 
-    if (countError || tasksError) {
+    if (error) {
         return <div className={styles.errorState}>Ошибка загрузки</div>;
     }
 
@@ -63,27 +58,22 @@ export function TasksPage(): ReactElement {
         <div className={styles.tasksPageContainer}>
             <TasksFilter onFilterChange={handleFilterChange} initialFilters={filters} />
 
-            {!tasks || tasks.length === 0 ? (
+            {tasks.length === 0 ? (
                 <div className={styles.emptyState}>
                     <p>Нет доступных задач</p>
                 </div>
             ) : (
                 <>
-                    {tasks.length > 0 && (
-                        <div className={styles.tasksGrid}>
-                            <div className={styles.statsInfo}>
-                                Всего {totalTasksCount} задач
-                            </div>
-                            {tasks.map((task) => (
-                                <Fragment>
-                                    <TaskCard
-                                        key={`${task.order_id}-${task.stage_index}`}
-                                        task={task}
-                                    />
-                                </Fragment>
-                            ))}
+                    <div className={styles.tasksGrid}>
+                        <div className={styles.statsInfo}>
+                            Всего {totalTasksCount} задач
                         </div>
-                    )}
+                        {tasks.map((task) => (
+                            <Fragment key={`${task.order_id}-${task.stage_index}`}>
+                                <TaskCard task={task} />
+                            </Fragment>
+                        ))}
+                    </div>
 
                     {totalPages > 1 && (
                         <div className={styles.paginationContainer}>

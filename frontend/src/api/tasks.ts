@@ -41,8 +41,8 @@ export const tasksAPI = {
         return response.data;
     },
 
-    getFiltered: async (params: TaskFilterParams): Promise<Task[]> => {
-        const response = await apiClient.get<Task[]>('/tasks/filter', { params });
+    getFiltered: async (params: TaskFilterParams): Promise<{ items: Task[]; total: number }> => {
+        const response = await apiClient.get<{ items: Task[]; total: number }>('/tasks/filter', { params });
         return response.data;
     },
 
