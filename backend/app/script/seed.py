@@ -520,6 +520,41 @@ def seed_orders():
     ]
     add_order(worker2_order_data, worker2_stages, worker2_order_created_at)
 
+    # Заказ с доступной задачей (статус Available)
+    available_order_created_at = now - timedelta(days=1)
+    available_order_data = {
+        "item": "Доступный заказ (ожидает раскроя)",
+        "design_name": "Классическая кухня",
+        "material_name": "ЛДСП 16мм",
+        "address": "ул. Доступная, д. 5",
+        "floor": 1,
+        "has_lift": True,
+        "total_price": 110000,
+        "type_price": 50000,
+        "material_price": 30000,
+        "delivery_price": 5000,
+        "comment_price": 1000,
+        "comment": "Заказ с доступной задачей для работников",
+        "color": {"red": 100, "green": 150, "blue": 200, "name": "Голубой"},
+    }
+    available_stages = [
+        {
+            "name_stage": TypeStage.Cutting,
+            "worker_id": "",
+            "status": TypeStatus.In_progress,
+            "task_status": TypeTask.Available,
+            "times": {
+                "deadline": available_order_created_at + timedelta(days=3),
+                "start": available_order_created_at,
+                "end": None,
+                "est_time": 2880,
+                "spent": 0,
+                "expired_time": 0,
+            },
+        }
+    ]
+    add_order(available_order_data, available_stages, available_order_created_at)
+
     for order in orders:
         db.orders.update_one({"item": order["item"]}, {"$set": order}, upsert=True)
     print(f"Seeded {db.orders.count_documents({})} orders with stages")
