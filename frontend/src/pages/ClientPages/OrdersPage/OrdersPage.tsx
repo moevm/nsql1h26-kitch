@@ -4,7 +4,7 @@ import styles from "./OrdersPage.module.scss"
 
 import {ClientOrderCard} from "../../../UI/CommonCards/ClientOrderCard/ClientOrderCard.tsx";
 import type {Order} from "../../../types/order.ts";
-import {useFilteredOrders, useOrdersCount} from "../../../hooks/useOrders.ts";
+import {useFilteredOrders} from "../../../hooks/useOrders.ts";
 import type {FilterParams} from "../../../api/orders.ts";
 import {OrdersFilter} from "../../../components/OrdersFilter/OrdersFilter.tsx";
 
@@ -13,18 +13,6 @@ const ITEMS_PER_PAGE = 3;
 export function OrdersPage(): ReactElement {
     const [filters, setFilters] = useState<Partial<FilterParams>>({});
     const [page, setPage] = useState(1);
-
-    const {
-        data: totalOrdersCount,
-        isLoading: isCountLoading,
-        error: countError,
-        refetch: refetchCount,
-    } = useOrdersCount()
-
-    const totalPages = useMemo(() => {
-        if (!totalOrdersCount) return 0;
-        return Math.ceil(totalOrdersCount / ITEMS_PER_PAGE);
-    }, [totalOrdersCount]);
 
     const filtersWithPagination: FilterParams = useMemo(() => ({
         ...filters,
@@ -35,10 +23,19 @@ export function OrdersPage(): ReactElement {
     }), [filters, page]);
 
     const {
-        data: orders,
-        isLoading: isOrdersLoading,
-        error: ordersError
+        data: filteredResult,
+        isLoading,
+        error,
+        refetch,
     } = useFilteredOrders(filtersWithPagination);
+
+    const orders = filteredResult?.items || [];
+    const totalOrdersCount = filteredResult?.total || 0;
+
+    const totalPages = useMemo(() => {
+        if (!totalOrdersCount) return 0;
+        return Math.ceil(totalOrdersCount / ITEMS_PER_PAGE);
+    }, [totalOrdersCount]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);
@@ -48,14 +45,14 @@ export function OrdersPage(): ReactElement {
     const handleFilterChange = useCallback((newFilters: Partial<FilterParams>) => {
         setFilters(newFilters);
         setPage(1);
-        refetchCount();
-    }, [refetchCount]);
+        refetch();
+    }, [refetch]);
 
-    if (isCountLoading || isOrdersLoading) {
+    if (isLoading) {
         return <div className={styles.loadingState}>Загружаем ваши заказы...</div>;
     }
 
-    if (countError || ordersError) {
+    if (error) {
         return <div className={styles.errorState}>Ошибка загрузки</div>;
     }
 
@@ -63,24 +60,22 @@ export function OrdersPage(): ReactElement {
         <div className={styles.ordersPageContainer}>
             <OrdersFilter onFilterChange={handleFilterChange} initialFilters={filters} />
 
-            {orders && orders.length === 0 ? (
+            {orders.length === 0 ? (
                 <div className={styles.emptyState}>
                     <p>Заказы не найдены</p>
                 </div>
             ) : (
                 <>
-                    {orders && orders.length > 0 && (
-                        <div className={styles.ordersGrid}>
-                            <div className={styles.statsInfo}>
-                                Всего {totalOrdersCount} заказов
-                            </div>
-                            <Fragment>
-                                {orders.map((order: Order) => (
-                                    <ClientOrderCard key={order.id} order={order} />
-                                ))}
-                            </Fragment>
+                    <div className={styles.ordersGrid}>
+                        <div className={styles.statsInfo}>
+                            Всего {totalOrdersCount} заказов
                         </div>
-                    )}
+                        <Fragment>
+                            {orders.map((order: Order) => (
+                                <ClientOrderCard key={order.id} order={order} />
+                            ))}
+                        </Fragment>
+                    </div>
 
                     {totalPages > 1 && (
                         <div className={styles.paginationContainer}>

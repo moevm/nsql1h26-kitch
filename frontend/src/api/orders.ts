@@ -38,30 +38,29 @@ export const ordersAPI = {
         return response.data;
     },
 
-    getFiltered: async (filters: FilterParams): Promise<Order[]> => {
+    getFiltered: async (filters: FilterParams): Promise<{ items: Order[]; total: number }> => {
         const params = new URLSearchParams();
 
-        if (filters.name_design && filters.name_design.trim())              params.append('name_design', filters.name_design);
-        if (filters.type)                                                   params.append('type', filters.type);
-        if (filters.material && filters.material.trim())                    params.append('material', filters.material);
-        if (filters.stage)                                                  params.append('stage', filters.stage);
-        if (filters.address && filters.address.trim())                      params.append('address', filters.address);
-        if (filters.comment && filters.comment.trim())                      params.append('comment', filters.comment);
-        if (filters.min_price !== undefined && filters.min_price > 0)       params.append('min_price', String(filters.min_price));
+        if (filters.name_design && filters.name_design.trim()) params.append('name_design', filters.name_design);
+        if (filters.type) params.append('type', filters.type);
+        if (filters.material && filters.material.trim()) params.append('material', filters.material);
+        if (filters.stage) params.append('stage', filters.stage);
+        if (filters.address && filters.address.trim()) params.append('address', filters.address);
+        if (filters.comment && filters.comment.trim()) params.append('comment', filters.comment);
+        if (filters.min_price !== undefined && filters.min_price > 0) params.append('min_price', String(filters.min_price));
         if (filters.max_price !== undefined && filters.max_price < 1000000) params.append('max_price', String(filters.max_price));
-        if (filters.from_created)                                           params.append('from_created', filters.from_created);
-        if (filters.to_created)                                             params.append('to_created', filters.to_created);
-        if (filters.from_deadline)                                          params.append('from_deadline', filters.from_deadline);
-        if (filters.to_deadline)                                            params.append('to_deadline', filters.to_deadline);
-        if (filters.sort_by)                                                params.append('sort_by', filters.sort_by);
-        if (filters.sort)                                                   params.append('sort', filters.sort);
-        if (filters.start !== undefined)                                    params.append('start', String(filters.start));
-        if (filters.limit !== undefined)                                    params.append('limit', String(filters.limit));
+        if (filters.from_created) params.append('from_created', filters.from_created);
+        if (filters.to_created) params.append('to_created', filters.to_created);
+        if (filters.from_deadline) params.append('from_deadline', filters.from_deadline);
+        if (filters.to_deadline) params.append('to_deadline', filters.to_deadline);
+        if (filters.sort_by) params.append('sort_by', filters.sort_by);
+        if (filters.sort) params.append('sort', filters.sort);
+        if (filters.start !== undefined) params.append('start', String(filters.start));
+        if (filters.limit !== undefined) params.append('limit', String(filters.limit));
 
         const queryString = params.toString();
         const url = queryString ? `/orders/filter?${queryString}` : '/orders/filter';
-        console.log(url);
-        const response = await apiClient.get(url);
+        const response = await apiClient.get<{ items: Order[]; total: number }>(url);
         return response.data;
     },
 
@@ -74,4 +73,4 @@ export const ordersAPI = {
         const response = await apiClient.patch(`/orders/${id}/cancel`);
         return response.data;
     }
-}
+};
