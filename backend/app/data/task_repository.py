@@ -22,7 +22,6 @@ orders_collection = db["orders"]
 
 
 def _build_tasks(docs: list, worker_id: Optional[str] = None) -> List[Task]:
-    """Собирает Task объекты из документов заказов"""
     tasks = []
     for doc in docs:
         doc["id"] = str(doc["_id"])
@@ -50,7 +49,6 @@ def _build_tasks(docs: list, worker_id: Optional[str] = None) -> List[Task]:
 
 
 async def get_all_tasks(worker_id: Optional[str] = None) -> List[Task]:
-    """Все задачи — для admin все, для worker только свои"""
     query = {} if worker_id is None else {"stages.worker_id": worker_id}
     cursor = orders_collection.find(query)
     docs = await cursor.to_list(length=1000)
@@ -58,14 +56,12 @@ async def get_all_tasks(worker_id: Optional[str] = None) -> List[Task]:
 
 
 async def get_tasks_by_worker(worker_id: str) -> List[Task]:
-    """Задачи конкретного рабочего (история)"""
     cursor = orders_collection.find({"stages.worker_id": worker_id})
     docs = await cursor.to_list(length=1000)
     return _build_tasks(docs, worker_id)
 
 
 async def take_task(order_id: str, stage_index: int, worker_id: str) -> bool:
-    """Назначить рабочего на этап и поставить статус In_progress"""
     now = datetime.now(timezone.utc)
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
@@ -82,7 +78,6 @@ async def take_task(order_id: str, stage_index: int, worker_id: str) -> bool:
 
 
 async def complete_task(order_id: str, stage_index: int) -> bool:
-    """Завершить этап и открыть следующий"""
     now = datetime.now(timezone.utc)
     
     if not ObjectId.is_valid(order_id):
@@ -108,7 +103,6 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
     else:
         final_status = TypeTask.Completed.value
 
-    # Обновляем текущий этап
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
         {
@@ -121,17 +115,16 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
     )
 
     # Определяем следующий этап
-    from app.service.order_service import STAGE_SEQUENCE  # импорт внутри функции
+    from app.service.order_service import STAGE_SEQUENCE
     current_stage_name = stage["name_stage"]
     next_index = stage_index + 1
 
-    # Если следующего этапа нет в массиве, создаём его
     if next_index >= len(stages):
         try:
             pos = STAGE_SEQUENCE.index(current_stage_name)
             next_stage_type = STAGE_SEQUENCE[pos + 1]
         except (ValueError, IndexError):
-            return result.modified_count > 0  # нет следующего этапа (возможно, уже Completed)
+            return result.modified_count > 0
 
         from app.models.order import TypeStatus, Times
         if next_stage_type == TypeStage.Completed:
@@ -169,7 +162,6 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
             {"$push": {"stages": new_stage}, "$set": {"updated_at": now}}
         )
     else:
-        # Открываем существующий следующий этап
         next_est = stages[next_index].get("times", {}).get("est_time", 2880)
         await orders_collection.update_one(
             {"_id": ObjectId(order_id)},
@@ -187,7 +179,6 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
 
 
 async def get_stage(order_id: str, stage_index: int) -> Optional[dict]:
-    """Получить конкретный этап"""
     doc = await orders_collection.find_one({"_id": ObjectId(order_id)})
     if not doc:
         return None
@@ -208,7 +199,7 @@ async def get_filtered_tasks_for_worker(
     name_stage: TypeStage,
     stage_status: TypeStatus,
     task_status: TypeTask,
-    min_estimated_time: int, # в минутах
+    min_estimated_time: int,
     max_estimated_time: int,
     from_created: Optional[datetime],
     to_created: Optional[datetime],
@@ -237,7 +228,7 @@ async def get_filtered_tasks_for_worker(
             match_filter["type"] = type_kitchen.value
         
         if order_id is not None:
-            match_filter["id"] = ObjectId(order_id)
+            match_filter["_id"] = ObjectId(order_id)
         
         if design_id is not None:
             match_filter["design_id"] = design_id
@@ -300,7 +291,7 @@ async def get_filtered_tasks_for_worker(
                     "$floor": {
                         "$divide": [
                             {"$subtract": ["$stages.times.deadline", now]},
-                            60000  # ms в минуты
+                            60000
                         ]
                     }
                 }
@@ -363,4 +354,4 @@ async def get_count_tasks(worker_id: str) -> int:
         return result[0]["total"] if result else 0
     except Exception as e:
         print(f"Error count tasks in task_repository.py: {e}")
-        return 0
+        return 
