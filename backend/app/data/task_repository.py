@@ -1,7 +1,7 @@
 from app.data.database import db
 from app.models.order import OrderInDB, TypeTask, Task, TypeStage, TypeStatus
 from app.models.design import TypeDesign
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
@@ -13,10 +13,9 @@ SORT_FIELD_MAP = {
     "name_stage": "stage_name",
     "task_status": "task_status",
     "type_kitchen": "type",
-    "estimated_time":"times.est_time",
+    "estimated_time": "times.est_time",
     "deadline": "times.deadline"
 }
-
 
 orders_collection = db["orders"]
 
@@ -27,7 +26,6 @@ def _build_tasks(docs: list, worker_id: Optional[str] = None) -> List[Task]:
         doc["id"] = str(doc["_id"])
         order = OrderInDB(**doc)
         order_id = str(order.id)
-
         for stage in order.stages:
             if worker_id and stage.worker_id != worker_id:
                 continue
@@ -79,18 +77,14 @@ async def take_task(order_id: str, stage_index: int, worker_id: str) -> bool:
 
 async def complete_task(order_id: str, stage_index: int) -> bool:
     now = datetime.now(timezone.utc)
-    
     if not ObjectId.is_valid(order_id):
         return False
-
     doc = await orders_collection.find_one({"_id": ObjectId(order_id)})
     if not doc:
         return False
-
     stages = doc.get("stages", [])
     if stage_index >= len(stages):
         return False
-
     stage = stages[stage_index]
     deadline = stage.get("times", {}).get("deadline")
     if deadline is not None:
@@ -102,7 +96,6 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
             final_status = TypeTask.Completed.value
     else:
         final_status = TypeTask.Completed.value
-
     result = await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
         {
@@ -113,19 +106,16 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
             }
         }
     )
-
     # Определяем следующий этап
     from app.service.order_service import STAGE_SEQUENCE
     current_stage_name = stage["name_stage"]
     next_index = stage_index + 1
-
     if next_index >= len(stages):
         try:
             pos = STAGE_SEQUENCE.index(current_stage_name)
             next_stage_type = STAGE_SEQUENCE[pos + 1]
         except (ValueError, IndexError):
             return result.modified_count > 0
-
         from app.models.order import TypeStatus, Times
         if next_stage_type == TypeStage.Completed:
             new_stage = {
@@ -174,7 +164,6 @@ async def complete_task(order_id: str, stage_index: int) -> bool:
                 }
             }
         )
-
     return result.modified_count > 0
 
 
@@ -209,33 +198,26 @@ async def get_filtered_tasks_for_worker(
     sort_direction: int,
     skip: int,
     limit: int
-) -> List[dict]:
+) -> Tuple[List[dict], int]:
     if limit == 0:
-        return []
+        return [], 0
     elif limit <= -1:
         limit = 1000
-    
+
     try:
         match_filter = {}
-
         if name_design is not None:
             match_filter["name_design"] = {"$regex": name_design, "$options": "i"}
-
         if material is not None:
             match_filter["material"] = {"$regex": material, "$options": "i"}
-        
         if type_kitchen is not None:
             match_filter["type"] = type_kitchen.value
-        
         if order_id is not None:
             match_filter["_id"] = ObjectId(order_id)
-        
         if design_id is not None:
             match_filter["design_id"] = design_id
-        
         if material_id is not None:
             match_filter["material_id"] = material_id
-        
         created_filter = {}
         if from_created is not None:
             created_filter["$gte"] = from_created
@@ -243,7 +225,7 @@ async def get_filtered_tasks_for_worker(
             created_filter["$lte"] = to_created
         if created_filter:
             match_filter["created_at"] = created_filter
-        
+
         now = datetime.now(timezone.utc)
         pipeline = [
             {"$match": match_filter},
@@ -259,13 +241,10 @@ async def get_filtered_tasks_for_worker(
         stage_match = {}
         if name_stage is not None:
             stage_match["stages.name_stage"] = name_stage.value
-        
         if stage_status is not None:
             stage_match["stages.stage_status"] = stage_status.value
-        
         if task_status is not None:
             stage_match["stages.task_status"] = task_status.value
-        
         deadline_filter = {}
         if from_deadline is not None:
             deadline_filter["$gte"] = from_deadline
@@ -273,7 +252,6 @@ async def get_filtered_tasks_for_worker(
             deadline_filter["$lte"] = to_deadline
         if deadline_filter:
             stage_match["stages.times.deadline"] = deadline_filter
-
         estimated_time_filter = {}
         if min_estimated_time is not None:
             estimated_time_filter["$gte"] = min_estimated_time
@@ -281,9 +259,14 @@ async def get_filtered_tasks_for_worker(
             estimated_time_filter["$lte"] = max_estimated_time
         if estimated_time_filter:
             stage_match["stages.times.est_time"] = estimated_time_filter
-
         if stage_match:
             pipeline.append({"$match": stage_match})
+
+        count_pipeline = pipeline.copy()
+        count_pipeline.append({"$count": "total"})
+        count_cursor = orders_collection.aggregate(count_pipeline)
+        count_docs = await count_cursor.to_list(length=1)
+        total = count_docs[0]["total"] if count_docs else 0
 
         pipeline.append({
             "$addFields": {
@@ -297,7 +280,6 @@ async def get_filtered_tasks_for_worker(
                 }
             }
         })
-
         pipeline.append({
             "$project": {
                 "order_id": {"$toString": "$_id"},
@@ -324,34 +306,13 @@ async def get_filtered_tasks_for_worker(
 
         cursor = orders_collection.aggregate(pipeline)
         docs = await cursor.to_list(length=limit)
-
         result = []
         for doc in docs:
             doc["id"] = str(doc["_id"])
             doc.pop("_id", None)
             result.append(doc)
-        
-        return result
+        return result, total
 
     except Exception as e:
-        print(f"Error getting tasks in task_repository.get_filtered_tasks: {e}")
-        return []
-
-
-async def get_count_tasks(worker_id: str) -> int:
-    try:
-        if worker_id == "":
-            pipeline = [{"$unwind": "$stages"}, {"$count": "total"}]
-        else:
-            pipeline = [
-                {"$match": {"stages.worker_id": worker_id}},
-                {"$unwind": "$stages"},
-                {"$match": {"stages.worker_id": worker_id}},
-                {"$count": "total"}
-            ]
-        cursor = orders_collection.aggregate(pipeline)
-        result = await cursor.to_list(length=1)
-        return result[0]["total"] if result else 0
-    except Exception as e:
-        print(f"Error count tasks in task_repository.py: {e}")
-        return 
+        print(f"Error getting filtered tasks: {e}")
+        return [], 0

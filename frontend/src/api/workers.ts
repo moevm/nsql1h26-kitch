@@ -39,8 +39,8 @@ export const workersAPI = {
         return response.data;
     },
 
-    getFiltered: async (params: WorkerFilterParams): Promise<WorkerPublic[]> => {
-        const response = await apiClient.get<WorkerPublic[]>('/workers/filter', { params });
+    getFiltered: async (params: WorkerFilterParams): Promise<{ items: WorkerPublic[]; total: number }> => {
+        const response = await apiClient.get<{ items: WorkerPublic[]; total: number }>('/workers/filter', { params });
         return response.data;
     },
 

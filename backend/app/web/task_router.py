@@ -7,12 +7,10 @@ from app.service.task_service import (
     take_task,
     complete_task,
     get_filtered_tasks_for_worker,
-    get_count_tasks,
 )
 from app.models.order import Task, TypeDesign, TypeStage, TypeStatus, TypeTask
 from pydantic import BaseModel
 from datetime import datetime
-
 
 ALLOWED_SORTED_FIELDS = {
     "created_at",
@@ -25,7 +23,6 @@ ALLOWED_SORTED_FIELDS = {
     "deadline"
 }
 
-
 router = APIRouter(prefix="/api", tags=["tasks"])
 
 
@@ -35,11 +32,9 @@ class TakeTaskRequest(BaseModel):
 
 @router.get(
     "/tasks/filter",
-    response_model=List[Task],
+    response_model=dict,
     summary="Получить отфильтрованный список задач",
-    description="""
-    Возвращает отфильтрованный список задач для работника с регистронезависимыми поиском по строковым полям и возможностью фильтрации по статусам, времени и сортировки.
-    """
+    description="Возвращает отфильтрованный список задач для работника и общее количество",
 )
 async def get_filtered_list_tasks(
         name_design: str = None,
@@ -65,20 +60,16 @@ async def get_filtered_list_tasks(
 ):
     if current_user["role"] != "worker":
         raise HTTPException(status_code=403, detail="Только работники могут просматривать задачи")
-
     if sort_by not in ALLOWED_SORTED_FIELDS:
         raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
-
     if sort.upper() not in {"ASC", "DESC"}:
         raise HTTPException(status_code=400, detail="sort может быть только 'ASC' или 'DESC'")
     sort_direction = 1 if sort.upper() == "ASC" else -1
-
     if limit < -1:
         limit = 1
     elif limit == 0:
         raise HTTPException(status_code=400, detail="limit должен быть больше 0")
-
-    tasks = await get_filtered_tasks_for_worker(
+    items, total = await get_filtered_tasks_for_worker(
         worker_id=current_user["user_id"],
         name_design=name_design,
         type_kitchen=type_kitchen,
@@ -100,60 +91,24 @@ async def get_filtered_list_tasks(
         skip=start,
         limit=limit
     )
-
-    return tasks
+    return {"items": items, "total": total}
 
 
 @router.get(
     "/tasks",
     response_model=List[Task],
     summary="Получить список задач",
-    description="""
-    Возвращает задачи в зависимости от роли:
-    - **WORKER**: только свои задачи
-    - **ADMIN**: все задачи
-    """,
 )
 async def get_all_tasks(current_user: dict = Depends(get_current_user_dep)):
     return await get_tasks(current_user["user_id"], current_user["role"])
 
 
 @router.get(
-    "/tasks/count",
-    response_model=int,
-    summary="Получить количество задач",
-    description="""
-    Возвращает количество задач
-    - **WORKER**: только свои задачи
-    - **ADMIN**: задачи любого рабочего
-    """
-)
-async def get_count(worker_id: str = "", current_user: dict = Depends(get_current_user_dep)):
-    if current_user["role"] not in {"admin","worker"}:
-        raise HTTPException(status_code=403, detail="Не хватает прав для доступа к задачам")
-    if current_user["role"] == "worker":
-        if worker_id is not None and worker_id != current_user["user_id"]:
-            raise HTTPException(403, "Доступ запрещён")
-        target_id = current_user["user_id"]
-    else:
-        target_id = worker_id
-
-    return await get_count_tasks(worker_id=target_id)
-
-
-@router.get(
     "/tasks/worker/{worker_id}",
     response_model=List[Task],
     summary="Получить задачи рабочего по ID",
-    description="""
-    Возвращает все задачи в которых участвовал рабочий:
-    - **WORKER**: только свои задачи
-    - **ADMIN**: задачи любого рабочего
-    """,
 )
-async def get_worker_tasks(
-    worker_id: str, current_user: dict = Depends(get_current_user_dep)
-):
+async def get_worker_tasks(worker_id: str, current_user: dict = Depends(get_current_user_dep)):
     return await get_tasks_by_worker(
         worker_id=current_user["user_id"],
         role=current_user["role"],
@@ -165,12 +120,6 @@ async def get_worker_tasks(
     "/tasks/{order_id}/{stage_index}/take",
     response_model=dict,
     summary="Взять задачу в работу",
-    description="""
-    Назначает рабочего на этап и ставит статус **В процессе**.
-    Можно взять только задачу со статусом **Доступна** без назначенного рабочего.
-    - **WORKER**: назначает себя
-    - **ADMIN**: назначает любого
-    """,
 )
 async def take_task_endpoint(
     order_id: str,
@@ -190,12 +139,6 @@ async def take_task_endpoint(
     "/tasks/{order_id}/{stage_index}/complete",
     response_model=dict,
     summary="Завершить задачу",
-    description="""
-    Завершает текущий этап и открывает следующий.
-    Статус следующего этапа становится **Доступна**.
-    - **WORKER**: только свою задачу
-    - **ADMIN**: любую задачу
-    """,
 )
 async def complete_task_endpoint(
     order_id: str, stage_index: int, current_user: dict = Depends(get_current_user_dep)

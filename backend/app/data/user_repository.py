@@ -2,7 +2,7 @@ from bson import ObjectId
 from app.data.database import db
 from app.models.user import UserInDB, WorkerInDB
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 SORT_FIELD_MAP = {
     "name_worker": "username",
@@ -37,37 +37,21 @@ async def get_user_by_id(id: str) -> dict | None:
 
 async def get_workers() -> List[WorkerInDB]:
     try:
-        cursor = users_collection.find({
-            "role": "worker",
-            # "$or": [
-            #     {"worker_info.date_of_remove": {"$exists": False}},
-            #     {"worker_info.date_of_remove": None}
-            # ]
-        })
-
+        cursor = users_collection.find({"role": "worker"})
         docs = await cursor.to_list(length=1000)
-
         return [WorkerInDB(**doc) for doc in docs]
     except Exception as e:
-        print(f"Error getting workers in user_repository.py: {e}")
+        print(f"Error getting workers: {e}")
         return []
 
 
 async def get_worker_by_id(worker_id: str) -> WorkerInDB | None:
     try:
-        doc = await users_collection.find_one({
-            "_id": ObjectId(worker_id),
-            "role": "worker",
-            # "$or": [
-            #     {"worker_info.date_of_remove": {"$exists": False}},
-            #     {"worker_info.date_of_remove": None}
-            # ]
-        })
-
+        doc = await users_collection.find_one({"_id": ObjectId(worker_id), "role": "worker"})
         if doc is not None:
             return WorkerInDB(**doc)
     except Exception as e:
-        print(f"Error getting worker with id {worker_id} in user_repository.py: {e}")
+        print(f"Error getting worker: {e}")
         return None
 
 
@@ -98,7 +82,6 @@ async def delete_worker_by_id(worker_id: str) -> bool:
             "updated_at": datetime.now(timezone.utc)
         }}
     )
-    print(f"Matched: {result.matched_count}, Modified: {result.modified_count}")
     return result.modified_count > 0
 
 
@@ -119,18 +102,16 @@ async def get_filtered_workers_for_admin(
         sort_direction: int,
         skip: int,
         limit: int
-) -> List[dict]:
+) -> Tuple[List[dict], int]:
     if limit == 0:
-        return []
+        return [], 0
     elif limit <= -1:
         limit = 1000
 
     try:
         match_filter = {"role": "worker"}
-
         if name_worker is not None:
             match_filter["username"] = {"$regex": name_worker, "$options": "i"}
-
         workday_filter = {}
         if start_workday is not None:
             workday_filter["$gte"] = start_workday
@@ -139,7 +120,6 @@ async def get_filtered_workers_for_admin(
         if workday_filter:
             match_filter["worker_info.work_day_start"] = workday_filter
             match_filter["worker_info.work_day_end"] = workday_filter
-
         created_filter = {}
         if from_created is not None:
             created_filter["$gte"] = from_created
@@ -149,8 +129,6 @@ async def get_filtered_workers_for_admin(
             match_filter["created_at"] = created_filter
 
         pipeline = [{"$match": match_filter}]
-
-        # Поиск заказов, в которых работник
         pipeline.append({
             "$lookup": {
                 "from": "orders",
@@ -161,8 +139,6 @@ async def get_filtered_workers_for_admin(
                 "as": "orders",
             }
         })
-
-        # Сборка всех этапов из заказов в массив
         pipeline.append({
             "$addFields": {
                 "allStages": {
@@ -174,8 +150,6 @@ async def get_filtered_workers_for_admin(
                 }
             }
         })
-
-        # Фильтрация этапов под конкретного работника
         pipeline.append({
             "$addFields": {
                 "workerStages": {
@@ -186,8 +160,6 @@ async def get_filtered_workers_for_admin(
                 }
             }
         })
-
-        # Подсчёт всех задач по статусам
         pipeline.append({
             "$addFields": {
                 "completed_tasks": {
@@ -225,7 +197,6 @@ async def get_filtered_workers_for_admin(
             completed_tasks_filter["$lte"] = max_completed_tasks
         if completed_tasks_filter:
             tasks_filter["completed_tasks"] = completed_tasks_filter
-
         overdue_tasks_filter = {}
         if min_overdue_tasks is not None:
             overdue_tasks_filter["$gte"] = min_overdue_tasks
@@ -233,7 +204,6 @@ async def get_filtered_workers_for_admin(
             overdue_tasks_filter["$lte"] = max_overdue_tasks
         if overdue_tasks_filter:
             tasks_filter["overdue_tasks"] = overdue_tasks_filter
-
         failed_tasks_filter = {}
         if min_failed_tasks is not None:
             failed_tasks_filter["$gte"] = min_failed_tasks
@@ -241,7 +211,6 @@ async def get_filtered_workers_for_admin(
             failed_tasks_filter["$lte"] = max_failed_tasks
         if failed_tasks_filter:
             tasks_filter["failed_tasks"] = failed_tasks_filter
-
         if tasks_filter:
             pipeline.append({"$match": tasks_filter})
 
@@ -250,16 +219,17 @@ async def get_filtered_workers_for_admin(
                 "last_position": {"$arrayElemAt": ["$worker_positions.position", -1]},
             }
         })
-
         if worker_position is not None:
-            pipeline.append({
-                "$match": {"last_position": {"$regex": worker_position, "$options": "i"}}
+            pipeline.append({"$match": {"last_position": {"$regex": worker_position, "$options": "i"}}})
 
-            })
+        count_pipeline = pipeline.copy()
+        count_pipeline.append({"$count": "total"})
+        count_cursor = users_collection.aggregate(count_pipeline)
+        count_docs = await count_cursor.to_list(length=1)
+        total = count_docs[0]["total"] if count_docs else 0
 
         sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
         pipeline.append({"$sort": {sort_field: sort_direction}})
-
         if skip > 0:
             pipeline.append({"$skip": skip})
         pipeline.append({"$limit": limit})
@@ -278,24 +248,13 @@ async def get_filtered_workers_for_admin(
 
         cursor = users_collection.aggregate(pipeline)
         docs = await cursor.to_list(length=limit)
-
         result = []
         for doc in docs:
             doc["id"] = str(doc["_id"])
             doc.pop("_id", None)
             result.append(doc)
+        return result, total
 
-        return result
     except Exception as e:
-        print(f"Error getting workers in worker_repository.get_filtered_workers_for_admin: {e}")
-        return []
-
-
-async def count_users(all_users: bool = False) -> int:
-    try:
-        if all_users:
-            return await users_collection.count_documents({})
-        return await users_collection.count_documents({"role": "worker"})
-    except Exception as e:
-        print(f"Error count users in user_repository.py: {e}")
-        return 0
+        print(f"Error getting filtered workers: {e}")
+        return [], 0
