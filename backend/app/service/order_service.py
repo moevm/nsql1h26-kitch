@@ -238,3 +238,47 @@ async def get_filtered_orders(
         limit=limit,
     )
     return [Order(**order.model_dump()) for order in orders_db], total
+
+async def change_stage_worker(
+    order_id: str,
+    stage_index: int,
+    worker_id: str,
+    role: str
+) -> dict:
+    if role not in ("admin", "worker"):
+        raise HTTPException(status_code=403, detail="Доступ только для admin и worker")
+
+    order_db = await order_repo.get_by_id(order_id)
+    if not order_db:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    if stage_index >= len(order_db.stages):
+        raise HTTPException(status_code=404, detail="Этап не найден")
+
+    stage = order_db.stages[stage_index]
+
+    if stage.task_status in (TypeTask.Completed, TypeTask.Canceled, TypeTask.Closed):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Нельзя сменить рабочего на завершённом этапе (статус: {stage.task_status})"
+        )
+
+    if worker_id and worker_id != "":
+        from app.service.worker_service import get_worker_by_id
+        try:
+            await get_worker_by_id(worker_id)
+        except HTTPException:
+            raise HTTPException(status_code=404, detail="Рабочий не найден")
+
+    now = datetime.now(timezone.utc)
+    result = await order_repo.update_stage_worker(order_id, stage_index, worker_id, now)
+
+    if not result:
+        raise HTTPException(status_code=500, detail="Не удалось обновить рабочего")
+
+    return {
+        "order_id": order_id,
+        "stage_index": stage_index,
+        "worker_id": worker_id,
+        "message": "Рабочий успешно назначен на этап"
+    }

@@ -9,6 +9,7 @@ from app.service.order_service import (
     get_filtered_orders,
     next_stage,
     can_worker_view_order,
+    change_stage_worker
 )
 from app.models.order import OrderCreate, Order, TypeStage
 from app.models.design import TypeDesign
@@ -153,3 +154,33 @@ async def cancel_order_endpoint(order_id: str, current_user: dict = Depends(get_
 )
 async def next_stage_endpoint(order_id: str, current_user: dict = Depends(get_current_user_dep)):
     return await next_stage(order_id, current_user["role"])
+
+@router.patch(
+    "/orders/{order_id}/stages/{stage_index}/worker",
+    status_code=200,
+    response_model=dict,
+    summary="Сменить рабочего на этапе",
+    description="Позволяет администратору или рабочему назначить другого рабочего на конкретный этап заказа",
+)
+async def change_stage_worker_endpoint(
+    order_id: str,
+    stage_index: int,
+    worker_id: str,
+    current_user: dict = Depends(get_current_user_dep)
+):
+    if current_user["role"] not in ("admin", "worker"):
+        raise HTTPException(status_code=403, detail="Доступ только для admin и worker")
+
+    if current_user["role"] == "worker":
+        order = await get_order_by_id(order_id)
+        is_participating = await can_worker_view_order(order, current_user["user_id"])
+        if not is_participating:
+            raise HTTPException(status_code=403, detail="Вы не участвуете в этом заказе")
+
+    result = await change_stage_worker(
+        order_id=order_id,
+        stage_index=stage_index,
+        worker_id=worker_id,
+        role=current_user["role"]
+    )
+    return result

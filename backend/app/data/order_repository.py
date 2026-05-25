@@ -210,3 +210,24 @@ async def get_filtered_orders(
     except Exception as e:
         print(f"Error getting filtered orders: {e}")
         return [], 0
+
+async def update_stage_worker(
+    order_id: str,
+    stage_index: int,
+    worker_id: str,
+    updated_at: datetime
+) -> bool:
+    try:
+        result = await orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {
+                "$set": {
+                    f"stages.{stage_index}.worker_id": worker_id,
+                    "updated_at": updated_at
+                }
+            }
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Error updating stage worker: {e}")
+        return False

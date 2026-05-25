@@ -1,4 +1,4 @@
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {type FilterParams, ordersAPI} from "../api/orders.ts";
 import type {OrderCreate} from "../types/order.ts";
 
@@ -41,5 +41,16 @@ export const useCreateOrder = () => {
 export const useCancelOrder = () => {
     return useMutation({
         mutationFn: (id: string) => ordersAPI.cancel(id),
+    });
+};
+
+export const useChangeStageWorker = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ orderId, stageIndex, workerId }: { orderId: string; stageIndex: number; workerId: string | null }) =>
+            ordersAPI.changeStageWorker(orderId, stageIndex, workerId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
     });
 };
