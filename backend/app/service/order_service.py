@@ -189,8 +189,8 @@ async def can_worker_view_order(order: Order, worker_id: str) -> bool:
     return False
 
 
-async def get_filtered_orders_for_client(
-    client_id: str,
+async def get_filtered_orders(
+    client_id: Optional[str],
     name_design: str,
     type: TypeDesign,
     material: str,
@@ -212,27 +212,29 @@ async def get_filtered_orders_for_client(
         if dt is None:
             return None
         return dt + timedelta(hours=3)
+
     from_created = normalize_by_time_zone(from_created)
     to_created = normalize_by_time_zone(to_created)
     from_deadline = normalize_by_time_zone(from_deadline)
     to_deadline = normalize_by_time_zone(to_deadline)
-    orders_db, total = await order_repo.get_filtered_orders_for_client(
-        client_id,
-        name_design,
-        type,
-        material,
-        stage,
-        address,
-        comment,
-        min_price,
-        max_price,
-        from_created,
-        to_created,
-        from_deadline,
-        to_deadline,
-        sort_by,
-        sort_direction,
-        skip,
-        limit,
+
+    orders_db, total = await order_repo.get_filtered_orders(
+        client_id=client_id,
+        name_design=name_design,
+        type=type,
+        material=material,
+        stage=stage,
+        address=address,
+        comment=comment,
+        min_price=min_price,
+        max_price=max_price,
+        from_created=from_created,
+        to_created=to_created,
+        from_deadline=from_deadline,
+        to_deadline=to_deadline,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        skip=skip,
+        limit=limit,
     )
     return [Order(**order.model_dump()) for order in orders_db], total

@@ -104,8 +104,8 @@ async def cancel(order_id: str) -> bool:
     return result.modified_count > 0
 
 
-async def get_filtered_orders_for_client(
-    client_id: str,
+async def get_filtered_orders(
+    client_id: Optional[str],
     name_design: str,
     type: TypeDesign,
     material: str,
@@ -127,7 +127,10 @@ async def get_filtered_orders_for_client(
         return [], 0
 
     try:
-        filter_query = {"client.client_id": client_id}
+        filter_query = {}
+
+        if client_id is not None:
+            filter_query["client.client_id"] = client_id
 
         if name_design is not None:
             filter_query["name_design"] = {"$regex": name_design, "$options": "i"}

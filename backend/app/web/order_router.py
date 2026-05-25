@@ -6,7 +6,7 @@ from app.service.order_service import (
     create_new_order,
     cancel_order,
     get_orders_by_user_role,
-    get_filtered_orders_for_client,
+    get_filtered_orders,
     next_stage,
     can_worker_view_order,
 )
@@ -52,8 +52,8 @@ async def get_filtered_orders_client(
     limit: int = -1,
     current_user: dict = Depends(get_current_user_dep)
 ):
-    if current_user["role"] != "client":
-        raise HTTPException(status_code=403, detail="Только клиенты могут фильтровать свои заказы")
+    if current_user["role"] == "worker":
+        raise HTTPException(status_code=403, detail="Только клиенты и админы могут заказы")
     if sort_by not in ALLOWED_SORTED_FIELDS:
         raise HTTPException(status_code=400, detail=f"Не может быть отсортировано по {sort_by}. Используйте что-то из списка {ALLOWED_SORTED_FIELDS}")
     if sort.upper() not in {"ASC", "DESC"}:
@@ -63,8 +63,11 @@ async def get_filtered_orders_client(
         limit = 1
     elif limit == 0:
         raise HTTPException(status_code=400, detail="limit должен быть больше 0")
-    items, total = await get_filtered_orders_for_client(
-        client_id=current_user["user_id"],
+
+    client_id = None if current_user["role"] == "admin" else current_user["user_id"]
+
+    items, total = await get_filtered_orders(
+        client_id=client_id,
         name_design=name_design,
         type=type,
         material=material,
