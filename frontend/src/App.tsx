@@ -5,6 +5,7 @@ import {LoginPage} from "./pages/CommonPages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/CommonPages/RegisterPage/RegisterPage.tsx";
 import {PasswordRecoverPage} from "./pages/CommonPages/PasswordRecoverPage/PasswordRecoverPage.tsx";
 import {ProtectedRoute} from "./components/ProtectedRoute/ProtectedRoute.tsx";
+import { EmployeeProfilePage } from "./pages/CommonPages/EmployeeProfilePage/EmployeeProfilePage.tsx";
 
 // client elements
 import {ClientLayout} from "./layouts/ClientLayout/ClientLayout.tsx";
@@ -15,12 +16,12 @@ import {OrderDetailsPage} from "./pages/CommonPages/OrderDatailsPage/OrderDatail
 
 // worker elements
 import {WorkerLayout} from "./layouts/WorkerLayout/WorkerLayout.tsx";
+import {TasksPage} from "./pages/WorkerPages/TasksPage/TasksPage.tsx";
 
 // admin elements
 import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
 import { AdminEmployeesPage } from "./pages/AdminPages/AdminEmployeesPage/AdminEmployeesPage.tsx";
-import { EmployeeProfilePage } from "./pages/CommonPages/EmployeeProfilePage/EmployeeProfilePage.tsx";
-import {TasksPage} from "./pages/WorkerPages/TasksPage/TasksPage.tsx";
+import {AdminOrdersPage} from "./pages/AdminPages/AdminOrdersPage/AdminOrdersPage.tsx";
 
 function AppRoutes() {
     return (
@@ -58,7 +59,7 @@ function AppRoutes() {
                     <AdminLayout />
                 </ProtectedRoute>
             }>
-                <Route path="/admin/orders"     element={<div>ADMIN ORDERS</div>}/>
+                <Route path="/admin/orders"     element={<AdminOrdersPage />}/>
                 <Route path="/admin/finances"   element={<div>ADMIN FINANCES</div>}/>
                 <Route path="/admin/employees"  element={<AdminEmployeesPage />}/>
                 <Route path="/admin/employees/:id" element={<EmployeeProfilePage />}/>

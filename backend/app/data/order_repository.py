@@ -104,8 +104,8 @@ async def cancel(order_id: str) -> bool:
     return result.modified_count > 0
 
 
-async def get_filtered_orders_for_client(
-    client_id: str,
+async def get_filtered_orders(
+    client_id: Optional[str],
     name_design: str,
     type: TypeDesign,
     material: str,
@@ -127,7 +127,10 @@ async def get_filtered_orders_for_client(
         return [], 0
 
     try:
-        filter_query = {"client.client_id": client_id}
+        filter_query = {}
+
+        if client_id is not None:
+            filter_query["client.client_id"] = client_id
 
         if name_design is not None:
             filter_query["name_design"] = {"$regex": name_design, "$options": "i"}
@@ -207,3 +210,24 @@ async def get_filtered_orders_for_client(
     except Exception as e:
         print(f"Error getting filtered orders: {e}")
         return [], 0
+
+async def update_stage_worker(
+    order_id: str,
+    stage_index: int,
+    worker_id: str,
+    updated_at: datetime
+) -> bool:
+    try:
+        result = await orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {
+                "$set": {
+                    f"stages.{stage_index}.worker_id": worker_id,
+                    "updated_at": updated_at
+                }
+            }
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Error updating stage worker: {e}")
+        return False

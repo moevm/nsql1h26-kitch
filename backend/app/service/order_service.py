@@ -189,8 +189,8 @@ async def can_worker_view_order(order: Order, worker_id: str) -> bool:
     return False
 
 
-async def get_filtered_orders_for_client(
-    client_id: str,
+async def get_filtered_orders(
+    client_id: Optional[str],
     name_design: str,
     type: TypeDesign,
     material: str,
@@ -212,27 +212,73 @@ async def get_filtered_orders_for_client(
         if dt is None:
             return None
         return dt + timedelta(hours=3)
+
     from_created = normalize_by_time_zone(from_created)
     to_created = normalize_by_time_zone(to_created)
     from_deadline = normalize_by_time_zone(from_deadline)
     to_deadline = normalize_by_time_zone(to_deadline)
-    orders_db, total = await order_repo.get_filtered_orders_for_client(
-        client_id,
-        name_design,
-        type,
-        material,
-        stage,
-        address,
-        comment,
-        min_price,
-        max_price,
-        from_created,
-        to_created,
-        from_deadline,
-        to_deadline,
-        sort_by,
-        sort_direction,
-        skip,
-        limit,
+
+    orders_db, total = await order_repo.get_filtered_orders(
+        client_id=client_id,
+        name_design=name_design,
+        type=type,
+        material=material,
+        stage=stage,
+        address=address,
+        comment=comment,
+        min_price=min_price,
+        max_price=max_price,
+        from_created=from_created,
+        to_created=to_created,
+        from_deadline=from_deadline,
+        to_deadline=to_deadline,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        skip=skip,
+        limit=limit,
     )
     return [Order(**order.model_dump()) for order in orders_db], total
+
+async def change_stage_worker(
+    order_id: str,
+    stage_index: int,
+    worker_id: str,
+    role: str
+) -> dict:
+    if role not in ("admin", "worker"):
+        raise HTTPException(status_code=403, detail="Доступ только для admin и worker")
+
+    order_db = await order_repo.get_by_id(order_id)
+    if not order_db:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    if stage_index >= len(order_db.stages):
+        raise HTTPException(status_code=404, detail="Этап не найден")
+
+    stage = order_db.stages[stage_index]
+
+    if stage.task_status in (TypeTask.Completed, TypeTask.Canceled, TypeTask.Closed):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Нельзя сменить рабочего на завершённом этапе (статус: {stage.task_status})"
+        )
+
+    if worker_id and worker_id != "":
+        from app.service.worker_service import get_worker_by_id
+        try:
+            await get_worker_by_id(worker_id)
+        except HTTPException:
+            raise HTTPException(status_code=404, detail="Рабочий не найден")
+
+    now = datetime.now(timezone.utc)
+    result = await order_repo.update_stage_worker(order_id, stage_index, worker_id, now)
+
+    if not result:
+        raise HTTPException(status_code=500, detail="Не удалось обновить рабочего")
+
+    return {
+        "order_id": order_id,
+        "stage_index": stage_index,
+        "worker_id": worker_id,
+        "message": "Рабочий успешно назначен на этап"
+    }

@@ -72,5 +72,12 @@ export const ordersAPI = {
     cancel: async (id: string): Promise<{ order_id: string; message: string }> => {
         const response = await apiClient.patch(`/orders/${id}/cancel`);
         return response.data;
-    }
+    },
+
+    changeStageWorker: async (orderId: string, stageIndex: number, workerId: string | null): Promise<{ order_id: string; stage_index: number; worker_id: string; message: string }> => {
+        const response = await apiClient.patch(
+            `/orders/${orderId}/stages/${stageIndex}/worker?worker_id=${workerId || ''}`
+        );
+        return response.data;
+    },
 };
