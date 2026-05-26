@@ -9,6 +9,7 @@ from app.web.design_router import router as design_router
 from app.web.order_router import router as order_router
 from app.web.task_router import router as task_router
 from app.web.worker_router import router as worker_router
+from app.web.finance_router import router as finance_router
 from app.web.import_export_router import router as import_export_router
 
 
@@ -31,7 +32,6 @@ app.add_middleware(
         "http://localhost",
         "http://localhost:80",
         "http://frontend",
-        "http://localhost:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -44,7 +44,6 @@ app.include_router(design_router)
 app.include_router(order_router)
 app.include_router(task_router)
 app.include_router(worker_router)
-app.include_router(import_export_router)
 
 
 @app.get("/")
