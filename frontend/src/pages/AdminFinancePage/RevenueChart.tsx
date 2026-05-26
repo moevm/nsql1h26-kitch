@@ -53,7 +53,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
   if (!data || data.length === 0) {
     return (
       <Paper sx={{ p: 3, borderRadius: 3, flex: 1, minWidth: 0 }}>
-        <Typography variant="subtitle1" fontWeight="bold" align="center" sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" fontWeight="bold" align="center" sx={{ mb: 2, textDecoration: 'underline' }}>
           {title}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>

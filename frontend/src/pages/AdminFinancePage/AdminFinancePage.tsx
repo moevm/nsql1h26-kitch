@@ -56,27 +56,26 @@ export const AdminFinancePage: React.FC = () => {
 
   const summary = data?.summary;
 
-  // Используем правильные данные в зависимости от выбранного периода
   let breakdown: RevenueByPeriod[] = [];
-
-  switch (periodType) {
-    case 'day':
-      breakdown = data?.daily_breakdown || [];
-      break;
-    case 'week':
-      breakdown = data?.weekly_breakdown || [];
-      break;
-    case 'month':
-      breakdown = data?.monthly_breakdown || [];
-      break;
-    case 'year':
-      breakdown = data?.yearly_breakdown || [];
-      break;
-    default:
-      breakdown = data?.monthly_breakdown || [];
+  if (data) {
+    switch (periodType) {
+      case 'day':
+        breakdown = data.daily_breakdown || [];
+        break;
+      case 'week':
+        breakdown = data.weekly_breakdown || [];
+        break;
+      case 'month':
+        breakdown = data.monthly_breakdown || [];
+        break;
+      case 'year':
+        breakdown = data.yearly_breakdown || [];
+        break;
+      default:
+        breakdown = data.monthly_breakdown || [];
+    }
   }
 
-  // Три отдельных набора точек для трёх графиков
   const revenueData = breakdown.map((item: RevenueByPeriod) => ({
     period: item.period,
     value: item.revenue,
@@ -92,10 +91,12 @@ export const AdminFinancePage: React.FC = () => {
     value: item.order_count,
   }));
 
+  const margin = summary?.total_revenue && summary?.total_profit
+    ? Math.round((summary.total_profit / summary.total_revenue) * 100)
+    : 0;
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-
-      {/* Выбор периода */}
       <Box sx={{ mb: 4 }}>
         <PeriodSelector
           periodType={periodType}
@@ -109,8 +110,7 @@ export const AdminFinancePage: React.FC = () => {
         />
       </Box>
 
-      {/* Три графика в ряд — как на макете */}
-      <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
+      <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
         <RevenueChart
           data={revenueData}
           title="Выручка"
@@ -120,18 +120,17 @@ export const AdminFinancePage: React.FC = () => {
         <RevenueChart
           data={profitData}
           title="Прибыль"
-          color="#1976d2"
+          color="#4caf50"
           valuePrefix="₽ "
         />
         <RevenueChart
           data={ordersData}
           title="Количество заказов"
-          color="#1976d2"
+          color="#ff9800"
           valueSuffix=" шт"
         />
       </Box>
 
-      {/* Метрики внизу */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         <Box sx={{ flex: '1 1 200px', minWidth: 160 }}>
           <MetricCard
@@ -168,11 +167,7 @@ export const AdminFinancePage: React.FC = () => {
         <Box sx={{ flex: '1 1 200px', minWidth: 160 }}>
           <MetricCard
             title="Маржинальность"
-            value={
-              summary?.total_revenue && summary?.total_profit
-                ? Math.round((summary.total_profit / summary.total_revenue) * 100)
-                : 0
-            }
+            value={margin}
             suffix="%"
             color="#4caf50"
           />

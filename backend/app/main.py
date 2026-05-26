@@ -44,6 +44,8 @@ app.include_router(design_router)
 app.include_router(order_router)
 app.include_router(task_router)
 app.include_router(worker_router)
+app.include_router(finance_router)
+app.include_router(import_export_router)
 
 
 @app.get("/")
@@ -57,4 +59,4 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, host="127.0.0.1", port=8000)
+    uvicorn.run("main:main", reload=True, host="127.0.0.1", port=8000)
