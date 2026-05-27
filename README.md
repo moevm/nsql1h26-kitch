@@ -17,6 +17,8 @@
 
 <a href=" ./../../../actions/workflows/7_app_is_ready.yml" >![7. App is ready]( ./../../actions/workflows/7_app_is_ready.yml/badge.svg)</a>
 
+При запуске через docker-compose.yml сайт открывается по адресу [localhost:8080](http://localhost:8080)
+
 ## Отладочные пользователи
 
 **Клиент**
