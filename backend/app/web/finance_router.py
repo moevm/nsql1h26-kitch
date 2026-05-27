@@ -62,7 +62,6 @@ async def get_finance_filters(
     if current_user["role"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Только администратор")
 
-    # Получаем уникальные worker_id из этапов заказов
     pipeline = [
         {"$unwind": "$stages"},
         {"$group": {"_id": "$stages.worker_id"}},
@@ -74,7 +73,6 @@ async def get_finance_filters(
 
     print(f"[DEBUG] Found worker_ids: {worker_ids}")
 
-    # Получаем имена сотрудников из коллекции users
     employees = []
     for worker_id in worker_ids:
         try:
@@ -90,11 +88,9 @@ async def get_finance_filters(
             employees.append({"id": worker_id, "name": f"Рабочий {worker_id[-6:]}"})
             print(f"[DEBUG] No user found for worker_id: {worker_id}")
 
-    # Типы заказов
     order_types = await orders_collection.distinct("type")
     order_types = [t for t in order_types if t]
 
-    # Позиции
     positions = await orders_collection.distinct("material")
     positions = [p for p in positions if p]
 

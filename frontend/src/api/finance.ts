@@ -34,7 +34,7 @@ export interface FinanceDashboardResponse {
 }
 
 export interface FinanceFiltersResponse {
-  employees: { id: string; name: string }[];  // ← объекты, а не строки
+  employees: { id: string; name: string }[];
   orderTypes: string[];
   positions: string[];
 }
@@ -51,7 +51,6 @@ export const financeAPI = {
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    // Добавляем фильтры
     if (filters?.employees && filters.employees.length > 0) {
       params.append('employees', filters.employees.join(','));
     }

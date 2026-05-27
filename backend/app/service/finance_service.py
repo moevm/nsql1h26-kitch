@@ -53,7 +53,6 @@ def _get_date_range(
         if start_date:
             season_start = start_date
         else:
-            # Определяем текущий сезон
             if today.month in [12, 1, 2]:
                 season_start = date(today.year if today.month == 12 else today.year - 1, 12, 1)
             elif today.month in [3, 4, 5]:
@@ -63,14 +62,13 @@ def _get_date_range(
             else:
                 season_start = date(today.year, 9, 1)
 
-        # Определяем конец сезона
         if season_start.month == 12:
             season_end = date(season_start.year + 1, 2, 28)
         elif season_start.month == 3:
             season_end = date(season_start.year, 5, 31)
         elif season_start.month == 6:
             season_end = date(season_start.year, 8, 31)
-        else:  # сентябрь
+        else:  
             season_end = date(season_start.year, 11, 30)
         return season_start, season_end
 
@@ -101,9 +99,7 @@ async def get_finance_summary(
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
     }
 
-    # 🔥 Фильтр по сотрудникам - используем worker_id напрямую
     if filters and filters.get("employees") and len(filters["employees"]) > 0:
-        # filters["employees"] теперь содержит worker_id (строки)
         worker_ids = filters["employees"]
         query["stages.worker_id"] = {"$in": worker_ids}
         print(f"[DEBUG] Filtering by worker_ids: {worker_ids}")
@@ -119,9 +115,6 @@ async def get_finance_summary(
     cursor = orders_collection.find(query)
     orders = await cursor.to_list(length=1000)
 
-    # ... остальной код без изменений
-
-    # ... остальной код без изменений
     total_revenue = 0
     total_material_cost = 0
     total_delivery_fee = 0
@@ -159,7 +152,7 @@ async def get_revenue_breakdown(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    filters: Optional[dict] = None,  # добавить
+    filters: Optional[dict] = None,
 ) -> List[RevenueByPeriod]:
     """Получение разбивки выручки по периодам с группировкой"""
 
@@ -172,7 +165,6 @@ async def get_revenue_breakdown(
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
 
-    # Базовый запрос
     query = {
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
     }
@@ -190,7 +182,6 @@ async def get_revenue_breakdown(
     cursor = orders_collection.find(query)
     orders = await cursor.to_list(length=10000)
 
-    # ... остальной код группировки без изменений
     if not orders:
         return []
 
@@ -245,7 +236,7 @@ async def get_finance_dashboard_data(
     period_type: PeriodType = PeriodType.MONTH,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    filters: Optional[dict] = None,  # добавить
+    filters: Optional[dict] = None,
 ) -> FinanceDashboardResponse:
     """Получение всех данных для финансового дашборда"""
 
@@ -256,7 +247,6 @@ async def get_finance_dashboard_data(
 
     print(f"[DEBUG] Dashboard: period_type={period_type}, date_range={start} to {end}, filters={filters}")
 
-    # Передаем фильтры во все breakdown
     daily_breakdown = await get_revenue_breakdown(PeriodType.DAY, start, end, filters)
     weekly_breakdown = await get_revenue_breakdown(PeriodType.WEEK, start, end, filters)
     monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, start, end, filters)
@@ -271,14 +261,12 @@ async def get_finance_dashboard_data(
     )
 
 
-# Остальные функции (get_detailed_finance_stats) остаются без изменений
 async def get_detailed_finance_stats(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
 ) -> DetailedFinanceResponse:
     """Получение детальной финансовой статистики"""
-    # ... (оставьте как было)
     start, end = _get_date_range(period_type, start_date, end_date)
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
@@ -370,7 +358,7 @@ async def get_detailed_finance_stats(
 
     top_products = sorted(
         [{"name": k, "count": v, "revenue": revenue_by_type.get(k, 0)}
-         for k, v in type_count.items()],
+        for k, v in type_count.items()],
         key=lambda x: x["count"],
         reverse=True
     )[:5]

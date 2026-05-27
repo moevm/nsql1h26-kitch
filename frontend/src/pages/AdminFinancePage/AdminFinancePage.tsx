@@ -12,7 +12,7 @@ import { RevenueChart } from './RevenueChart';
 import type { PeriodType, RevenueByPeriod } from '../../api/finance';
 
 interface FilterState {
-  employees: string[];  // храним worker_id
+  employees: string[];  
   orderTypes: string[];
   positions: string[];
 }
@@ -93,13 +93,6 @@ export const AdminFinancePage: React.FC = () => {
     const employee = filterOptions?.employees?.find((e: EmployeeOption) => e.id === id);
     return employee?.name || id.slice(-8);
   };
-
-  // Сокращаем ID для отображения (запасной вариант)
-  // const shortenId = (id: string): string => {
-  //   if (!id) return '';
-  //   if (id.length <= 8) return id;
-  //   return id.slice(-8);
-  // };
 
   const getChartData = useMemo(() => {
     if (!data) return { revenueData: [], profitData: [], ordersData: [] };
