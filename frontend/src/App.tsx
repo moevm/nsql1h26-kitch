@@ -22,6 +22,7 @@ import {TasksPage} from "./pages/WorkerPages/TasksPage/TasksPage.tsx";
 import { AdminLayout } from "./layouts/AdminLayout/AdminLayout.tsx";
 import { AdminEmployeesPage } from "./pages/AdminPages/AdminEmployeesPage/AdminEmployeesPage.tsx";
 import {AdminOrdersPage} from "./pages/AdminPages/AdminOrdersPage/AdminOrdersPage.tsx";
+import { AdminFinancePage } from "./pages/AdminFinancePage/AdminFinancePage.tsx";
 
 function AppRoutes() {
     return (
@@ -60,7 +61,7 @@ function AppRoutes() {
                 </ProtectedRoute>
             }>
                 <Route path="/admin/orders"     element={<AdminOrdersPage />}/>
-                <Route path="/admin/finances"   element={<div>ADMIN FINANCES</div>}/>
+                <Route path="/admin/finances"   element={<AdminFinancePage />}/>
                 <Route path="/admin/employees"  element={<AdminEmployeesPage />}/>
                 <Route path="/admin/employees/:id" element={<EmployeeProfilePage />}/>
             </Route>

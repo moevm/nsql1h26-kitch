@@ -1,0 +1,27 @@
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.cardContent {
+  padding: 20px;
+}
+
+.cardTitle {
+  @include text-style(14px, 400, $on-surface-color, 20px);
+  margin-bottom: 8px;
+}
+
+.cardValue {
+  @include text-style(32px, 600, #1976d2, 40px);
+}
