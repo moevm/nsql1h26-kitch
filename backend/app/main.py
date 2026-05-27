@@ -32,6 +32,7 @@ app.add_middleware(
         "http://localhost",
         "http://localhost:80",
         "http://frontend",
+        "http://localhost:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -59,4 +60,4 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:main", reload=True, host="127.0.0.1", port=8000)
+    uvicorn.run("main:app", reload=True, host="127.0.0.1", port=8000)
