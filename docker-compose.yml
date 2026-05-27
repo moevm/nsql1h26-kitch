@@ -19,7 +19,7 @@ services:
       start_period: 5s
 
   backend:
-    image: nsql1h26-kitch_backend-python-fastapi:v.0.8
+    image: nsql1h26-kitch_backend-python-fastapi:v.1.0
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -41,7 +41,7 @@ services:
       start_period: 5s
 
   frontend:
-    image: nsql1h26-kitch_frontend-nginx-react:v.0.8
+    image: nsql1h26-kitch_frontend-nginx-react:v.1.0
     build:
       context: ./frontend
       dockerfile: Dockerfile
