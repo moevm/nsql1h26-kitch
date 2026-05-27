@@ -16,7 +16,7 @@ from app.models.finance import (
 )
 
 orders_collection = db["orders"]
-
+users_collection = db["users"]
 
 def _get_date_range(
     period_type: PeriodType,
@@ -53,7 +53,6 @@ def _get_date_range(
         if start_date:
             season_start = start_date
         else:
-            # Определяем текущий сезон
             if today.month in [12, 1, 2]:
                 season_start = date(today.year if today.month == 12 else today.year - 1, 12, 1)
             elif today.month in [3, 4, 5]:
@@ -63,14 +62,13 @@ def _get_date_range(
             else:
                 season_start = date(today.year, 9, 1)
 
-        # Определяем конец сезона
         if season_start.month == 12:
             season_end = date(season_start.year + 1, 2, 28)
         elif season_start.month == 3:
             season_end = date(season_start.year, 5, 31)
         elif season_start.month == 6:
             season_end = date(season_start.year, 8, 31)
-        else:  # сентябрь
+        else:  
             season_end = date(season_start.year, 11, 30)
         return season_start, season_end
 
@@ -91,15 +89,30 @@ async def get_finance_summary(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    filters: Optional[dict] = None,
 ) -> FinanceSummary:
-    """Получение финансовой сводки за период"""
     start, end = _get_date_range(period_type, start_date, end_date)
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
 
-    cursor = orders_collection.find({
+    query = {
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
-    })
+    }
+
+    if filters and filters.get("employees") and len(filters["employees"]) > 0:
+        worker_ids = filters["employees"]
+        query["stages.worker_id"] = {"$in": worker_ids}
+        print(f"[DEBUG] Filtering by worker_ids: {worker_ids}")
+
+    if filters and filters.get("order_types") and len(filters["order_types"]) > 0:
+        query["type"] = {"$in": filters["order_types"]}
+
+    if filters and filters.get("positions") and len(filters["positions"]) > 0:
+        query["material"] = {"$in": filters["positions"]}
+
+    print(f"[DEBUG] Summary query: {query}")
+
+    cursor = orders_collection.find(query)
     orders = await cursor.to_list(length=1000)
 
     total_revenue = 0
@@ -139,10 +152,10 @@ async def get_revenue_breakdown(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    filters: Optional[dict] = None,
 ) -> List[RevenueByPeriod]:
     """Получение разбивки выручки по периодам с группировкой"""
 
-    # Используем переданные даты напрямую
     if start_date and end_date:
         start = start_date
         end = end_date
@@ -152,25 +165,32 @@ async def get_revenue_breakdown(
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
 
-    print(f"[DEBUG] get_revenue_breakdown: period_type={period_type}, range={start} to {end}")
-
-    # Получаем заказы за период
-    cursor = orders_collection.find({
+    query = {
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
-    })
+    }
+
+    if filters:
+        if filters.get("employees") and len(filters["employees"]) > 0:
+            query["stages.worker_id"] = {"$in": filters["employees"]}
+        if filters.get("order_types") and len(filters["order_types"]) > 0:
+            query["type"] = {"$in": filters["order_types"]}
+        if filters.get("positions") and len(filters["positions"]) > 0:
+            query["material"] = {"$in": filters["positions"]}
+
+    print(f"[DEBUG] Breakdown query: {query}")
+
+    cursor = orders_collection.find(query)
     orders = await cursor.to_list(length=10000)
 
     if not orders:
         return []
 
-    # Группировка
     groups = {}
     for order in orders:
         created_at = order.get("created_at")
         if not created_at:
             continue
 
-        # Парсим дату
         if isinstance(created_at, str):
             try:
                 created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
@@ -179,7 +199,6 @@ async def get_revenue_breakdown(
         elif not isinstance(created_at, datetime):
             continue
 
-        # Ключ группировки
         if period_type == PeriodType.DAY:
             key = created_at.strftime("%Y-%m-%d")
         elif period_type == PeriodType.WEEK:
@@ -200,7 +219,6 @@ async def get_revenue_breakdown(
         groups[key]["material_cost"] += pricing.get("material_price", 0)
         groups[key]["order_count"] += 1
 
-    # Формируем результат
     results = []
     for key, data in sorted(groups.items()):
         results.append(RevenueByPeriod(
@@ -211,7 +229,6 @@ async def get_revenue_breakdown(
             average_check=data["revenue"] / data["order_count"] if data["order_count"] > 0 else 0,
         ))
 
-    print(f"[DEBUG] Groups found: {len(results)}")
     return results
 
 
@@ -219,22 +236,21 @@ async def get_finance_dashboard_data(
     period_type: PeriodType = PeriodType.MONTH,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    filters: Optional[dict] = None,
 ) -> FinanceDashboardResponse:
     """Получение всех данных для финансового дашборда"""
 
-    summary = await get_finance_summary(period_type, start_date, end_date)
+    summary = await get_finance_summary(period_type, start_date, end_date, filters)
 
-    # Используем точные даты из summary
     start = summary.start_date
     end = summary.end_date
 
-    print(f"[DEBUG] Dashboard: period_type={period_type}, date_range={start} to {end}")
+    print(f"[DEBUG] Dashboard: period_type={period_type}, date_range={start} to {end}, filters={filters}")
 
-    # Получаем разбивки с разной группировкой
-    daily_breakdown = await get_revenue_breakdown(PeriodType.DAY, start, end)
-    weekly_breakdown = await get_revenue_breakdown(PeriodType.WEEK, start, end)
-    monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, start, end)
-    yearly_breakdown = await get_revenue_breakdown(PeriodType.YEAR, start, end)
+    daily_breakdown = await get_revenue_breakdown(PeriodType.DAY, start, end, filters)
+    weekly_breakdown = await get_revenue_breakdown(PeriodType.WEEK, start, end, filters)
+    monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, start, end, filters)
+    yearly_breakdown = await get_revenue_breakdown(PeriodType.YEAR, start, end, filters)
 
     return FinanceDashboardResponse(
         summary=summary,
@@ -245,14 +261,12 @@ async def get_finance_dashboard_data(
     )
 
 
-# Остальные функции (get_detailed_finance_stats) остаются без изменений
 async def get_detailed_finance_stats(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
 ) -> DetailedFinanceResponse:
     """Получение детальной финансовой статистики"""
-    # ... (оставьте как было)
     start, end = _get_date_range(period_type, start_date, end_date)
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
@@ -344,7 +358,7 @@ async def get_detailed_finance_stats(
 
     top_products = sorted(
         [{"name": k, "count": v, "revenue": revenue_by_type.get(k, 0)}
-         for k, v in type_count.items()],
+        for k, v in type_count.items()],
         key=lambda x: x["count"],
         reverse=True
     )[:5]
