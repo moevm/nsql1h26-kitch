@@ -1,6 +1,5 @@
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timedelta
 from typing import List, Optional, Tuple
-from fastapi import HTTPException, status
 
 from app.data.database import db
 from app.models.finance import (
@@ -20,9 +19,11 @@ orders_collection = db["orders"]
 
 
 def _get_date_range(
-    period_type: PeriodType, start_date: Optional[date] = None, end_date: Optional[date] = None
+    period_type: PeriodType,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
 ) -> Tuple[date, date]:
-    """Возвращает кортеж (start_date, end_date) на основе типа периода"""
+    """Получение диапазона дат для выбранного периода"""
     today = date.today()
 
     if period_type == PeriodType.DAY:
@@ -32,79 +33,58 @@ def _get_date_range(
 
     elif period_type == PeriodType.WEEK:
         if start_date:
-            week_start = start_date
-            week_end = week_start + timedelta(days=6)
-            return week_start, week_end
+            return start_date, start_date + timedelta(days=6)
         week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        return week_start, week_end
+        return week_start, week_start + timedelta(days=6)
 
     elif period_type == PeriodType.MONTH:
         if start_date:
             month_start = start_date.replace(day=1)
-            if month_start.month == 12:
-                next_month = month_start.replace(year=month_start.year + 1, month=1, day=1)
-            else:
-                next_month = month_start.replace(month=month_start.month + 1, day=1)
-            month_end = next_month - timedelta(days=1)
-            return month_start, month_end
-        month_start = today.replace(day=1)
+        else:
+            month_start = today.replace(day=1)
+
         if month_start.month == 12:
             next_month = month_start.replace(year=month_start.year + 1, month=1, day=1)
         else:
             next_month = month_start.replace(month=month_start.month + 1, day=1)
-        month_end = next_month - timedelta(days=1)
-        return month_start, month_end
+        return month_start, next_month - timedelta(days=1)
 
     elif period_type == PeriodType.SEASON:
         if start_date:
             season_start = start_date
-            if season_start.month in [12, 1, 2]:
-                if season_start.month == 12:
-                    season_end = date(season_start.year + 1, 2, 28)
-                else:
-                    season_end = date(season_start.year, 2, 28)
-            elif season_start.month in [3, 4, 5]:
-                season_end = date(season_start.year, 5, 31)
-            elif season_start.month in [6, 7, 8]:
-                season_end = date(season_start.year, 8, 31)
-            else:
-                season_end = date(season_start.year, 11, 30)
-            return season_start, season_end
-
-        if today.month in [12, 1, 2]:
-            if today.month == 12:
-                season_start = date(today.year, 12, 1)
-                season_end = date(today.year + 1, 2, 28)
-            else:
-                season_start = date(today.year - 1, 12, 1)
-                season_end = date(today.year, 2, 28)
-        elif today.month in [3, 4, 5]:
-            season_start = date(today.year, 3, 1)
-            season_end = date(today.year, 5, 31)
-        elif today.month in [6, 7, 8]:
-            season_start = date(today.year, 6, 1)
-            season_end = date(today.year, 8, 31)
         else:
-            season_start = date(today.year, 9, 1)
-            season_end = date(today.year, 11, 30)
+            # Определяем текущий сезон
+            if today.month in [12, 1, 2]:
+                season_start = date(today.year if today.month == 12 else today.year - 1, 12, 1)
+            elif today.month in [3, 4, 5]:
+                season_start = date(today.year, 3, 1)
+            elif today.month in [6, 7, 8]:
+                season_start = date(today.year, 6, 1)
+            else:
+                season_start = date(today.year, 9, 1)
+
+        # Определяем конец сезона
+        if season_start.month == 12:
+            season_end = date(season_start.year + 1, 2, 28)
+        elif season_start.month == 3:
+            season_end = date(season_start.year, 5, 31)
+        elif season_start.month == 6:
+            season_end = date(season_start.year, 8, 31)
+        else:  # сентябрь
+            season_end = date(season_start.year, 11, 30)
         return season_start, season_end
 
     elif period_type == PeriodType.YEAR:
         if start_date:
-            year_start = date(start_date.year, 1, 1)
-            year_end = date(start_date.year, 12, 31)
-            return year_start, year_end
-        year_start = date(today.year, 1, 1)
-        year_end = date(today.year, 12, 31)
-        return year_start, year_end
+            return date(start_date.year, 1, 1), date(start_date.year, 12, 31)
+        return date(today.year, 1, 1), date(today.year, 12, 31)
 
     elif period_type == PeriodType.CUSTOM:
         if not start_date or not end_date:
             return today - timedelta(days=30), today
         return start_date, end_date
 
-    return today, today
+    return today - timedelta(days=30), today
 
 
 async def get_finance_summary(
@@ -113,13 +93,10 @@ async def get_finance_summary(
     end_date: Optional[date] = None,
 ) -> FinanceSummary:
     """Получение финансовой сводки за период"""
-
     start, end = _get_date_range(period_type, start_date, end_date)
-
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
 
-    # Получаем все заказы за период
     cursor = orders_collection.find({
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
     })
@@ -163,34 +140,46 @@ async def get_revenue_breakdown(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
 ) -> List[RevenueByPeriod]:
-    """Получение разбивки выручки по периодам"""
+    """Получение разбивки выручки по периодам с группировкой"""
 
-    start, end = _get_date_range(period_type, start_date, end_date)
+    # Используем переданные даты напрямую
+    if start_date and end_date:
+        start = start_date
+        end = end_date
+    else:
+        start, end = _get_date_range(period_type, start_date, end_date)
+
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
 
-    print(f"DEBUG: get_revenue_breakdown - period_type={period_type}, start={start}, end={end}")
+    print(f"[DEBUG] get_revenue_breakdown: period_type={period_type}, range={start} to {end}")
 
-    # Получаем все заказы за период
+    # Получаем заказы за период
     cursor = orders_collection.find({
         "created_at": {"$gte": start_datetime, "$lt": end_datetime},
     })
     orders = await cursor.to_list(length=10000)
 
-    print(f"DEBUG: Found {len(orders)} orders in period")
-
     if not orders:
         return []
 
-    # Группировка в Python
+    # Группировка
     groups = {}
-
     for order in orders:
         created_at = order.get("created_at")
         if not created_at:
             continue
 
-        # Определяем ключ группировки
+        # Парсим дату
+        if isinstance(created_at, str):
+            try:
+                created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+            except:
+                continue
+        elif not isinstance(created_at, datetime):
+            continue
+
+        # Ключ группировки
         if period_type == PeriodType.DAY:
             key = created_at.strftime("%Y-%m-%d")
         elif period_type == PeriodType.WEEK:
@@ -204,20 +193,14 @@ async def get_revenue_breakdown(
             key = created_at.strftime("%Y-%m-%d")
 
         if key not in groups:
-            groups[key] = {
-                "revenue": 0,
-                "material_cost": 0,
-                "order_count": 0
-            }
+            groups[key] = {"revenue": 0, "material_cost": 0, "order_count": 0}
 
         pricing = order.get("pricing", {})
         groups[key]["revenue"] += pricing.get("total_price", 0)
         groups[key]["material_cost"] += pricing.get("material_price", 0)
         groups[key]["order_count"] += 1
 
-    print(f"DEBUG: Groups found: {list(groups.keys())}")
-
-    # Преобразуем в список
+    # Формируем результат
     results = []
     for key, data in sorted(groups.items()):
         results.append(RevenueByPeriod(
@@ -228,16 +211,48 @@ async def get_revenue_breakdown(
             average_check=data["revenue"] / data["order_count"] if data["order_count"] > 0 else 0,
         ))
 
+    print(f"[DEBUG] Groups found: {len(results)}")
     return results
 
 
+async def get_finance_dashboard_data(
+    period_type: PeriodType = PeriodType.MONTH,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+) -> FinanceDashboardResponse:
+    """Получение всех данных для финансового дашборда"""
+
+    summary = await get_finance_summary(period_type, start_date, end_date)
+
+    # Используем точные даты из summary
+    start = summary.start_date
+    end = summary.end_date
+
+    print(f"[DEBUG] Dashboard: period_type={period_type}, date_range={start} to {end}")
+
+    # Получаем разбивки с разной группировкой
+    daily_breakdown = await get_revenue_breakdown(PeriodType.DAY, start, end)
+    weekly_breakdown = await get_revenue_breakdown(PeriodType.WEEK, start, end)
+    monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, start, end)
+    yearly_breakdown = await get_revenue_breakdown(PeriodType.YEAR, start, end)
+
+    return FinanceDashboardResponse(
+        summary=summary,
+        daily_breakdown=daily_breakdown,
+        weekly_breakdown=weekly_breakdown,
+        monthly_breakdown=monthly_breakdown,
+        yearly_breakdown=yearly_breakdown,
+    )
+
+
+# Остальные функции (get_detailed_finance_stats) остаются без изменений
 async def get_detailed_finance_stats(
     period_type: PeriodType,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
 ) -> DetailedFinanceResponse:
     """Получение детальной финансовой статистики"""
-
+    # ... (оставьте как было)
     start, end = _get_date_range(period_type, start_date, end_date)
     start_datetime = datetime.combine(start, datetime.min.time())
     end_datetime = datetime.combine(end + timedelta(days=1), datetime.min.time())
@@ -317,17 +332,15 @@ async def get_detailed_finance_stats(
     total_delivery_cost = sum(delivery_fees)
     total_comment_cost = sum(comment_fees)
 
-    # Вычисляем маржинальность по типам
     margin_by_type = {}
     for k, v in revenue_by_type.items():
         if v > 0:
-            margin_by_type[k] = 50  # заглушка
+            margin_by_type[k] = 50
 
-    # Вычисляем маржинальность по материалам
     margin_by_material = {}
     for k, v in revenue_by_material.items():
         if v > 0:
-            margin_by_material[k] = 50  # заглушка
+            margin_by_material[k] = 50
 
     top_products = sorted(
         [{"name": k, "count": v, "revenue": revenue_by_type.get(k, 0)}
@@ -368,45 +381,3 @@ async def get_detailed_finance_stats(
         ),
         top_products=top_products,
     )
-
-
-async def get_finance_dashboard_data(
-    period_type: PeriodType = PeriodType.MONTH,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-) -> FinanceDashboardResponse:
-    """Получение всех данных для финансового дашборда"""
-
-    summary = await get_finance_summary(period_type, start_date, end_date)
-
-    print(f"DEBUG: Dashboard summary period: {summary.start_date} to {summary.end_date}")
-
-    # Получаем разбивки для каждого типа периода, НО используем полные даты года
-    if period_type == PeriodType.YEAR:
-        # Для года показываем разбивку по месяцам
-        year_start = date(summary.start_date.year, 1, 1)
-        year_end = date(summary.start_date.year, 12, 31)
-
-        monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, year_start, year_end)
-        yearly_breakdown = await get_revenue_breakdown(PeriodType.YEAR, year_start, year_end)
-
-        return FinanceDashboardResponse(
-            summary=summary,
-            daily_breakdown=[],
-            weekly_breakdown=[],
-            monthly_breakdown=monthly_breakdown,
-            yearly_breakdown=yearly_breakdown,
-        )
-    else:
-        daily_breakdown = await get_revenue_breakdown(PeriodType.DAY, summary.start_date, summary.end_date)
-        weekly_breakdown = await get_revenue_breakdown(PeriodType.WEEK, summary.start_date, summary.end_date)
-        monthly_breakdown = await get_revenue_breakdown(PeriodType.MONTH, summary.start_date, summary.end_date)
-        yearly_breakdown = await get_revenue_breakdown(PeriodType.YEAR, summary.start_date, summary.end_date)
-
-        return FinanceDashboardResponse(
-            summary=summary,
-            daily_breakdown=daily_breakdown,
-            weekly_breakdown=weekly_breakdown,
-            monthly_breakdown=monthly_breakdown,
-            yearly_breakdown=yearly_breakdown,
-        )
